@@ -1,0 +1,6 @@
+[submodule "BlueBlur"]
+	path = BlueBlur
+	url = https://github.com/blueskythlikesclouds/BlueBlur
+[submodule "Dependencies/BlueBlur"]
+	path = Dependencies/BlueBlur
+	url = https://github.com/blueskythlikesclouds/BlueBlur
