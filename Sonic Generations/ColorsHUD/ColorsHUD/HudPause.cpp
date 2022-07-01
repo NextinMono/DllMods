@@ -141,16 +141,25 @@ void HudPause_PauseCase(uint32_t* This, int Case, bool isPam)
 	{
 		originalScene->SetHideFlag(true);
 		HudPause_OpenPauseScreen(isPam);
+		if (!isPam)
+		{
+			originalScene->GetNode("continue_sdw")->SetPosition(0, -80);
+			originalScene->GetNode("restart_sdw")->SetPosition(0, -30);
+			originalScene->GetNode("how_to_control_sdw")->SetPosition(0, 20);
+			originalScene->GetNode("quit_sdw")->SetPosition(0, 73);
+			originalScene->GetNode("Null_text")->SetPosition(0, 2);
 
-		originalScene->GetNode("continue_sdw")->SetPosition(0, -80);
-		originalScene->GetNode("restart_sdw")->SetPosition(0, -30);
-		originalScene->GetNode("how_to_control_sdw")->SetPosition(0, 20);
-		originalScene->GetNode("quit_sdw")->SetPosition(0, 73);
-		originalScene->GetNode("Null_text")->SetPosition(0, 2);
+		}
+		else
+		{
+			originalScene->GetNode("position")->SetScale(0.65f, 0.65f);
+			originalScene->SetPosition(2, 35);
+		}
 		break;
 	}
 	case 1: // End
 	{
+		CSDCommon::PlayAnimation(*originalScene, "select_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		originalScene->SetHideFlag(true);			
 		break;
 	}

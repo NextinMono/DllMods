@@ -1,5 +1,5 @@
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcBtnGuideColors;
-Chao::CSD::RCPtr<Chao::CSD::CScene> trick_text;
+Chao::CSD::RCPtr<Chao::CSD::CScene> trick_text, onebtn;
 boost::shared_ptr<Sonic::CGameObjectCSD> spBtnGuideColors;
 
 bool moved = false;
@@ -32,28 +32,50 @@ void HudGpTricks::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGa
 	else
 		HudGpTricks::KillScreen();
 }
+void __fastcall HGT_CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
+{
+	HudGpTricks::KillScreen();
+
+	Chao::CSD::CProject::DestroyScene(rcBtnGuideColors.Get(), trick_text);
+	Chao::CSD::CProject::DestroyScene(rcBtnGuideColors.Get(), onebtn);
+	rcBtnGuideColors = nullptr;
+	tricksStarted = false;
+	introAnimPlayed = false;
+	textChoice = -1;
+
+}
+
 HOOK(void, __fastcall, HGT_CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObject* This)
 {
 	originalHGT_CHudSonicStageDelayProcessImp(This);
 
+	HGT_CHudSonicStageRemoveCallback(This, nullptr, nullptr);
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 
 	auto spCsdProject = wrapper.GetCsdProject("ui_gameplay_btn_guide");
 	rcBtnGuideColors = spCsdProject->m_rcProject;
 	trick_text = rcBtnGuideColors->CreateScene("trickjump");
+	onebtn = rcBtnGuideColors->CreateScene("1btn");
 
 	trick_text->GetNode("text")->SetPatternIndex(0);
 	trick_text->GetNode("text_0001")->SetPatternIndex(0);
 	CSDCommon::PlayAnimation(*trick_text, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	trick_text->SetHideFlag(true);
+
+	onebtn->GetNode("icon_btn")->SetPatternIndex(35);
+	CSDCommon::PlayAnimation(*onebtn, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	onebtn->SetHideFlag(true);
+
 	HudGpTricks::CreateScreen(This);
 }
 HOOK(void, __fastcall, StartTricks, 0x52F030, Sonic::CGameObject* This, void* edx, int a2)
-{	
+{
+	originalStartTricks(This, edx, a2);
 	textChoice = -1;
 	tricksStarted = true;
 	trick_text->SetHideFlag(false);
-	return originalStartTricks(This,edx,  a2);
+	onebtn->SetHideFlag(false);
+	CSDCommon::PlayAnimation(*onebtn, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 }
 
 HOOK(void, __fastcall, AdvanceTricks, 0x52F390, Sonic::CGameObject* This, void* edx, int a2)
@@ -71,21 +93,26 @@ HOOK(void, __fastcall, AdvanceTricks, 0x52F390, Sonic::CGameObject* This, void* 
 	return originalAdvanceTricks(This, edx, a2);
 }
 HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
-{
-	
-	if (tricksStarted)
+{	
+	if (introAnimPlayed)
 	{
-		if (introAnimPlayed && trick_text->m_MotionDisableFlag == 1)
+		if (trick_text->m_MotionDisableFlag == 1)
 		{
-			introAnimPlayed = false;
 			CSDCommon::PlayAnimation(*trick_text, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+
+			introAnimPlayed = false;
+		}
+		if (textChoice <= 0 && tricksStarted && onebtn->m_MotionDisableFlag == 1)
+		{
+			CSDCommon::PlayAnimation(*onebtn, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 		}
 	}
 }
 HOOK(void, __fastcall, FinalTrick, 0x52F8F0, Sonic::CGameObject* This, void* Edx, int a2)
 {
 	const byte mode = *(byte*)(a2 + 16);
-	//TODO: fix "amazing" text showing up when hitting floor
+
+	tricksStarted = false;
 	if (mode != 0)
 	{
 		trick_text->GetNode("text")->SetPatternIndex(4);
@@ -93,7 +120,7 @@ HOOK(void, __fastcall, FinalTrick, 0x52F8F0, Sonic::CGameObject* This, void* Edx
 		CSDCommon::PlayAnimation(*trick_text, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		introAnimPlayed = true;
 	}
-	
+	CSDCommon::PlayAnimation(*onebtn, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	textChoice = -1;
 	return originalFinalTrick(This, Edx, a2);
 }
