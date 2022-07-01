@@ -9,6 +9,7 @@ extern "C" __declspec(dllexport) void Init(const char* path)
 		Title::Install();
 #endif
 		HudPause::Install();
+		HudGpTricks::Install();
 	}
 	//Install UI anyway, as it has patches. It'll disable the XNCP in this code anyway if its disabled
 	HudUI::Install();

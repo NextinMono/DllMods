@@ -53,6 +53,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(SolutionDir)$(Configuration)\objects\</IntDir>
+    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\#SonicColorsHUD - XNCP</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -102,6 +103,7 @@
     <ClInclude Include="CSDCommon.h" />
     <ClInclude Include="HudPause.h" />
     <ClInclude Include="HudResult.h" />
+    <ClInclude Include="HudGpTricks.h" />
     <ClInclude Include="HudUI.h" />
     <ClInclude Include="detours\include\detours.h" />
     <ClInclude Include="detours\include\detver.h" />
@@ -1826,6 +1828,7 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="HudPause.cpp" />
     <ClCompile Include="HudResult.cpp" />
+    <ClCompile Include="HudGpTricks.cpp" />
     <ClCompile Include="HudUI.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Pch.cpp">

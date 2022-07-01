@@ -16,6 +16,7 @@ Hedgehog::Math::CVector2* shakeBoostValuePixy;
 Hedgehog::Math::CVector2* offsetAspect;
 float boostShakePower;
 bool readyGoNone = true;
+float offset = 0;
 //Would be used for wisp bar, but i dont know how to grab the time yet. Boowomp
 float currentTimeRocket = 5;
 float timeSinceStart = 0;
@@ -83,8 +84,8 @@ void GetTime(Sonic::CGameDocument* pGameDocument, size_t* minutes, size_t* secon
 	}
 }
 void ShakeBoostElements(uint32_t deltaTime)
-{
-	printf("deltatime %zu", deltaTime);
+{/*
+	printf("deltatime %zu", deltaTime);*/
 
 	if (deltaTime % 2 == 0 && rcBoostBar && rcBoostBarGlow && rcWispContainer)
 	{
@@ -201,7 +202,10 @@ void SetAllToIntroFirst()
 	if (rcRingCount)
 	HudUI_IntroFirstFrame(rcRingCount);
 	if (rcBoostBar)
-	HudUI_IntroFirstFrame(rcBoostBar);
+	{
+		SetBoostValue(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);
+		HudUI_IntroFirstFrame(rcBoostBar);
+	}
 	if (rcWispContainer)
 	HudUI_IntroFirstFrame(rcWispContainer);
 	if (rcScoreCount)
@@ -298,22 +302,20 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	if (flags & 0x1 && *(uint8_t*)0x1098C82 != 0xEB || Common::GetCurrentStageID() == SMT_bsd) // Lives
 	{
 		rcPlayerCount = rcGameplayColors->CreateScene("info_1");
-		HudUI_IntroFirstFrame(rcPlayerCount);
-
 		rcLife = rcLifeColors->CreateScene("1up");
-		HudUI_IntroFirstFrame(rcLife);
-
-		
+		offset = 0;
 	}
+	else
+		offset = -48;
 	if (flags & 0x2) // Time
 	{
 		rcTimeCount = rcGameplayColors->CreateScene("info_2");
-		HudUI_IntroFirstFrame(rcTimeCount);
+		rcTimeCount->SetPosition(0, offset);
 	}
 	if (flags & 0x4 || Common::GetCurrentStageID() == SMT_bsd) // Rings
 	{
 		rcRingCount = rcGameplayColors->CreateScene("ring");
-		HudUI_IntroFirstFrame(rcRingCount);
+		rcRingCount->SetPosition(0, offset);
 	}
 	if (flags & 0x200) // Boost Gauge
 	{
@@ -323,13 +325,11 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		Hedgehog::Math::CVector2 pos = rcBoostBar->GetNode("fulcrum_point_energy")->GetPosition();
 		rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 57.8f, pos.y() + 21.13f);
 		rcBoostBarGlow->SetScale(2.26f, 1);
-		HudUI_IntroFirstFrame(rcBoostBar);
 	}
 	if (flags)
 	{
 		rcWispContainer = rcGameplayColors->CreateScene("pixy", "Intro_Anim");
 		rcWispContainer->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-		HudUI_IntroFirstFrame(rcWispContainer);
 	}
 	flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800); // Mask to prevent crash when game tries accessing the elements we disabled later on
 
@@ -337,8 +337,8 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	if (ScoreGenerationsAPI::IsAttached() && !ScoreGenerationsAPI::IsStageForbidden()) // Score
 	{
 		rcScoreCount = rcGameplayColors->CreateScene("info_score");
-		HudUI_IntroFirstFrame(rcScoreCount);
 	}
+	SetAllToIntroFirst();
 	HudUI::CreateScreen(This);
 	SetBoostValue(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);
 }
@@ -390,7 +390,6 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		}
 		}
 	}
-	printf("\ntimesincestart %d", timeSinceStart);
 	if (timeSinceStart < 3.5f)
 	{
 		timeSinceStart += in_rUpdateInfo.DeltaTime;
@@ -399,6 +398,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	}
 	else if (timeSinceStart >= 3.5f && !timeStarted)
 	{
+		SetBoostValue(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);
 		if (rcPlayerCount)
 			CSDCommon::IntroAnim(rcPlayerCount);
 		if (rcTimeCount)
@@ -467,9 +467,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	}
 
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
-
 	/*printf("\n");
-	printf(playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName().c_str());*/
+	printf(->GetStateName().c_str());*/
 	if (rcBoostBarGlow)
 		rcBoostBarGlow->SetHideFlag(!isBoosting);
 
@@ -671,15 +670,20 @@ HOOK(int, __fastcall, MsgRestartStage,0xE76810, Sonic::CGameObject* This, void* 
 	timeSinceStart = 0;
 	boostIntroPlayed = false;
 	timeStarted = false;
+	
 	SetAllToIntroFirst();
 	return originalMsgRestartStage(This,edx, a2);
 }
 HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
 {
 	readyGoNone = false;
-	printf("CALLED");
+#if DEBUG
+	printf("\n\nStarting Level\n");
+#endif
 	return originalMsgStartMode(This);
 }
+
+
 void HudUI::Install()
 {
 	INSTALL_HOOK(CHudSonicStageUpdate);

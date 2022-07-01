@@ -15,7 +15,7 @@
 
 #include "detours\include\detours.h"
 
-
+#include "HudGpTricks.h"
 #include "CSDCommon.h"
 #include "Title.h"
 #include "Configuration.h"
