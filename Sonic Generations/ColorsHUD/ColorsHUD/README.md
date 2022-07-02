@@ -1,5 +1,5 @@
 # [Ultimate Colors UI](https://gamebanana.com/wips/68708)
-Source code for the DLL used in the Sonic Colors HUD and UI mod for Sonic Generations.
+Source code for the DLL used in the Ultimate Colors UI mod.
 
 ## Credits
 - [NextinHKRY](https://github.com/NextinMono) - Implementing Colors UI
