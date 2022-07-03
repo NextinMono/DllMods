@@ -1,6 +1,6 @@
 #pragma once
 
-class HudGpTricks
+class HudSonicStage
 {
 
 

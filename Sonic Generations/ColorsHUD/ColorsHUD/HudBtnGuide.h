@@ -1,6 +1,6 @@
 #pragma once
 
-class HudUI
+class HudBtnGuide
 {
 
 

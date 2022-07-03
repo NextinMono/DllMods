@@ -1,32 +1,38 @@
-Chao::CSD::RCPtr<Chao::CSD::CProject> rcGameplayColors, rcMissionColors, rcLifeColors;
+//CSD Object
+boost::shared_ptr<Sonic::CGameObjectCSD> spGameplayColors, spMissionColors, spLifeColors, spGaugeEff;
+
+//Projects
+Chao::CSD::RCPtr<Chao::CSD::CProject> rcGameplayColors, rcMissionColors, rcLifeColors, rcGaugeEff;
+
+//Scenes of projects (ideally keep them all separate from each project, unless they're used together)
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcPlayerCount, rcTimeCount, rcRingCount, rcBoostBar, rcBoostBarGlow,
 rcWispContainer, rcScoreCount, rcBonusCount, rcSkillCount;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcMissionTimer, rcMissionSecondP;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcLife;
 
-boost::shared_ptr<Sonic::CGameObjectCSD> spGameplayColors, spMissionColors, spLifeColors;
-
+//Parameters
 size_t prevRingCount;
 size_t itemCountDenominator;
 bool isMission;
-bool isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet = false;
+bool isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone = false;
 //Boost Shake
 Hedgehog::Math::CVector2* shakeBoostValue;
 Hedgehog::Math::CVector2* shakeBoostValuePixy;
 Hedgehog::Math::CVector2* offsetAspect;
 float boostShakePower;
-bool readyGoNone = true;
-float offset = 0;
+
 //Would be used for wisp bar, but i dont know how to grab the time yet. Boowomp
 float currentTimeRocket = 5;
 float timeSinceStart = 0;
+//Offset in case lives are disabled
+float offset = 0;
 int skillIndex = -1;
 size_t flagsStuff;
 bool lifeGoing = false;
 int lifeAnim;
 
 #pragma region XNCPStuff
-void HudUI::CreateScreen(Sonic::CGameObject* pParentGameObject)
+void HudSonicStage::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
 	if (rcGameplayColors && !spGameplayColors)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spGameplayColors = boost::make_shared<Sonic::CGameObjectCSD>(rcGameplayColors, 0.5f, "HUD", false), "main", pParentGameObject);
@@ -34,8 +40,10 @@ void HudUI::CreateScreen(Sonic::CGameObject* pParentGameObject)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spMissionColors = boost::make_shared<Sonic::CGameObjectCSD>(rcMissionColors, 0.5f, "HUD", false), "main", pParentGameObject);
 	if (rcLifeColors && !spLifeColors)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spLifeColors = boost::make_shared<Sonic::CGameObjectCSD>(rcLifeColors, 0.5f, "HUD", false), "main", pParentGameObject);
+	if (rcGaugeEff && !spGaugeEff)
+		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spGaugeEff = boost::make_shared<Sonic::CGameObjectCSD>(rcGaugeEff, 0.5f, "HUD", false), "main", pParentGameObject);
 }
-void HudUI::KillScreen()
+void HudSonicStage::KillScreen()
 {
 	if (spGameplayColors)
 	{
@@ -47,6 +55,11 @@ void HudUI::KillScreen()
 		spMissionColors->SendMessage(spMissionColors->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
 		spMissionColors = nullptr;
 	}
+	if (spGaugeEff)
+	{
+		spGaugeEff->SendMessage(spGaugeEff->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		spGaugeEff = nullptr;
+	}
 	/*if (spLifeColors)
 	{
 		spLifeColors->SendMessage(spMissionColors->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
@@ -54,16 +67,16 @@ void HudUI::KillScreen()
 	}*/
 }
 
-void HudUI::HudUI::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
+void HudSonicStage::HudSonicStage::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
 {
 	if (visible)
 	{
-		HudUI::CreateScreen(pParentGameObject);
+		HudSonicStage::CreateScreen(pParentGameObject);
 	}
 	else
-		HudUI::KillScreen();
+		HudSonicStage::KillScreen();
 }
-void HudUI_IntroFirstFrame(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
+void HudSonicStage_IntroFirstFrame(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
 {
 	scene->SetMotion("Intro_Anim");
 	scene->SetMotionFrame(0);
@@ -82,6 +95,24 @@ void GetTime(Sonic::CGameDocument* pGameDocument, size_t* minutes, size_t* secon
 		mov eax, pGameDocument
 		call[pAddr]
 	}
+}
+
+
+void SetBoostGlowPosition(bool start) {
+
+	Hedgehog::Math::CVector2 pos = rcBoostBar->GetNode("fulcrum_point_energy")->GetPosition();
+	Hedgehog::Math::CVector2 posT = rcBoostBarGlow->GetNode("rt")->GetPosition();
+	if (start) {
+
+
+		rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 77, pos.y());
+	}
+	else
+	{
+
+		rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 81, pos.y());
+	}
+	rcBoostBarGlow->SetScale(1.47f, 1);
 }
 void ShakeBoostElements(uint32_t deltaTime)
 {/*
@@ -137,8 +168,7 @@ void WispBarSet(bool wispInside)
 
 		if (rcBoostBarGlow)
 		{
-			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 64.1f, pos.y() + 21.13f);
-			rcBoostBarGlow->SetScale(2.26f, 1);
+			SetBoostGlowPosition(false);
 		}
 	}
 	else
@@ -158,11 +188,7 @@ void WispBarSet(bool wispInside)
 
 		if (rcBoostBarGlow)
 		{
-			Hedgehog::Math::CVector2 pos = rcBoostBar->GetNode("fulcrum_point_energy")->GetPosition();
-			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(0, 0);
-			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 57.8f, pos.y() + 21.13f);
-			rcBoostBarGlow->SetScale(2.26f, 1);
-
+			SetBoostGlowPosition(true);
 		}
 	}
 
@@ -193,29 +219,29 @@ void SetBoostValue(float value)
 
 void SetAllToIntroFirst()
 {
-	if(rcPlayerCount)
-	HudUI_IntroFirstFrame(rcPlayerCount);
+	if (rcPlayerCount)
+		HudSonicStage_IntroFirstFrame(rcPlayerCount);
 	if (rcLife)
-	HudUI_IntroFirstFrame(rcLife);
+		HudSonicStage_IntroFirstFrame(rcLife);
 	if (rcTimeCount)
-	HudUI_IntroFirstFrame(rcTimeCount);
+		HudSonicStage_IntroFirstFrame(rcTimeCount);
 	if (rcRingCount)
-	HudUI_IntroFirstFrame(rcRingCount);
+		HudSonicStage_IntroFirstFrame(rcRingCount);
 	if (rcBoostBar)
 	{
 		SetBoostValue(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);
-		HudUI_IntroFirstFrame(rcBoostBar);
+		HudSonicStage_IntroFirstFrame(rcBoostBar);
 	}
 	if (rcWispContainer)
-	HudUI_IntroFirstFrame(rcWispContainer);
+		HudSonicStage_IntroFirstFrame(rcWispContainer);
 	if (rcScoreCount)
-	HudUI_IntroFirstFrame(rcScoreCount);
+		HudSonicStage_IntroFirstFrame(rcScoreCount);
 }
 
 //REMEMBER TO CALL NULLPTR HERE!!!!
 void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
-	HudUI::KillScreen();
+	HudSonicStage::KillScreen();
 
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcPlayerCount);
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcTimeCount);
@@ -225,11 +251,13 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcScoreCount);
 	Chao::CSD::CProject::DestroyScene(rcMissionColors.Get(), rcMissionTimer);
 	Chao::CSD::CProject::DestroyScene(rcLifeColors.Get(), rcLife);
+	Chao::CSD::CProject::DestroyScene(rcGaugeEff.Get(), rcBoostBarGlow);
 
 
 	rcGameplayColors = nullptr;
 	rcMissionColors = nullptr;
 	rcLifeColors = nullptr;
+	rcGaugeEff = nullptr;
 	isMission = false;
 	timeSinceStart = 0;
 	timeStarted = false;
@@ -264,6 +292,8 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	rcMissionColors = spCsdProject->m_rcProject;
 	spCsdProject = wrapper.GetCsdProject("ui_1up");
 	rcLifeColors = spCsdProject->m_rcProject;
+	spCsdProject = wrapper.GetCsdProject("ui_burndown-timer");
+	rcGaugeEff = spCsdProject->m_rcProject;
 	Configuration::Read();
 	boostShakePower = Configuration::GaugeShakeAmountXNCP;
 	isMission = !Common::IsCurrentStageBossBattle() && (Common::GetCurrentStageID() & (SMT_Mission1 | SMT_Mission2 | SMT_Mission3 | SMT_Mission4 | SMT_Mission5));
@@ -321,10 +351,12 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	{
 		rcBoostBar = rcGameplayColors->CreateScene("gauge_energy");
 		CSDCommon::PlayAnimation(*rcBoostBar, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
-		rcBoostBarGlow = rcGameplayColors->CreateScene("gauge_energy_2_eff");
-		Hedgehog::Math::CVector2 pos = rcBoostBar->GetNode("fulcrum_point_energy")->GetPosition();
-		rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 57.8f, pos.y() + 21.13f);
-		rcBoostBarGlow->SetScale(2.26f, 1);
+		//Create, set position, and fix boost bar glow to work with the 16:9 gameplay XNCP
+		rcBoostBarGlow = rcGaugeEff->CreateScene("gauge_energy_2_eff");
+
+		Hedgehog::Math::CVector2 posT = rcBoostBarGlow->GetNode("rt")->GetPosition();
+		rcBoostBarGlow->GetNode("rt")->SetPosition(posT.x() + 5, posT.y());
+		SetBoostGlowPosition(true);
 	}
 	if (flags)
 	{
@@ -339,14 +371,14 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcScoreCount = rcGameplayColors->CreateScene("info_score");
 	}
 	SetAllToIntroFirst();
-	HudUI::CreateScreen(This);
+	HudSonicStage::CreateScreen(This);
 	SetBoostValue(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);
 }
 
 HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
 	originalCHudSonicStageUpdateParallel(This, Edx, in_rUpdateInfo);
-	HudUI::ToggleScreen(*(bool*)0x1A430D8, This); // ms_IsRenderGameMainHud
+	HudSonicStage::ToggleScreen(*(bool*)0x1A430D8, This); // ms_IsRenderGameMainHud
 
 	if (!spGameplayColors && !spMissionColors)
 		return;
@@ -564,7 +596,7 @@ HOOK(void, __fastcall, MsgChangeCustomHud, 0x10947A0, Sonic::CGameObject* This, 
 		WispBarSet(false);
 		skillIndex = -1;
 	}
-	else 
+	else
 	{
 		WispBarSet(true);
 		skillIndex = iconType;
@@ -603,7 +635,7 @@ HOOK(void, __fastcall, ProcMsgChangeWispHud, 0x1096050, Sonic::CGameObject* This
 HOOK(void, __stdcall, CPlayerGetLife, 0xE75520, Sonic::Player::CPlayerContext* context, int lifeCount, bool playSound)
 {
 	/*originalCPlayerGetLife(context, lifeCount, playSound);*/
-	
+
 	if (lifeCount > 0)
 	{
 		if (rcLife)
@@ -612,7 +644,7 @@ HOOK(void, __stdcall, CPlayerGetLife, 0xE75520, Sonic::Player::CPlayerContext* c
 			CSDCommon::PlayAnimation(*rcLife, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, false);
 		}
 		lifeGoing = true;
-		lifeAnim = 1;		
+		lifeAnim = 1;
 		if (playSound)
 		{
 			context->PlaySound(4001009, 0);
@@ -643,14 +675,14 @@ HOOK(void, __fastcall, MsgStartCommonButtonSign, 0x5289A0, void* thisDeclaration
 }
 #pragma endregion
 //Brianuu/Skyth
-void HudUI_CalculateAspectOffsets()
+void HudSonicStage_CalculateAspectOffsets()
 {
 	if (*(size_t*)0x6F23C6 != 0x75D8C0D9) // Widescreen Support
 	{
 		const float aspect = (float)*(size_t*)0x1DFDDDC / (float)*(size_t*)0x1DFDDE0;
 
 		if (aspect * 9.0f > 16.0f)
-		{			
+		{
 			offsetAspect = new Hedgehog::Math::CVector2(720.0f * aspect - 1280.0f, 0.0f);
 		}
 		else
@@ -660,19 +692,19 @@ void HudUI_CalculateAspectOffsets()
 	}
 	else
 	{
-		offsetAspect = new Hedgehog::Math::CVector2(0,0);
+		offsetAspect = new Hedgehog::Math::CVector2(0, 0);
 	}
 }
 /*
 	t;*/
-HOOK(int, __fastcall, MsgRestartStage,0xE76810, Sonic::CGameObject* This, void* edx, int a2)
-{	
+HOOK(int, __fastcall, MsgRestartStage, 0xE76810, Sonic::CGameObject* This, void* edx, int a2)
+{
 	timeSinceStart = 0;
 	boostIntroPlayed = false;
 	timeStarted = false;
-	
+
 	SetAllToIntroFirst();
-	return originalMsgRestartStage(This,edx, a2);
+	return originalMsgRestartStage(This, edx, a2);
 }
 HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
 {
@@ -684,38 +716,36 @@ HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
 }
 
 
-void HudUI::Install()
+void HudSonicStage::Install()
 {
 	INSTALL_HOOK(CHudSonicStageUpdate);
 	INSTALL_HOOK(MsgStartMode);
 	INSTALL_HOOK(MsgRestartStage);
 	/*INSTALL_HOOK(TestRestart);*/
-	if (Configuration::XNCPEnabled == true)
-	{
-		INSTALL_HOOK(ProcMsgGetMissionCondition);
-		INSTALL_HOOK(CHudSonicStageDelayProcessImp);
-		INSTALL_HOOK(CHudSonicStageUpdateParallel);
-		INSTALL_HOOK(MsgChangeCustomHud);
-		INSTALL_HOOK(ProcMsgChangeWispHud);
-		INSTALL_HOOK(CPlayerGetLife);
-		WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
 
-		WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives
-		WRITE_MEMORY(0x109B490, uint8_t, 0x90, 0xE9); // Disable time
-		WRITE_MEMORY(0x109B5AD, uint8_t, 0x90, 0xE9); // Disable rings
-		WRITE_MEMORY(0x109B8F5, uint8_t, 0x90, 0xE9); // Disable boost gauge
-		WRITE_MEMORY(0x109BC88, uint8_t, 0x90, 0xE9); // Disable boost button
-	}
-	else
-	{
-		INSTALL_HOOK(MsgStartCommonButtonSign);
-		// Patch ring counter to use four digits.
-		WRITE_MEMORY(0x168D33C, const char, "%04d");
-		WRITE_MEMORY(0x168E8E0, const char, "%04d");
+	INSTALL_HOOK(ProcMsgGetMissionCondition);
+	INSTALL_HOOK(CHudSonicStageDelayProcessImp);
+	INSTALL_HOOK(CHudSonicStageUpdateParallel);
+	INSTALL_HOOK(MsgChangeCustomHud);
+	INSTALL_HOOK(ProcMsgChangeWispHud);
+	INSTALL_HOOK(CPlayerGetLife);
+	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
 
-		// Disable boost button guide animation.
-		if (!Configuration::GaugeShake)
-			WRITE_NOP(0x124F4A1, 2);
-	}
+	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives
+	WRITE_MEMORY(0x109B490, uint8_t, 0x90, 0xE9); // Disable time
+	WRITE_MEMORY(0x109B5AD, uint8_t, 0x90, 0xE9); // Disable rings
+	WRITE_MEMORY(0x109B8F5, uint8_t, 0x90, 0xE9); // Disable boost gauge
+	WRITE_MEMORY(0x109BC88, uint8_t, 0x90, 0xE9); // Disable boost button
+
+
+	INSTALL_HOOK(MsgStartCommonButtonSign);
+	// Patch ring counter to use four digits.
+	WRITE_MEMORY(0x168D33C, const char, "%04d");
+	WRITE_MEMORY(0x168E8E0, const char, "%04d");
+
+	// Disable boost button guide animation.
+	if (!Configuration::GaugeShake)
+		WRITE_NOP(0x124F4A1, 2);
+
 
 }

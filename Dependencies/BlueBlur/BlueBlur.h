@@ -132,6 +132,8 @@
 #include <Sonic/Message/MsgGetRotation.h>
 #include <Sonic/Message/MsgHitReactionPlate.h>
 #include <Sonic/Message/MsgKill.h>
+#include <Sonic/Message/MsgComboTrickSign.h>
+#include <Sonic/Message/MsgStartTrickFinishButtonSign.h>
 #include <Sonic/Message/MsgSetPosition.h>
 #include <Sonic/Message/MsgSetRotation.h>
 #include <Sonic/Message/MsgSetVisible.h>
