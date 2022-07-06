@@ -1,8 +1,14 @@
-#include <thread>
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreen;
-Chao::CSD::RCPtr<Chao::CSD::CScene> rcTitleMain;
+Chao::CSD::RCPtr<Chao::CSD::CScene> title;
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreen;
 int currentTitleIndex = 0;
+int timePassed = 1;
+bool entered = false;
+bool startAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
+bool hasSavefile = false;
+Title::HudTitleState State = Title::HudTitleState::PressStartIntro;
+
+inline FUNCTION_PTR(int, __fastcall, CTitleMainFinishH, 0x5727F0, void* Edx, Sonic::CGameObject* This);
 
 void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
@@ -27,25 +33,69 @@ void Title::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObje
 		KillScreen();
 }
 
-void ColorsTitleSelect()
+void Title::FreezeMotion(Chao::CSD::CScene* pScene)
 {
-	if (currentTitleIndex < 0) 
-		currentTitleIndex = 3;
-	else if (currentTitleIndex > 3)
-		currentTitleIndex = 0;	
-
-	std::string name = "position_" + std::to_string(currentTitleIndex);
-	CSDCommon::PlayAnimation(*rcTitleMain, name.c_str(), Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-
-#if _DEBUG
-	printf("\nCURRENT INDEX: %d", currentTitleIndex);
-#endif
-
+	pScene->SetMotionFrame(pScene->m_MotionEndFrame);
+	pScene->m_MotionSpeed = 0.0f;
+	pScene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 }
 
+void Title::PlayAnimation(Chao::CSD::CScene* pScene, const char* name, Chao::CSD::EMotionRepeatType repeatType, float motionSpeed, float startFrame)
+{
+	pScene->SetMotion(name);
+	pScene->m_MotionRepeatType = repeatType;
+	pScene->m_MotionDisableFlag = 0;
+	pScene->m_MotionSpeed = motionSpeed;
+	pScene->SetMotionFrame(startFrame);
+	pScene->Update(0);
+}
+void StuffTest(int number)
+{
+	static uint32_t pAddr = 0x005727FE;
+	__asm
+	{
+		mov edi, number
+		jmp pAddr
+	}
+}
+
+void Title::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
+{
+	scene->SetMotion("Intro_Anim");
+	scene->SetMotionFrame(0.0f);
+	scene->m_MotionSpeed = 1;
+	scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+	scene->Update(0.0f);
+}
+
+//void UnleashedTitleText()
+//{
+//	rcTitleMenuTXT->SetPosition(0, 0);
+//
+//	if (currentTitleIndex < 0)
+//		currentTitleIndex = 4;
+//	else if (currentTitleIndex > 4)
+//		currentTitleIndex = 0;
+//
+//	rcTitleMenuTXT->GetNode("txt_0")->SetHideFlag(!(currentTitleIndex == 0));
+//	rcTitleMenuTXT->GetNode("txt_1")->SetHideFlag(!(currentTitleIndex == 1));
+//	rcTitleMenuTXT->GetNode("txt_2")->SetHideFlag(!(currentTitleIndex == 2));
+//	rcTitleMenuTXT->GetNode("txt_3")->SetHideFlag(!(currentTitleIndex == 3));
+//
+//#if _DEBUG
+//	printf("\nCURRENT INDEX: %d", currentTitleIndex);
+//#endif
+//
+//	/*Title::PlayAnimation(*rcTitleMenuTXT, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);*/
+//}
+HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	uint32_t owner = (uint32_t)(This->GetContextBase());
+	hasSavefile = *(bool*)(owner + 0x1AC);
+	currentTitleIndex = hasSavefile ? 1 : 0;
+}
 HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Edx, int a2, int a3, void** a4)
 {
-	//Spawn
 	rcTitleScreen = nullptr;
 	originalCTitleMain(This, Edx, a2, a3, a4);
 	rcTitleScreen = nullptr;
@@ -54,56 +104,116 @@ HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Ed
 
 	auto spCsdProject = wrapper.GetCsdProject("ui_title_colors");
 	rcTitleScreen = spCsdProject->m_rcProject;
-	rcTitleMain = rcTitleScreen->CreateScene("title");
-	CSDCommon::FreezeMotion(*rcTitleMain);
-	CSDCommon::PlayAnimation(*rcTitleMain, "main_Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+
+	title = rcTitleScreen->CreateScene("title");
+	CSDCommon::PlayAnimation(*title, "main_Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+
 	Title::CreateScreen(This);
+
 	return 0;
 }
 
 HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
 {
-	//When Press Start is done
-	CSDCommon::FreezeMotion(*rcTitleMain);
-	CSDCommon::PlayAnimation(*rcTitleMain, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	State = Title::HudTitleState::ButtonsGeneral;
+	entered = true;
+
 	return originalCTitleMainSelect(a1);
 }
 
-HOOK(int, __fastcall, CTitleMainWait, 0x11D1410, int a1)
+HOOK(int, __fastcall, CTitleMainWait, 0x11D1410,void* Edx, int a1)
 {
-	/*if(rcTitleMain->m_MotionDisableFlag == 1)
-	CSDCommon::PlayAnimation(*rcTitleMain, "main_Active_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, -1, rcTitleMain->m_MotionEndFrame);*/
-
-	return originalCTitleMainWait(a1);
+	/*Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
+	rcTitleMenuTXT->SetPosition(0, 65000);
+	rcTitleMenuScroll->SetPosition(0, 65000);*/
+	return originalCTitleMainWait(Edx, a1);
 }
 
-HOOK(int, __fastcall, CTitleMainFinish, 0x5727F0, Sonic::CGameObject* This)
+HOOK(int, __fastcall, CTitleMainFinish, 0x5727F0, void* Edx, Sonic::CGameObject* This)
 {
-	auto inputState = Sonic::CInputState::GetInstance();
-	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
-	if (rcTitleMain->m_MotionDisableFlag == 0)
-		return 0;
-	if (inputPtr->LeftStickVertical >= 0.5f)
-		currentTitleIndex--;
-	else if(inputPtr->LeftStickVertical <= -0.5f)
-		currentTitleIndex++;
+	return originalCTitleMainFinish(Edx, This);
+}
+float m_applicationDeltaTimeT = 0.0f;
+HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
+{
 
-	ColorsTitleSelect();
-	return 0;
+	m_applicationDeltaTimeT = elapsedTime;
+	timePassed += 1;
+	printf("\nDeltaTime: %d", m_applicationDeltaTimeT);
+	printf("| TimePassed: %d", timePassed);/*
+	FUNCTION_PTR(int, __cdecl, FirstSetup, 0x11D10A0, int);*/
+	if (title)
+	{
+		if (title->m_MotionDisableFlag == 1 && State == Title::PressStartUsual)
+		{
+			CSDCommon::PlayAnimation(*title, "main_Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+		}
+	}
+
+	//if (rcTitleMenu)
+	//{
+	//	if (rcTitleMenu->m_MotionDisableFlag == 1 && !startButtonAnimComplete)
+	//	{
+	//		startButtonAnimComplete = true;
+	//		Title::PlayAnimation(*rcTitleMenu, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+	//	}
+	//}
+	//if (rcTitlebg && entered)
+	//{
+	//	if (rcTitlebg->m_MotionDisableFlag == 1 && !startBgAnimComplete)
+	//	{
+	//		startBgAnimComplete = true;
+	//		Title::PlayAnimation(*rcTitlebg, "Usual_Anim_2", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+	//	}
+	//}
+	//if (rcTitleMenu) {
+
+	//	auto inputState = Sonic::CInputState::GetInstance();
+	//	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
+
+	//	printf("Left Stick: %d", inputPtr->LeftStickVertical);
+
+
+	//	if (inputPtr->LeftStickHorizontal >= 0.5f && !moved)
+	//	{
+	//		currentTitleIndex -= 1;
+	//		Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	//		UnleashedTitleText();
+	//		moved = true;
+	//		inputPtr->LeftStickVertical == 0.5f;
+	//		GetTime(1);
+	//		CTitleMainFinishH(Edx, This);
+	//	}
+	//	if (inputPtr->LeftStickHorizontal < -0.5f && !moved)
+	//	{
+	//		currentTitleIndex += 1;
+	//		Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	//		UnleashedTitleText();
+	//		moved = true;
+	//		inputPtr->LeftStickVertical == -0.5f;
+	//	}
+
+	//	if (inputPtr->LeftStickHorizontal == 0)
+	//		moved = false;
+
+	//}
+
+
+
+
+
+
+	return originalTitle_UpdateApplication(This, Edx, elapsedTime, a3);
 }
 void Title::Install()
 {
-	//if (!StringHelper::IsEmpty(Configuration::UIType.c_str()))
-	//{
-	//	// Loop the title screen animations indefinitely (code by Hyper).
-	//	WRITE_MEMORY(0x1A57A3C, uint8_t, 0x00);
-	//	WRITE_MEMORY(0x1A57BBC, uint8_t, 0x00);
-
-	//	// Disable the title outro animation (code by Skyth).
-	//	WRITE_MEMORY(0x57346F, uint32_t, 0x16A36CC);
-	//}
 	INSTALL_HOOK(CTitleMain);
+	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuBegin);
+	INSTALL_HOOK(Title_UpdateApplication);
 	INSTALL_HOOK(CTitleMainFinish);
-	INSTALL_HOOK(CTitleMainWait);
 	INSTALL_HOOK(CTitleMainSelect);
+
+	//INSTALL_HOOK(CTitleMainWait);
 }

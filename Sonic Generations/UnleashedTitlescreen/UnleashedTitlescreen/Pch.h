@@ -21,11 +21,5 @@
 
 #include "detours\include\detours.h"
 
-#include "HudBtnGuide.h"
-#include "CSDCommon.h"
-#include "Title.h"
 #include "Configuration.h"
-#include "HudLoading.h"
-#include "HudResult.h"
-#include "HudSonicStage.h"
-#include "HudPause.h"
+#include "Title.h"

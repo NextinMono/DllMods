@@ -9,7 +9,7 @@
 
 #include <vector>
 #include <fstream>
-
+#include <filesystem>
 #include "IniReader.h"
 
 typedef void CSonicContext;
@@ -18,12 +18,14 @@ CSonicContext** const pModernSonicContext = (CSonicContext**)0x1E5E2F8;
 CSonicContext** const pClassicSonicContext = (CSonicContext**)0x1E5E304;
 CSonicContext** const pSuperSonicContext = (CSonicContext**)0x1E5E310;
 
+using SharedPtrTypeless = boost::shared_ptr<void>;
 uint32_t* const BACKBUFFER_WIDTH = (uint32_t*)0x1DFDDDC;
 uint32_t* const BACKBUFFER_HEIGHT = (uint32_t*)0x1DFDDE0;
 
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
 
+using SharedPtrTypeless = boost::shared_ptr<void>;
 enum SonicCollision : uint32_t
 {
 	TypeNoAttack			= 0x1E61B5C,
@@ -885,53 +887,11 @@ enum StageMissionType : uint32_t
 
 namespace Common
 {
-
-	inline float* GetPlayerBoost()
-	{
-		if (!*PLAYER_CONTEXT) return 0;
-		return (float*)((uint32_t)*PLAYER_CONTEXT + 0x5BC);
-	}
-
-	inline uint32_t GetMultiLevelAddress(uint32_t initAddress, std::vector<uint32_t> offsets)
-	{
-		uint32_t address = *(uint32_t*)initAddress;
-		for (uint32_t i = 0; i < offsets.size(); i++)
-		{
-			uint32_t const& offset = offsets[i];
-			address += offset;
-
-			if (i < offsets.size() - 1)
-			{
-				address = *(uint32_t*)address;
-			}
-		}
-		return address;
-	}
-
-	inline uint32_t GetCurrentStageID()
-	{
-		uint32_t stageIDAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x0 });
-		return *(uint32_t*)stageIDAddress;
-	}
-
-	inline bool IsCurrentStageBossBattle() {
-		uint8_t stageID = (uint8_t)GetCurrentStageID();
-		return stageID >= 0x13 && stageID <= 0x1A;
-	}
-
-	inline bool IsAtLoadingScreen()
-	{
-		uint32_t** hudCount = (uint32_t**)0x1E66B40;
-		if (!*hudCount) return false;
-		return (*hudCount)[2] > 0;
-	}
-
 	inline bool IsFileExist(std::string const& file)
 	{
 		struct stat buffer;
 		return stat(file.c_str(), &buffer) == 0;
 	}
-
 	inline void GetModIniList(std::vector<std::string>& modIniList)
 	{
 		char buffer[MAX_PATH];
@@ -989,6 +949,94 @@ namespace Common
 			}
 		}
 
+		return false;
+
+	}
+
+
+	inline float* GetPlayerBoost()
+	{
+		if (!*PLAYER_CONTEXT) return 0;
+		return (float*)((uint32_t)*PLAYER_CONTEXT + 0x5BC);
+	}
+
+	inline uint32_t GetMultiLevelAddress(uint32_t initAddress, std::vector<uint32_t> offsets)
+	{
+		uint32_t address = *(uint32_t*)initAddress;
+		for (uint32_t i = 0; i < offsets.size(); i++)
+		{
+			uint32_t const& offset = offsets[i];
+			address += offset;
+
+			if (i < offsets.size() - 1)
+			{
+				address = *(uint32_t*)address;
+			}
+		}
+		return address;
+	}
+
+	inline uint32_t GetCurrentStageID()
+	{
+		uint32_t stageIDAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x0 });
+		return *(uint32_t*)stageIDAddress;
+	}
+
+	inline bool IsCurrentStageBossBattle() {
+		uint8_t stageID = (uint8_t)GetCurrentStageID();
+		return stageID >= 0x13 && stageID <= 0x1A;
+	}
+	inline bool IsCurrentStageMission()
+	{
+		uint8_t missionNumber = (GetCurrentStageID() & 0xFF00) >> 8;
+		return !IsCurrentStageBossBattle() && missionNumber > 0;
+	}
+	inline bool IsModNameEnabled(std::string const& testModName, std::string* o_iniPath = nullptr)
+	{
+		std::vector<std::string> modIniList;
+		GetModIniList(modIniList);
+		for (size_t i = 0; i < modIniList.size(); i++)
+		{
+			std::string const& config = modIniList[i];
+			INIReader configReader(config);
+			std::string name = configReader.Get("Desc", "Title", "");
+			if (name == testModName)
+			{
+				if (o_iniPath)
+				{
+					*o_iniPath = config;
+				}
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+	inline bool IsAtLoadingScreen()
+	{
+		uint32_t** hudCount = (uint32_t**)0x1E66B40;
+		if (!*hudCount) return false;
+		return (*hudCount)[2] > 0;
+	}
+
+
+	
+	inline bool DoesArchiveExist(std::string const& archiveName)
+	{
+		std::vector<std::string> modFolderList;
+		GetModIniList(modFolderList);
+		for (std::string& folder : modFolderList)
+		{
+			folder = folder.substr(0, folder.length() - 7);
+			for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(folder))
+			{
+				if (dirEntry.path().filename() == archiveName)
+				{
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 }

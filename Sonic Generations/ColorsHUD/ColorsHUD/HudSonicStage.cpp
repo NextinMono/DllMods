@@ -347,6 +347,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcRingCount = rcGameplayColors->CreateScene("ring");
 		rcRingCount->SetPosition(0, offset);
 	}
+	isClassic = !flags & 0x200;
 	if (flags & 0x200) // Boost Gauge
 	{
 		rcBoostBar = rcGameplayColors->CreateScene("gauge_energy");

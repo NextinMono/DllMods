@@ -12,11 +12,11 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{30C32A8F-341B-42EB-AE08-43119AB25E46}</ProjectGuid>
+    <ProjectGuid>{C59A48F1-7673-4A1E-B829-D5FC590CB594}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>ColorsHUD</RootNamespace>
+    <RootNamespace>UnleashedTitle</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>SCU</ProjectName>
+    <ProjectName>UnleashedTitle</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -46,14 +46,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\#SonicColorsHUD - XNCP</OutDir>
+    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\UnleashedTS\</OutDir>
     <IncludePath>$(SolutionDir)Dependencies\BlueBlur\;$(SolutionDir)Dependencies;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Dependencies\BlueBlur;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(SolutionDir)$(Configuration)\objects\</IntDir>
-    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\#SonicColorsHUD - XNCP</OutDir>
+    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\UnleashedTS\</OutDir>
     <IncludePath>$(SolutionDir)Dependencies\BlueBlur\;$(SolutionDir)Dependencies;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Dependencies\BlueBlur;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -107,11 +107,6 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="CSDCommon.h" />
-    <ClInclude Include="HudLoading.h" />
-    <ClInclude Include="HudPause.h" />
-    <ClInclude Include="HudResult.h" />
-    <ClInclude Include="HudBtnGuide.h" />
-    <ClInclude Include="HudSonicStage.h" />
     <ClInclude Include="detours\include\detours.h" />
     <ClInclude Include="detours\include\detver.h" />
     <ClInclude Include="detours\include\syelog.h" />
@@ -1833,11 +1828,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="HudLoading.cpp" />
-    <ClCompile Include="HudPause.cpp" />
-    <ClCompile Include="HudResult.cpp" />
-    <ClCompile Include="HudBtnGuide.cpp" />
-    <ClCompile Include="HudSonicStage.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

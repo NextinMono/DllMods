@@ -325,7 +325,18 @@ void HudPause_CreateWindowScreen(Sonic::CGameObject* gameObject)
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spWindowUniversal, "main", gameObject);
 	}
 }
+void SetWindowSize(float x, float y)
+{
+	Hedgehog::Math::CVector2 sxy_vc, line_size, sxy, sx_zero, sx_one, sx_two, sx_three, word, sy;
+	universal_window->SetMotion("Size_Anim_X");
+	universal_window->m_MotionDisableFlag = 0;
+	universal_window->SetMotionFrame(x);
+	universal_window->m_MotionSpeed = 0;
+	universal_window->Update(0);/*
+	sxy_vc.y = CSDCommon::lerp(0, 77, y);*/
 
+
+}
 HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	Sonic::CGameObject* parent = (Sonic::CGameObject*)(This->GetContextBase());
@@ -334,11 +345,7 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CS
 	float* context = (float*)(This->GetContextBase());
 	float widthMotionRatio = context[242] / 1.65f; /** 0.01f * 0.8f*/;
 	float heightMotionRatio = context[243] / 1.65f /** 0.01f * 0.8f*/;
-	universal_window->SetMotion("Size_Anim_X");
-	universal_window->m_MotionDisableFlag = 0;
-	universal_window->SetMotionFrame(widthMotionRatio);
-	universal_window->m_MotionSpeed = 0;
-	universal_window->Update(0);
+	
 
 	universal_window->SetMotion("Size_Anim_Y");
 	universal_window->SetMotionFrame(widthMotionRatio);
@@ -352,7 +359,7 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CS
 	universal_window->GetNode("sxy_vc")->SetScale(widthMotionRatio / 12, heightMotionRatio * 1.5f);
 	universal_window->GetNode("sy")->SetScale(widthMotionRatio / 12.1f, heightMotionRatio * 1.5f);
 	universal_window->GetNode("sxy")->SetScale(widthMotionRatio / 12.1f, heightMotionRatio * 1.5f);
-	universal_window->GetNode("sx_0")->SetScale(1, 1);
+	universal_window->GetNode("sx_0")->SetScale(widthMotionRatio / 12.1f, 1);
 	return originalHudPause_CWindowImplCStateOpenBegin(This);
 }
 
@@ -487,5 +494,5 @@ void HudPause::Install()
 	//WRITE_MEMORY(0x11D203A, uint32_t, 1000000);
 	//WRITE_MEMORY(0x11D1F8A, uint32_t, 1000001);
 	Install_Pause();
-	/*Install_Window();*/
+	Install_Window();
 }
