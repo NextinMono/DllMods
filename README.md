@@ -1,5 +1,5 @@
 # NextinHKRY's DLL Mods
-Contains code injection mods for:
+Contains code injection mods' source for:
 - Sonic Generations
 - - Black Knight HUD 
 - - Ultimate Colors UI Port
