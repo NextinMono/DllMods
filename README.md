@@ -1,7 +1,6 @@
 # NextinHKRY's DLL Mods
 Contains code injection mods for:
 - Sonic Generations
-- - Colors HUD & UI
 - - Black Knight HUD 
 - - Ultimate Colors UI Port
 - - SWA Title Screen
