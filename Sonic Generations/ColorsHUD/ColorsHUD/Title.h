@@ -4,11 +4,13 @@ class Title
 {
 public:
 	static void Install();
-	static enum HudTitleState {
+	static enum TState {
 		PressStartIntro,
 		PressStartUsual,
 		PressStartOutro,
-		ButtonsGeneral
+		ButtonsGeneralIntro,
+		ButtonsGeneralUsual,
+		ButtonsGeneralOutro
 	};
 	static void CreateScreen(Sonic::CGameObject* pParentGameObject);
 	static void ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject);

@@ -4,9 +4,10 @@ boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreen;
 int currentTitleIndex = 0;
 int timePassed = 1;
 bool entered = false;
+bool movedT;
 bool startAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
 bool hasSavefile = false;
-Title::HudTitleState State = Title::HudTitleState::PressStartIntro;
+Title::TState State = Title::TState::PressStartIntro;
 
 inline FUNCTION_PTR(int, __fastcall, CTitleMainFinishH, 0x5727F0, void* Edx, Sonic::CGameObject* This);
 
@@ -68,26 +69,21 @@ void Title::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
 	scene->Update(0.0f);
 }
 
-//void UnleashedTitleText()
-//{
-//	rcTitleMenuTXT->SetPosition(0, 0);
-//
-//	if (currentTitleIndex < 0)
-//		currentTitleIndex = 4;
-//	else if (currentTitleIndex > 4)
-//		currentTitleIndex = 0;
-//
-//	rcTitleMenuTXT->GetNode("txt_0")->SetHideFlag(!(currentTitleIndex == 0));
-//	rcTitleMenuTXT->GetNode("txt_1")->SetHideFlag(!(currentTitleIndex == 1));
-//	rcTitleMenuTXT->GetNode("txt_2")->SetHideFlag(!(currentTitleIndex == 2));
-//	rcTitleMenuTXT->GetNode("txt_3")->SetHideFlag(!(currentTitleIndex == 3));
-//
-//#if _DEBUG
-//	printf("\nCURRENT INDEX: %d", currentTitleIndex);
-//#endif
-//
-//	/*Title::PlayAnimation(*rcTitleMenuTXT, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);*/
-//}
+void ColorsSelect()
+{	
+	if (currentTitleIndex < 0)
+		currentTitleIndex = 4;
+	else if (currentTitleIndex > 4)
+		currentTitleIndex = 0;
+	char integer_string[32];
+	sprintf(integer_string, "Usual_Anim_%d", currentTitleIndex);
+	printf(integer_string);
+	CSDCommon::PlayAnimation(*title, integer_string, Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+
+	printf("\nCURRENT INDEX: %d", currentTitleIndex);
+	
+	/*Title::PlayAnimation(*rcTitleMenuTXT, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);*/
+}
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	uint32_t owner = (uint32_t)(This->GetContextBase());
@@ -115,24 +111,25 @@ HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Ed
 
 HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
 {
-	State = Title::HudTitleState::ButtonsGeneral;
+	State = Title::TState::ButtonsGeneralIntro;
+
+	CSDCommon::PlayAnimation(*title, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	entered = true;
+	ColorsSelect();
 
 	return originalCTitleMainSelect(a1);
 }
 
-HOOK(int, __fastcall, CTitleMainWait, 0x11D1410,void* Edx, int a1)
-{
-	/*Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	Title::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
-	rcTitleMenuTXT->SetPosition(0, 65000);
-	rcTitleMenuScroll->SetPosition(0, 65000);*/
-	return originalCTitleMainWait(Edx, a1);
+HOOK(int, __fastcall, CTitleMainWait, 0x11D1410, int a1)
+{/*
+	CSDCommon::PlayAnimation(*title, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, false, true);*/
+	State = Title::TState::PressStartUsual;
+	return originalCTitleMainWait(a1);
 }
 
 HOOK(int, __fastcall, CTitleMainFinish, 0x5727F0, void* Edx, Sonic::CGameObject* This)
 {
+	ColorsSelect();
 	return originalCTitleMainFinish(Edx, This);
 }
 float m_applicationDeltaTimeT = 0.0f;
@@ -146,65 +143,51 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, void* This, void* Edx
 	FUNCTION_PTR(int, __cdecl, FirstSetup, 0x11D10A0, int);*/
 	if (title)
 	{
-		if (title->m_MotionDisableFlag == 1 && State == Title::PressStartUsual)
+		switch (State)
 		{
-			CSDCommon::PlayAnimation(*title, "main_Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+		case Title::ButtonsGeneralOutro:
+		{
+			if (title->m_MotionDisableFlag == 1)
+			{
+				CSDCommon::PlayAnimation(*title, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, true);
+			}
+			if (title->m_MotionFrame <= 0)
+			{
+				State = Title::PressStartIntro;
+			}
+		}		
+		case Title::PressStartUsual:
+		{
+			if (title->m_MotionDisableFlag == 1)
+			{
+				CSDCommon::PlayAnimation(*title, "main_Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0, 0, false, true);
+			}
 		}
+		}
+
+		auto inputState = Sonic::CInputState::GetInstance();
+		auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
+
+		printf("Left Stick: %d", inputPtr->LeftStickVertical);
+
+
+		if (inputPtr->LeftStickVertical >= 0.5f && !movedT)
+		{
+			currentTitleIndex -= 1;
+			ColorsSelect();
+			movedT = true;
+		}
+		if (inputPtr->LeftStickVertical < -0.5f && !movedT)
+		{
+			currentTitleIndex += 1;
+			ColorsSelect();
+			movedT = true;
+		}
+		if (inputPtr->LeftStickVertical == 0)
+			movedT = false;
+		printf("Bool: %d",movedT);
+
 	}
-
-	//if (rcTitleMenu)
-	//{
-	//	if (rcTitleMenu->m_MotionDisableFlag == 1 && !startButtonAnimComplete)
-	//	{
-	//		startButtonAnimComplete = true;
-	//		Title::PlayAnimation(*rcTitleMenu, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-	//	}
-	//}
-	//if (rcTitlebg && entered)
-	//{
-	//	if (rcTitlebg->m_MotionDisableFlag == 1 && !startBgAnimComplete)
-	//	{
-	//		startBgAnimComplete = true;
-	//		Title::PlayAnimation(*rcTitlebg, "Usual_Anim_2", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-	//	}
-	//}
-	//if (rcTitleMenu) {
-
-	//	auto inputState = Sonic::CInputState::GetInstance();
-	//	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
-
-	//	printf("Left Stick: %d", inputPtr->LeftStickVertical);
-
-
-	//	if (inputPtr->LeftStickHorizontal >= 0.5f && !moved)
-	//	{
-	//		currentTitleIndex -= 1;
-	//		Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	//		UnleashedTitleText();
-	//		moved = true;
-	//		inputPtr->LeftStickVertical == 0.5f;
-	//		GetTime(1);
-	//		CTitleMainFinishH(Edx, This);
-	//	}
-	//	if (inputPtr->LeftStickHorizontal < -0.5f && !moved)
-	//	{
-	//		currentTitleIndex += 1;
-	//		Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	//		UnleashedTitleText();
-	//		moved = true;
-	//		inputPtr->LeftStickVertical == -0.5f;
-	//	}
-
-	//	if (inputPtr->LeftStickHorizontal == 0)
-	//		moved = false;
-
-	//}
-
-
-
-
-
-
 	return originalTitle_UpdateApplication(This, Edx, elapsedTime, a3);
 }
 void Title::Install()
@@ -215,5 +198,5 @@ void Title::Install()
 	INSTALL_HOOK(CTitleMainFinish);
 	INSTALL_HOOK(CTitleMainSelect);
 
-	//INSTALL_HOOK(CTitleMainWait);
+	INSTALL_HOOK(CTitleMainWait);
 }

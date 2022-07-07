@@ -222,8 +222,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 				Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				UnleashedTitleText();
 				moved = true;
-				inputPtr->LeftStickVertical == 0.5f;
-				CTitleMainFinishH(Edx, This);
+				inputPtr->LeftStickVertical = 0.5f;
 			}
 			if (inputPtr->LeftStickHorizontal < -0.5f && !moved)
 			{
@@ -231,7 +230,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 				Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				UnleashedTitleText();
 				moved = true;
-				inputPtr->LeftStickVertical == -0.5f;
+				inputPtr->LeftStickVertical = -0.5f;
 			}
 
 			if (inputPtr->LeftStickHorizontal == 0)

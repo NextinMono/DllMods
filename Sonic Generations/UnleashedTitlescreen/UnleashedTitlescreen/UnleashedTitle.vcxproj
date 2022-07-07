@@ -1846,9 +1846,6 @@
     <None Include="include\BlueBlur\BlueBlur.inl" />
     <None Include="include\BlueBlur\Sonic\Player\Character\Speed\PlayerSpeedContext.inl" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="CREDITS.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
