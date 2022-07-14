@@ -5,12 +5,11 @@ extern "C" __declspec(dllexport) void Init(const char* path)
 
 	HudPause::Install();
 	HudBtnGuide::Install();
-	//Install UI anyway, as it has patches. It'll disable the XNCP in this code anyway if its disabled
 	HudSonicStage::Install();
 	HudLoading::Install();
 	HudResult::Install();
-
-	Title::Install();
+	//Title::Install();
+	HudGate::Install();
 }
 extern "C" __declspec(dllexport) void PostInit()
 {

@@ -1,3 +1,4 @@
+//All of these are either from Skyth or brianuuuSonic.
 #pragma once
 
 #define PI 3.141592
@@ -1038,6 +1039,64 @@ namespace Common
 			}
 		}
 		return false;
+	}	
+	inline bool IsStageCompleted(uint32_t stageID)
+	{
+		FUNCTION_PTR(bool, __stdcall, fpIsStageCompleted, 0x107ADC0, uint32_t stageID);
+		return fpIsStageCompleted(stageID);
+	}
+	inline bool GetStageData
+	(
+		uint32_t stageID,
+		uint32_t& bestScore,
+		float& bestTime,
+		float& bestTime2,
+		float& bestTime3,
+		uint32_t& bestRank,
+		uint32_t& bestRing,
+		uint32_t& redRingCount
+	)
+	{
+		FUNCTION_PTR(int, __fastcall, fpGetSaveSlotID, 0x552130, uint32_t stageID);
+		int saveSlotID = fpGetSaveSlotID(stageID);
+
+		uint32_t CGameParameterAddress = *(uint32_t*)GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4 });
+		uint32_t unknownOffset = *(uint32_t*)(CGameParameterAddress + 0x7C) + 0x1C;
+		uint32_t saveSlotAddress = 0x120 * saveSlotID + unknownOffset;
+		if (saveSlotID < 0x8E && saveSlotAddress != 0)
+		{
+			bestScore = *(uint32_t*)(saveSlotAddress);
+			if (IsStageCompleted(stageID))
+			{
+				bestTime = *(float*)(saveSlotAddress + 0x4);
+				bestTime2 = *(float*)(saveSlotAddress + 0x8);
+				bestTime3 = *(float*)(saveSlotAddress + 0xC);
+			}
+			else
+			{
+				bestTime = -1.0f;
+				bestTime2 = -1.0f;
+				bestTime3 = -1.0f;
+			}
+			bestRank = 4 - *(uint32_t*)(saveSlotAddress + 0x10);
+			bestRing = *(uint32_t*)(saveSlotAddress + 0x14);
+
+			if ((stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11)
+			{
+				redRingCount = 0;
+			}
+			else
+			{
+				FUNCTION_PTR(int, __fastcall, fpGetRedRingCount, 0xD591B0, uint32_t stageID, int dummy, uint32_t CGameParameter);
+				redRingCount = fpGetRedRingCount(stageID, 0, CGameParameterAddress);
+			}
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }
 #pragma region HyperBE32 Original

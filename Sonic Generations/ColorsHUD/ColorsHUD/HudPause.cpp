@@ -159,7 +159,7 @@ void HudPause_PauseCase(uint32_t* This, int Case, bool isPam)
 	}
 	case 1: // End
 	{
-		CSDCommon::PlayAnimation(*originalScene, "select_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		/*CSDCommon::PlayAnimation(*originalScene, "select_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);*/
 		originalScene->SetHideFlag(true);			
 		break;
 	}
@@ -343,23 +343,18 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CS
 	HudPause_CreateWindowScreen(parent);
 
 	float* context = (float*)(This->GetContextBase());
-	float widthMotionRatio = context[242] / 1.65f; /** 0.01f * 0.8f*/;
-	float heightMotionRatio = context[243] / 1.65f /** 0.01f * 0.8f*/;
-	
+	float widthMotionRatio = context[242] / 1.65f; /** 0.01f * 0.8f;*/
+	float heightMotionRatio = context[243] / 1.65f;
 
-	universal_window->SetMotion("Size_Anim_Y");
-	universal_window->SetMotionFrame(widthMotionRatio);
-	universal_window->m_MotionSpeed = 0;
-	universal_window->Update();
-	/*universal_window->GetNode("center")->SetScale(30.0f + (152.0f - 30.0f) * widthMotionRatio, 0.2f + (2.35f - 0.2f) * heightMotionRatio);
-	universal_window->GetNode("text_area")->SetScale(30.0f + (152.0f - 30.0f) * widthMotionRatio, 0.2f + (2.35f - 0.2f) * heightMotionRatio);*/
-	HudPause_PlayMotion(universal_window, "Size_Anim_X", false, widthMotionRatio, widthMotionRatio + 0.1f, false);
-	HudPause_PlayMotion(universal_window, "Size_Anim_Y", false, heightMotionRatio * 2, heightMotionRatio * 2 + 0.1f, false);
-
+	CSDCommon::PlayAnimation(*universal_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	universal_window->SetHideFlag(false);
 	universal_window->GetNode("sxy_vc")->SetScale(widthMotionRatio / 12, heightMotionRatio * 1.5f);
 	universal_window->GetNode("sy")->SetScale(widthMotionRatio / 12.1f, heightMotionRatio * 1.5f);
 	universal_window->GetNode("sxy")->SetScale(widthMotionRatio / 12.1f, heightMotionRatio * 1.5f);
-	universal_window->GetNode("sx_0")->SetScale(widthMotionRatio / 12.1f, 1);
+	universal_window->GetNode("sx_0")->SetScale((widthMotionRatio / 4 + (0.018f * context[242])) - 1.72f, 1);
+	universal_window->GetNode("sx_1")->SetScale((widthMotionRatio / 4 + (0.018f * context[242])) - 1.72f, 1);
+	universal_window->GetNode("sx_2")->SetScale((widthMotionRatio / 4 + (0.018f * context[242])) - 1.72f, 1);
+	universal_window->GetNode("sx_3")->SetScale((widthMotionRatio / 4 + (0.018f * context[242])) - 1.72f, 1);
 	return originalHudPause_CWindowImplCStateOpenBegin(This);
 }
 
@@ -371,7 +366,7 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateShowBegin, 0x4392A0, hh::fnd::CS
 	float widthMotionRatio = context[242] * 0.01f * 0.8f;
 	//universal_select->GetNode("img")->SetScale(19.0f + (95.0f - 19.0f) * widthMotionRatio, 1.0f);
 
-	float heightMotion = context[243];
+	float heightMotion = context[243] * 0.01f * 0.8f;;
 	float yPos = (heightMotion - 48.69f) * 2.2f;
 	uint32_t cursorCount = ((uint32_t*)This)[12];
 	if (cursorCount == 3)
@@ -445,7 +440,7 @@ HOOK(void*, __fastcall, HudPause_UpdateApplication, 0xE7BED0, void* This, void* 
 
 HOOK(int, __fastcall, HudPause_CWindowImplCStateCloseBegin, 0x4395A0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	/*universal_window->SetHideFlag(true);*/
+	universal_window->SetHideFlag(true);
 	universal_select->SetHideFlag(true);
 	return originalHudPause_CWindowImplCStateCloseBegin(This);
 }

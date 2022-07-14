@@ -105,6 +105,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="CSDCommon.h" />
     <ClInclude Include="detours\include\detours.h" />

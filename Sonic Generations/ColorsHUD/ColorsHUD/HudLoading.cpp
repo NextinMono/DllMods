@@ -4,7 +4,8 @@
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectLoading;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcLoadingBG, ogLoad;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcActInfo;
-
+char* textTest;
+HudLoading::StageData m_stageData;
 bool m_isBG1Intro = false;
 HudLoading::LoadingArchiveType m_loadingArchiveType = (HudLoading::LoadingArchiveType)0;
 char const* m_loadingArchiveNames[] =
@@ -53,6 +54,7 @@ void __declspec(naked) HudLoading_ExtraLoadingARL()
 		jmp[returnAddress]
 	}
 }
+
 
 void __declspec(naked) HudLoading_ExtraLoadingAR()
 {
@@ -256,6 +258,8 @@ void HudLoading_CreateScene(hh::fnd::CStateMachineBase::CStateBase* This)
 	rcLoadingBG->SetHideFlag(true);
 	rcActInfo = rcProjectLoading->CreateScene("loaC");
 	rcActInfo->SetHideFlag(true);
+	ogLoad = rcProjectLoading->CreateScene("load");
+	ogLoad->SetHideFlag(true);
 }
 
 void HudLoading_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* motion, float startFrame = 0.0f, bool loop = false)
@@ -278,9 +282,63 @@ HOOK(int*, __fastcall, HudLoading_CHudLoadingCStateIdleBegin, 0x1092710, hh::fnd
 
 	return originalHudLoading_CHudLoadingCStateIdleBegin(This);
 }
-
+void __declspec(naked) HudLoading_GetRank()
+{
+	static uint32_t returnAddress = 0x01093BCA;
+	__asm
+	{
+		mov edx, textTest
+		jmp[returnAddress]
+	}
+}
 bool m_isEvent = false;
 bool m_loadingDisplayHint = false;
+
+//Modified version of https://github.com/brianuuu/DllMods/blob/master/Source/STH2006Project/TitleUI.cpp's stuff
+void SetBestData() {
+	float bestTime, bestTime2, bestTime3;
+	uint32_t bestRank;
+	m_stageData = HudLoading::StageData();
+	if (!Common::GetStageData
+	(
+		NULL,
+		m_stageData.m_bestScore,
+		bestTime,
+		bestTime2,
+		bestTime3,
+		bestRank,
+		m_stageData.m_bestRing,
+		m_stageData.m_silverMedalCount
+	)) return;
+
+	// Time
+	uint32_t minutes, seconds, milliseconds;
+	uint32_t totalMilliseconds = bestTime * 1000.0f;
+	minutes = totalMilliseconds / 60000;
+	if (bestTime > 0.0f && minutes <= 99)
+	{
+		seconds = (totalMilliseconds % 60000) / 1000;
+		milliseconds = (totalMilliseconds % 60000) % 1000;
+	}
+	else
+	{
+		minutes = 99;
+		seconds = 59;
+		milliseconds = 999;
+	}
+	char* scoreCount = new char[8];
+	sprintf(m_stageData.m_bestTime, "%02d:%02d.%02d", minutes, seconds, milliseconds);
+	sprintf(scoreCount, "%08d", m_stageData.m_bestScore);
+	printf("%d", bestRank);
+	rcLoadingBG->GetNode("rank_frame")->SetPatternIndex(bestRank);
+	
+	rcLoadingBG->GetNode("time_word")->SetHideFlag(bestTime < 0);
+	rcLoadingBG->GetNode("score_word")->SetHideFlag(bestTime < 0);
+	rcLoadingBG->GetNode("rank")->SetHideFlag(bestTime < 0);
+
+	rcLoadingBG->GetNode("time_num")->SetText(m_stageData.m_bestTime);
+	rcLoadingBG->GetNode("score_num")->SetText(scoreCount);
+}
 HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	char const* eventName = *(char**)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x2C });
@@ -291,17 +349,20 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 	m_loadingDisplayHint = false;
 	
 	m_isBG1Intro = true;
+	ogLoad->SetHideFlag(true);
 	rcActInfo->GetNode("stage_name")->SetHideFlag(false);
 	HudLoading_PlayMotion(rcLoadingBG, "Intro_Anim", 0);
 
 	HudLoading_PlayMotion(rcActInfo, "Intro_Anim", 0);
 	//TODO: Make this use clamp instead of this awful math
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
+	printf("\n\n\n\n\n\n%d\n\n\n", stageID);
 	int stageName = stageID % 2 ? stageID - 1 : stageID;
 	stageName-= stageName / 2;
 	if (stageName < 0)
 		stageName = 0;
 	rcActInfo->GetNode("stage_name")->SetPatternIndex(stageName);
+	rcActInfo->GetNode("stage_name_shade")->SetPatternIndex(stageName);
 	if(stageID % 2)
 	rcActInfo->GetNode("act_num")->SetPatternIndex(1);
 	else
@@ -311,11 +372,11 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 		rcActInfo->GetNode("act_num")->SetPatternIndex(6);
 		rcActInfo->GetNode("stage_name")->SetHideFlag(true);
 	}
-	rcActInfo->SetHideFlag(stageID == SMT_pam000);
-	rcLoadingBG->SetHideFlag(stageID == SMT_pam000);
 	HudLoading_PlayMotion(rcActInfo, "Intro_Anim", 29.0f);
 	HudLoading_PlayMotion(rcLoadingBG, "Intro_Anim", 0.0f, false);
-
+	SetBestData();
+	rcActInfo->SetHideFlag(stageID == SMT_pam000);
+	rcLoadingBG->SetHideFlag(stageID == SMT_pam000);
 	std::srand(static_cast<unsigned int>(std::time(nullptr)));
 	int hintPattern = std::rand() % 7;
 	originalHudLoading_CHudLoadingCStateIntroBegin(This);
@@ -327,6 +388,9 @@ HOOK(int32_t*, __fastcall, HudLoading_CHudLoadingCStateIntroAdvance, 0x10936B0, 
 {
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 	
+
+	rcActInfo->SetHideFlag(stageID == SMT_pam000);
+	rcLoadingBG->SetHideFlag(stageID == SMT_pam000);
 	if (m_isEvent)
 	{
 		This->m_pStateMachine->ChangeState("Usual");
@@ -363,6 +427,10 @@ HOOK(int, __fastcall, HudLoading_CHudLoadingCStateUsualAdvance, 0x10926E0, hh::f
 		m_tailsTextStart = (m_tailsTextStart + 1) % m_tailsTextSize;
 	}*/
 
+	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
+	rcActInfo->SetHideFlag(stageID == SMT_pam000);
+	rcLoadingBG->SetHideFlag(stageID == SMT_pam000);
+
 	return originalHudLoading_CHudLoadingCStateUsualAdvance(This);
 }
 
@@ -375,8 +443,9 @@ HOOK(int32_t*, __fastcall, HudLoading_CHudLoadingCStateOutroBegin, 0x1093410, hh
 		HudLoading_PlayMotion(rcActInfo, "Outro_Anim");
 		rcActInfo->SetHideFlag(true);
 
-		uint8_t stageID = Common::GetCurrentStageID() & 0xFF;/*
-		rcLoadingPDA->GetNode("img2")->SetHideFlag(stageID != SMT_pam000 && !Common::IsCurrentStageMission());*/
+		uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
+		rcActInfo->SetHideFlag(stageID == SMT_pam000);
+		rcLoadingBG->SetHideFlag(stageID == SMT_pam000);
 	}
 
 	return originalHudLoading_CHudLoadingCStateOutroBegin(This);
@@ -438,7 +507,7 @@ HOOK(void, __fastcall, HudLoading_CHudGateMenuMainCStateOutroBegin, 0x107B770, h
 		{
 			if (v8 == 2)
 			{
-				HudLoading::StartFadeOut();
+				/*HudLoading::StartFadeOut();*/
 			}
 		}
 		else
@@ -447,7 +516,7 @@ HOOK(void, __fastcall, HudLoading_CHudGateMenuMainCStateOutroBegin, 0x107B770, h
 			uint32_t v9 = *(uint32_t*)(contextBase + 520);
 			if (v9 != 7 && v9 != 11 && v9 != 13)
 			{
-				HudLoading::StartFadeOut();
+				/*HudLoading::StartFadeOut();*/
 			}
 		}
 	}
@@ -579,8 +648,8 @@ void HudLoading::Install()
 	WRITE_JUMP(0xD6A455, HudLoading_ExtraLoadingAR);
 
 	// Always use stage loading even on PAM
-	WRITE_MEMORY(0x1093EB8, uint8_t, 0xEB);
-	WRITE_NOP(0x109273D, 9);
+	/*WRITE_MEMORY(0x1093EB8, uint8_t, 0xEB);
+	WRITE_NOP(0x109273D, 9);*/
 
 	// Disable loading screen sfx
 	WRITE_MEMORY(0x44A2E8, int, -1);
@@ -598,9 +667,10 @@ void HudLoading::Install()
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroBegin);
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroAdvance);
 
-	// Resident Loading
+	//// Resident Loading
 	WRITE_JUMP(0x44A2F3, HudLoading_StartResidentLoading);
 	WRITE_JUMP(0x44A500, HudLoading_EndResidentLoading);
+	/*WRITE_JUMP(0x01093BC9, HudLoading_GetRank);*/
 
 	// Transition out to loading screen
 	INSTALL_HOOK(HudLoading_UpdateApplication);
@@ -618,11 +688,11 @@ void HudLoading::Install()
 	INSTALL_HOOK(HudLoading_SetConverseCommonInfo);
 }
 
-void HudLoading::StartFadeOut()
+void HudLoading::StartFadeOut()  
 {
 	if (!rcLoadingBG) return;
-	m_isBG1Intro = true;/*
-	HudLoading_PlayMotion(rcLoadingBG, "Intro_Anim");*/
+	m_isBG1Intro = true;
+	/*HudLoading_PlayMotion(ogLoad, "Intro_Anim");*/
 }
 
 bool HudLoading::IsFadeOutCompleted()
@@ -634,12 +704,15 @@ bool HudLoading::IsFadeOutCompleted()
 void HudLoading::StartResidentLoading()
 {
 	if (!rcLoadingBG) return;
-	m_isBG1Intro = true;/*
+	m_isBG1Intro = true;
+	ogLoad->SetHideFlag(false);
+	HudLoading_PlayMotion(ogLoad, "Intro_Anim");/*
 	HudLoading_PlayMotion(rcLoadingBG, "Intro_Anim", 100.0f);*/
 }
 
 void HudLoading::EndResidentLoading()
 {
-	if (!rcLoadingBG) return;	/*
+	if (!rcLoadingBG) return;
+	HudLoading_PlayMotion(ogLoad, "Outro_Anim");	/*
 	HudLoading_PlayMotion(rcLoadingBG, "Outro_Anim");*/
 }

@@ -22,4 +22,6 @@
 #include "detours\include\detours.h"
 
 #include "Configuration.h"
+#include "CSDCommon.h"
 #include "Title.h"
+#include "Camera.h"

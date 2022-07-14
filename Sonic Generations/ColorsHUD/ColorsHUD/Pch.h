@@ -29,3 +29,4 @@
 #include "HudResult.h"
 #include "HudSonicStage.h"
 #include "HudPause.h"
+#include "HudGate.h"

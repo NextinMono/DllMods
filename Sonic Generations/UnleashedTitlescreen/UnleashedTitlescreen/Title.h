@@ -1,8 +1,10 @@
 #pragma once
-
+#include "Camera.h"
 class Title
 {
+	
 public:
+	Camera* camera;
 	static void Install();
 	static void CreateScreen(Sonic::CGameObject* pParentGameObject);
 	static void ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject);

@@ -123,6 +123,10 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 		break;
 	}
 	}
+	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
+	std::string stateCheckS(stateCheck.c_str());
+	printf(stateCheck.c_str());
 	#pragma region Experimental A-Tricking (disabled)
 	/*
 	printf("\nBoost: %f\n", Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);*/

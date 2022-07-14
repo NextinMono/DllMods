@@ -107,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="CSDCommon.h" />
+    <ClInclude Include="HudGate.h" />
     <ClInclude Include="HudLoading.h" />
     <ClInclude Include="HudPause.h" />
     <ClInclude Include="HudResult.h" />
@@ -1833,6 +1834,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="HudGate.cpp" />
     <ClCompile Include="HudLoading.cpp" />
     <ClCompile Include="HudPause.cpp" />
     <ClCompile Include="HudResult.cpp" />
