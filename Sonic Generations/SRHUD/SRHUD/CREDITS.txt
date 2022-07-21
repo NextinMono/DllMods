@@ -1,0 +1,2 @@
+Credit to Skyth & Brianuuu for making the Unleashed HUD port, and for helping me with code stuff.
+Thanks to Hyper for the original non-XNCP code patches

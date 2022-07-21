@@ -1,3 +1,6 @@
+//for BtnGuide, I mean the HUD's BtnGuide. Although there's some stuff for the general BtnGuide
+//Thanks SEGA for the naming!
+
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcBtnGuideColors;
 Chao::CSD::RCPtr<Chao::CSD::CScene> trick_text, onebtn, sign;
 boost::shared_ptr<Sonic::CGameObjectCSD> spBtnGuideColors;
@@ -126,7 +129,7 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
 	std::string stateCheckS(stateCheck.c_str());
-	printf(stateCheck.c_str());
+	/*printf(stateCheck.c_str());*/
 	#pragma region Experimental A-Tricking (disabled)
 	/*
 	printf("\nBoost: %f\n", Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);*/
@@ -214,12 +217,27 @@ HOOK(int, _cdecl, TestTwo, 0x12258B0, int a1)
 HOOK(void, *_fastcall, NavigationCollisionSignal, 0x1222CC0, int This, void* Edx, int a2)
 {
 	int navigationType = *(DWORD*)(This + 348);
+	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
+	if (!stageID % 2)
+	{
+		return originalNavigationCollisionSignal(This, Edx, a2);
+	}
+	//Check if any message enabled other stuff first
+	
 	//Toggle
-	if (lastNavigationType == navigationType) //Hide
+	if (lastNavigationType == navigationType && lastNavigationType != -1) //Hide
 	{
 		CSDCommon::PlayAnimation(*sign, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		SignState = HudBtnGuide::None;
 		lastNavigationType = -1;
+	}
+	if (SignState != HudBtnGuide::None && lastNavigationType == -1)
+	{
+		switch (SignState)
+		{
+
+		}
+		lastNavigationType = 8;
 	}
 	else //Show
 	{
@@ -260,8 +278,20 @@ HOOK(int, __fastcall, TestTh, 0x1094820, Sonic::CGameObject* This, void* Edx, in
 {
 	return originalTestTh(This, Edx, a2);
 }
+
+HOOK(int, __stdcall, sub_B21A30, 0xB21A30, Sonic::CGameObject* a1)
+{
+	return originalsub_B21A30(a1);
+}
+HOOK(int, __cdecl, MsgStartQuickStepSign, 0x46F250, int a1, char* a2, hh::math::CVector* a3, int* a4)
+{	
+
+	return originalMsgStartQuickStepSign(a1, a2, a3, a4);
+}
 void HudBtnGuide::Install()
 {
+	INSTALL_HOOK(MsgStartQuickStepSign);
+	INSTALL_HOOK(sub_B21A30);
 	INSTALL_HOOK(TestTh);
 	INSTALL_HOOK(TestTwo);
 	INSTALL_HOOK(NavigationCollisionSignal);

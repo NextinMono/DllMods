@@ -349,6 +349,7 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 	m_loadingDisplayHint = false;
 	
 	m_isBG1Intro = true;
+	ogLoad->GetNode("score")->SetHideFlag(true);
 	ogLoad->SetHideFlag(true);
 	rcActInfo->GetNode("stage_name")->SetHideFlag(false);
 	HudLoading_PlayMotion(rcLoadingBG, "Intro_Anim", 0);

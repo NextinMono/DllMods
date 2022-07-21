@@ -2,12 +2,10 @@
 Chao::CSD::RCPtr<Chao::CSD::CProject> projPause;
 boost::shared_ptr<Sonic::CGameObjectCSD> spPause;
 Chao::CSD::RCPtr<Chao::CSD::CScene> pause_window;
-Chao::CSD::RCPtr<Chao::CSD::CScene> pause_select;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> projWindowUniversal;
 boost::shared_ptr<Sonic::CGameObjectCSD> spWindowUniversal;
 Chao::CSD::RCPtr<Chao::CSD::CScene> universal_window;
-Chao::CSD::RCPtr<Chao::CSD::CScene> universal_select;
 
 uint32_t m_cursorPos = 0;
 bool closePause = false;
@@ -61,23 +59,22 @@ void __fastcall HudPause_CPauseRemoveCallback(Sonic::CGameObject* This, void*, S
 	//Chao::CSD::CProject::DestroyScene(projPause.Get(), m_scenePauseBG);
 	//Chao::CSD::CProject::DestroyScene(projPause.Get(), m_scenePauseHeader);
 	Chao::CSD::CProject::DestroyScene(projPause.Get(), pause_window);
-	Chao::CSD::CProject::DestroyScene(projPause.Get(), pause_select);
 
 	projPause = nullptr;
 }
+//test
 
 void HudPause_CreatePauseScreen(uint32_t* This)
 {
 	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)This[1];
 	HudPause_CPauseRemoveCallback(gameObject, nullptr, nullptr);
+	
 
 	Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 	projPause = wrapper.GetCsdProject("ui_pause_colors")->m_rcProject;
 
 	pause_window = projPause->CreateScene("pause");
 	pause_window->SetHideFlag(true);
-	pause_select = projPause->CreateScene("cursor");
-	pause_select->SetHideFlag(true);
 	pause_window->GetNode("word_1")->SetHideFlag(true);
 	pause_window->GetNode("word_2")->SetHideFlag(true);
 	pause_window->GetNode("word_3")->SetHideFlag(true);
@@ -100,15 +97,11 @@ void HudPause_OpenPauseWindow(bool isPam)
 
 void HudPause_OpenPauseScreen(bool isPam)
 {
-	if (!projPause || !pause_select) return;
+	if (!projPause) return;
 	/*HudPause_PlayMotion(m_scenePauseBG, "Intro_Anim");
 	HudPause_PlayMotion(m_scenePauseHeader, "Intro_Anim");*/
 	HudPause_PlayMotion(pause_window, "Size_Anim", false, 20, 21);
-	pause_select->SetPosition(0.0f, isPam ? -23.0f : -74.0f);
 	/*pause_select->GetNode("img")->SetScale(38.0f, 1.0f);*/
-	HudPause_PlayMotion(pause_select, "Usual_Anim", true);
-	HudPause_StopMotion(pause_select, "Scroll_Anim", 0.0f);
-	pause_select->SetHideFlag(true);
 
 	HudPause_OpenPauseWindow(isPam);
 }
@@ -120,11 +113,8 @@ void HudPause_ClosePauseScreen()
 	//m_scenePauseHeader->SetHideFlag(true);
 	pause_window->SetMotion("Intro_Anim");
 	CSDCommon::PlayAnimation(*pause_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 5, pause_window->m_MotionEndFrame, false, true);
-	pause_select->SetHideFlag(true);
 	closePause = true;
-	/*HudPause_PlayMotion(pause_window, "Intro_Anim", false, 0, pause_window->m_MotionEndFrame, true);*/
-	
-	pause_select->SetHideFlag(true);
+	/*HudPause_PlayMotion(pause_window, "Intro_Anim", false, 0, pause_window->m_MotionEndFrame, true);*/	
 }
 
 void HudPause_PauseCase(uint32_t* This, int Case, bool isPam)
@@ -171,27 +161,26 @@ void HudPause_PauseCase(uint32_t* This, int Case, bool isPam)
 			originalScene->SetMotionFrame(originalScene->m_MotionEndFrame);
 		}
 		HudPause_PlayMotion(pause_window, "Usual_Anim", true, 0);
-		pause_select->SetHideFlag(true);
 		break;
 	}
 	case 3: // New cursor pos
 	{
-		originalScene->SetMotionFrame(originalScene->m_MotionEndFrame);
-		HudPause_StopMotion(pause_select, "Usual_Anim", 0.0f);
-		if (cursorPos == m_cursorPos + 1)
-		{
-			// Scroll down
-			HudPause_PlayMotion(pause_select, "Scroll_Anim", false, m_cursorPos * 10.0f, cursorPos * 10.0f);
-		}
-		else if (cursorPos == m_cursorPos - 1)
-		{
-			// Scroll up
-			HudPause_PlayMotion(pause_select, "Scroll_Anim", false, 120.0f - m_cursorPos * 10.0f, 120.0f - cursorPos * 10.0f);
-		}
-		else
-		{
-			HudPause_StopMotion(pause_select, "Scroll_Anim", cursorPos * 10.0f);
-		}
+		//originalScene->SetMotionFrame(originalScene->m_MotionEndFrame);
+		//HudPause_StopMotion(pause_select, "Usual_Anim", 0.0f);
+		//if (cursorPos == m_cursorPos + 1)
+		//{
+		//	// Scroll down
+		//	HudPause_PlayMotion(pause_select, "Scroll_Anim", false, m_cursorPos * 10.0f, cursorPos * 10.0f);
+		//}
+		//else if (cursorPos == m_cursorPos - 1)
+		//{
+		//	// Scroll up
+		//	HudPause_PlayMotion(pause_select, "Scroll_Anim", false, 120.0f - m_cursorPos * 10.0f, 120.0f - cursorPos * 10.0f);
+		//}
+		//else
+		//{
+		//	HudPause_StopMotion(pause_select, "Scroll_Anim", cursorPos * 10.0f);
+		//}
 		break;
 	}
 	case 4: // Confirm
@@ -233,18 +222,6 @@ HOOK(int, __fastcall, HudPause_CPauseVisualActCase, 0x109F910, uint32_t* This, v
 	return result;
 }
 
-HOOK(void, __fastcall, HudPause_CPauseCStateSelectAdvance, 0x42A520, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-	if (pause_select)
-	{
-		if (pause_select->m_MotionDisableFlag)
-		{
-			HudPause_PlayMotion(pause_select, "Usual_Anim", true, 0.0f);
-		}
-	}
-
-	originalHudPause_CPauseCStateSelectAdvance(This);
-}
 
 HOOK(void, __fastcall, HudPause_CPauseCStateCloseBegin, 0x42A710, hh::fnd::CStateMachineBase::CStateBase* This)
 {
@@ -259,8 +236,7 @@ HOOK(void, __fastcall, HudPause_CPauseCStateCloseBegin, 0x42A710, hh::fnd::CStat
 		// HOWTO/WINDOW
 		if (pause_window)
 		{
-			CSDCommon::PlayAnimation(*pause_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 5, pause_window->m_MotionEndFrame, false, true);
-			pause_select->SetHideFlag(true);
+			CSDCommon::PlayAnimation(*pause_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 5, pause_window->m_MotionEndFrame, false, true);			
 		}
 	}
 
@@ -276,6 +252,11 @@ HOOK(int, __fastcall, HudPause_CPauseCStateIdleBegin, 0x42A340, hh::fnd::CStateM
 HOOK(bool, __fastcall, HudPause_CPauseVisualPamInit, 0x109E9D0, uint32_t* This)
 {
 	HudPause_CreatePauseScreen(This);
+	if (pause_window)
+	{
+		pause_window->GetNode("position")->SetScale(1, 0.65f);
+		pause_window->GetNode("position")->SetPosition(1280/2, 720/2-5);
+	}
 	return originalHudPause_CPauseVisualPamInit(This);;
 }
 
@@ -302,7 +283,6 @@ void __fastcall HudPause_CWindowImplRemoveCallback(Sonic::CGameObject* This, voi
 	}
 
 	Chao::CSD::CProject::DestroyScene(projWindowUniversal.Get(), universal_window);
-	Chao::CSD::CProject::DestroyScene(projWindowUniversal.Get(), universal_select);
 
 	projWindowUniversal = nullptr;
 }
@@ -316,9 +296,7 @@ void HudPause_CreateWindowScreen(Sonic::CGameObject* gameObject)
 
 	universal_window = projWindowUniversal->CreateScene("universal");
 	universal_window->SetHideFlag(true);
-	universal_select = projWindowUniversal->CreateScene("cursor");
-	universal_select->SetHideFlag(true);
-
+	universal_window->SetPosition(1280 / 2, 720 / 2);
 	if (projWindowUniversal && !spWindowUniversal)
 	{
 		spWindowUniversal = boost::make_shared<Sonic::CGameObjectCSD>(projWindowUniversal, 0.5f, "HUD_A2", true);
@@ -346,6 +324,7 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CS
 	float widthMotionRatio = context[242] / 1.65f; /** 0.01f * 0.8f;*/
 	float heightMotionRatio = context[243] / 1.65f;
 
+	/*universal_window->GetNode("bg")->SetHideFlag(true);*/
 	CSDCommon::PlayAnimation(*universal_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	universal_window->SetHideFlag(false);
 	universal_window->GetNode("sxy_vc")->SetScale(widthMotionRatio / 12, heightMotionRatio * 1.5f);
@@ -358,69 +337,6 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CS
 	return originalHudPause_CWindowImplCStateOpenBegin(This);
 }
 
-HOOK(int, __fastcall, HudPause_CWindowImplCStateShowBegin, 0x4392A0, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-	int result = originalHudPause_CWindowImplCStateShowBegin(This);
-
-	float* context = (float*)(This->GetContextBase());
-	float widthMotionRatio = context[242] * 0.01f * 0.8f;
-	//universal_select->GetNode("img")->SetScale(19.0f + (95.0f - 19.0f) * widthMotionRatio, 1.0f);
-
-	float heightMotion = context[243] * 0.01f * 0.8f;;
-	float yPos = (heightMotion - 48.69f) * 2.2f;
-	uint32_t cursorCount = ((uint32_t*)This)[12];
-	if (cursorCount == 3)
-	{
-		// HACK: for 3 buttons move the cursor up by one slot
-		yPos -= 50.0f;
-	}
-	if (!universal_select)
-		return result;
-	if (cursorCount == 0)
-	{
-		universal_select->SetHideFlag(true);
-	}
-	else
-	{
-		universal_select->SetPosition(0.0f, yPos);
-		HudPause_StopMotion(universal_select, "Scroll_Anim", 0.0f);
-		HudPause_PlayMotion(universal_select, "Usual_Anim", true);
-	}
-	return result;
-}
-
-HOOK(void, __fastcall, HudPause_CWindowImplCStateShowAdvance, 0x439350, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-	uint32_t* context = (uint32_t*)(This->GetContextBase());
-	uint32_t cursorPos = context[96];
-
-	originalHudPause_CWindowImplCStateShowAdvance(This);
-
-	uint32_t cursorPosNew = context[96];
-	if (cursorPosNew != cursorPos)
-	{
-		HudPause_StopMotion(universal_select, "Usual_Anim", 0.0f);
-		if (cursorPosNew == cursorPos + 1)
-		{
-			// Scroll down
-			HudPause_PlayMotion(universal_select, "Scroll_Anim", false, cursorPos * 10.0f, cursorPosNew * 10.0f);
-		}
-		else if (cursorPosNew == cursorPos - 1)
-		{
-			// Scroll up
-			HudPause_PlayMotion(universal_select, "Scroll_Anim", false, 200.0f - cursorPos * 10.0f, 200.0f - cursorPosNew * 10.0f);
-		}
-		else
-		{
-			HudPause_StopMotion(universal_select, "Scroll_Anim", cursorPosNew * 10.0f);
-		}
-	}
-
-	if (universal_select->m_MotionDisableFlag)
-	{
-		HudPause_PlayMotion(universal_select, "Usual_Anim", true);
-	}
-}
 HOOK(void*, __fastcall, HudPause_UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
 {
 	if (pause_window)
@@ -441,7 +357,6 @@ HOOK(void*, __fastcall, HudPause_UpdateApplication, 0xE7BED0, void* This, void* 
 HOOK(int, __fastcall, HudPause_CWindowImplCStateCloseBegin, 0x4395A0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	universal_window->SetHideFlag(true);
-	universal_select->SetHideFlag(true);
 	return originalHudPause_CWindowImplCStateCloseBegin(This);
 }
 #pragma endregion
@@ -452,8 +367,6 @@ void Install_Window()
 	//---------------------------------------------------
 	WRITE_MEMORY(0x16A6D84, void*, HudPause_CWindowImplRemoveCallback);
 	INSTALL_HOOK(HudPause_CWindowImplCStateOpenBegin);
-	INSTALL_HOOK(HudPause_CWindowImplCStateShowBegin);
-	INSTALL_HOOK(HudPause_CWindowImplCStateShowAdvance);
 	INSTALL_HOOK(HudPause_CWindowImplCStateCloseBegin);
 }
 void Install_Pause()
@@ -471,7 +384,6 @@ void Install_Pause()
 	INSTALL_HOOK(HudPause_CPauseVisualPamOpened);
 	INSTALL_HOOK(HudPause_CPauseVisualPamCase);
 
-	INSTALL_HOOK(HudPause_CPauseCStateSelectAdvance);
 	INSTALL_HOOK(HudPause_CPauseCStateCloseBegin);
 	INSTALL_HOOK(HudPause_CPauseCStateIdleBegin);
 

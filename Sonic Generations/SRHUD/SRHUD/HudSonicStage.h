@@ -9,18 +9,8 @@ public:
 	static void CreateScreen(Sonic::CGameObject* pParentGameObject);
 	static void ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject);
 	static void KillScreen();
-	static enum StageAnimMode 
-	{
-		Idle,
-		IdleWisp,
-		IntroWait,
-		Intro,
-		Usual,
-		BoostingNormal,
-		WispIdle,
-		BoostingWisp,
-		WispShake,
-		Outro
-	};
+	static float xAspectOffset;
+	static float yAspectOffset;
+	static void CalculateAspectOffsets();
 
 };
