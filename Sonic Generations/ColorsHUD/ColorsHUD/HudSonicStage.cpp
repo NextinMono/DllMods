@@ -29,6 +29,7 @@ float currentTimeRocket = 5;
 float timeSinceStart = 0;
 //Offset in case lives are disabled
 float offset = 0;
+float glowIntroFrame;
 int skillIndex = -1;
 size_t flagsStuff;
 bool lifeGoing = false;
@@ -37,13 +38,14 @@ int lifeAnim;
 #pragma region XNCPStuff
 void HudSonicStage::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
+	Configuration::Read();
 	if (rcGameplayColors && !spGameplayColors)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spGameplayColors = boost::make_shared<Sonic::CGameObjectCSD>(rcGameplayColors, 0.5f, "HUD", false), "main", pParentGameObject);
 	if (rcMissionColors && !spMissionColors)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spMissionColors = boost::make_shared<Sonic::CGameObjectCSD>(rcMissionColors, 0.5f, "HUD", false), "main", pParentGameObject);
 	if (rcLifeColors && !spLifeColors)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spLifeColors = boost::make_shared<Sonic::CGameObjectCSD>(rcLifeColors, 0.5f, "HUD", false), "main", pParentGameObject);
-	if (rcGaugeEff && !spGaugeEff)
+	if (rcGaugeEff && !spGaugeEff && Configuration::IsColorsOG)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spGaugeEff = boost::make_shared<Sonic::CGameObjectCSD>(rcGaugeEff, 0.5f, "HUD", false), "main", pParentGameObject);
 }
 void HudSonicStage::KillScreen()
@@ -105,15 +107,31 @@ void SetBoostGlowPosition(bool start) {
 
 	Hedgehog::Math::CVector2 pos = rcBoostBar->GetNode("fulcrum_point_energy")->GetPosition();
 	Hedgehog::Math::CVector2 posT = rcBoostBarGlow->GetNode("rt")->GetPosition();
-	if (start) {
+	Configuration::Read();
+	if (Configuration::IsColorsOG)
+	{
+		if (start) {
 
-		rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 77, pos.y());
+			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 77, pos.y());
+		}
+		else
+		{
+			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 81, pos.y());
+		}
+		rcBoostBarGlow->SetScale(1.47f, 1);
 	}
 	else
 	{
-		rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 81, pos.y());
+		if (start)
+		{
+			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 57.8f, pos.y() + 21.13f);
+		}
+		else
+		{
+			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 64.1f, pos.y() + 21.13f);
+		}
+		rcBoostBarGlow->SetScale(2.26f, 1);
 	}
-	rcBoostBarGlow->SetScale(1.47f, 1);
 }
 void ShakeBoostElements(uint32_t deltaTime, bool boostBrilliance = false)
 {/*
@@ -139,7 +157,9 @@ void ShakeBoostElements(uint32_t deltaTime, bool boostBrilliance = false)
 
 		if (rcWispContainer->m_MotionDisableFlag)
 		{			
-			CSDCommon::PlayAnimation(*rcWispContainer, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+			float frameBefore = rcWispContainer->m_MotionFrame;		
+			CSDCommon::PlayAnimation(*rcWispContainer, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, frameBefore);/*
+			CSDCommon::PlayAnimation(*rcWispContainer, "get_Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, frameBefore);*/
 		}
 		if (rcBoostBar->m_MotionDisableFlag)
 		{
@@ -148,10 +168,11 @@ void ShakeBoostElements(uint32_t deltaTime, bool boostBrilliance = false)
 			else
 				CSDCommon::PlayAnimation(*rcBoostBar, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 		}
-		if (rcBoostBarGlow->m_MotionDisableFlag)
+		CSDCommon::PlayAnimation(*rcBoostBarGlow, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+		/*if (rcBoostBarGlow->m_MotionDisableFlag && glowAnimState == 2)
 		{
 			CSDCommon::PlayAnimation(*rcBoostBarGlow, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-		}
+		}*/
 	}
 }
 void WispSet(int which)
@@ -161,14 +182,15 @@ void WispSet(int which)
 	// 2 - Spike
 	rcWispContainer->GetNode("icon_wisp")->SetPatternIndex(which);
 }
-void WispBarSet(bool wispInside)
+void WispBarSet(bool wispInside, bool end = false)
 {
 	if (!boostIntroPlayed)
 		return;
+	float frame = end ? 100 : 0;
 	if (wispInside)
 	{
 		if (rcWispContainer)		
-			CSDCommon::PlayAnimation(*rcWispContainer, "get_wisp", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);			
+			CSDCommon::PlayAnimation(*rcWispContainer, "get_wisp", Chao::CSD::eMotionRepeatType_PlayOnce, 1, frame);
 		gettingWisp = true;
 		removingWisp = false;
 		
@@ -180,7 +202,7 @@ void WispBarSet(bool wispInside)
 	else
 	{
 		if (rcWispContainer)		
-			CSDCommon::PlayAnimation(*rcWispContainer, "mode_change_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			CSDCommon::PlayAnimation(*rcWispContainer, "mode_change_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, frame);
 		if(rcBoostBar)
 			CSDCommon::PlayAnimation(*rcBoostBar, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
 		removingWisp = true;
@@ -212,18 +234,16 @@ void SetBoostValue(float value)
 	}
 	if (isBoosting)
 	{
-		float frameBefore = rcBoostBar->m_MotionFrame ;
+		float frameBefore = rcBoostBar->m_MotionFrame;
+		printf("\nFrameBoost = %f\n", frameBefore);
 		CSDCommon::PlayAnimation(*rcBoostBar, "gauge_energy_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
 		CSDCommon::PlayAnimation(*rcBoostBar, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, frameBefore);
-		if (glowIntroOutro)
-		{
-			glowIntroOutro = rcBoostBarGlow->m_MotionDisableFlag;
-		}
-		else
-		{			
-			CSDCommon::PlayAnimation(*rcBoostBarGlow, "Size_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
-			CSDCommon::PlayAnimation(*rcBoostBarGlow, "Usual_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, frameBefore);
-		}
+
+		
+		CSDCommon::PlayAnimation(*rcBoostBarGlow, "Size_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
+		CSDCommon::PlayAnimation(*rcBoostBarGlow, "Usual_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, frameBefore);
+
+		
 		printf("\nFrame: %f", rcBoostBar->m_MotionFrame);
 	}
 	if (gettingWisp)
@@ -235,6 +255,7 @@ void SetBoostValue(float value)
 		if (rcBoostBar->m_MotionDisableFlag)
 			gettingWisp = false;
 	}	
+	
 	if(!isBoosting && !gettingWisp)
 	CSDCommon::PlayAnimation(*rcBoostBar, "gauge_energy", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
 
@@ -269,8 +290,8 @@ void SetAllToIntroFirst()
 //REMEMBER TO CALL NULLPTR HERE!!!!
 void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
+	WispBarSet(false, true);
 	HudSonicStage::KillScreen();
-
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcPlayerCount);
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcTimeCount);
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcRingCount);
@@ -311,7 +332,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	ScoreGenerationsAPI::SetVisibility(false);
 	originalCHudSonicStageDelayProcessImp(This);
 	CHudSonicStageRemoveCallback(This, nullptr, nullptr);
-
+	Configuration::Read();
 
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 
@@ -321,10 +342,12 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	rcMissionColors = spCsdProject->m_rcProject;
 	spCsdProject = wrapper.GetCsdProject("ui_1up");
 	rcLifeColors = spCsdProject->m_rcProject;
-	spCsdProject = wrapper.GetCsdProject("ui_burndown-timer");
-	rcGaugeEff = spCsdProject->m_rcProject;
+	if (Configuration::IsColorsOG) {
+
+		spCsdProject = wrapper.GetCsdProject("ui_burndown-timer");
+		rcGaugeEff = spCsdProject->m_rcProject;
+	}
 	Configuration::Read();
-	boostShakePower = Configuration::GaugeShakeAmountXNCP;
 	isMission = !Common::IsCurrentStageBossBattle() && (Common::GetCurrentStageID() & (SMT_Mission1 | SMT_Mission2 | SMT_Mission3 | SMT_Mission4 | SMT_Mission5));
 
 	size_t& flags = ((size_t*)This)[151];
@@ -382,11 +405,20 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcBoostBar = rcGameplayColors->CreateScene("gauge_energy");
 		CSDCommon::PlayAnimation(*rcBoostBar, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
 		//Create, set position, and fix boost bar glow to work with the 16:9 gameplay XNCP
-		rcBoostBarGlow = rcGaugeEff->CreateScene("gauge_energy_2_eff");
-
-		Hedgehog::Math::CVector2 posT = rcBoostBarGlow->GetNode("rt")->GetPosition();
-		rcBoostBarGlow->GetNode("rt")->SetPosition(posT.x() + 5, posT.y());
-		SetBoostGlowPosition(true);
+		if (Configuration::IsColorsOG)
+		{
+			rcBoostBarGlow = rcGaugeEff->CreateScene("gauge_energy_2_eff");
+			Hedgehog::Math::CVector2 posT = rcBoostBarGlow->GetNode("rt")->GetPosition();
+			rcBoostBarGlow->GetNode("rt")->SetPosition(posT.x() + 5, posT.y());
+			SetBoostGlowPosition(true);
+		}
+		else
+		{
+			rcBoostBarGlow = rcGameplayColors->CreateScene("gauge_energy_2_eff");
+			Hedgehog::Math::CVector2 pos = rcBoostBar->GetNode("fulcrum_point_energy")->GetPosition();
+			rcBoostBarGlow->GetNode("fulcrum_point_energy")->SetPosition(pos.x() - 57.8f, pos.y() + 21.13f);
+			rcBoostBarGlow->SetScale(2.26f, 1);
+		}
 
 		rcWispContainer = rcGameplayColors->CreateScene("pixy", "Intro_Anim");
 		rcWispContainer->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
@@ -546,8 +578,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 			if (playerContext->StateFlag(eStateFlag_Boost))
 			{
 				if (!isBoosting)
-				{
-					CSDCommon::PlayAnimation(*rcBoostBarGlow, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				{					
+					glowAnimState = 0;
 				}
 				ShakeBoostElements(in_rUpdateInfo.Frame);
 				isBoosting = true;
@@ -565,10 +597,10 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 						CSDCommon::PlayAnimation(*rcWispContainer, "mode_change_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
 				}
 
-				if (isBoosting)
+				/*if (glowAnimState == 2)
 				{
 					CSDCommon::PlayAnimation(*rcBoostBarGlow, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-				}
+				}*/
 				isBoosting = false;
 			}
 			if (boostIntroPlayed && !isUsingWisp)
@@ -626,6 +658,11 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		}
 
 		prevRingCount = playerContext->m_RingCount;
+	}
+	if (gettingWisp)
+	{
+		if (rcWispContainer->m_MotionDisableFlag)
+			gettingWisp = false;
 	}
 }
 HOOK(void, __fastcall, MsgChangeCustomHud, 0x10947A0, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
@@ -788,10 +825,4 @@ void HudSonicStage::Install()
 	// Patch ring counter to use four digits.
 	WRITE_MEMORY(0x168D33C, const char, "%04d");
 	WRITE_MEMORY(0x168E8E0, const char, "%04d");
-
-	// Disable boost button guide animation.
-	if (!Configuration::GaugeShake)
-		WRITE_NOP(0x124F4A1, 2);
-
-
 }

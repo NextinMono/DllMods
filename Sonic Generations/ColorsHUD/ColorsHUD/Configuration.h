@@ -10,22 +10,18 @@ public:
 	/// </summary>
 	static void Read();
 
-	/// <summary>
-	/// Determines whether the gauge plays a shaking animation.
-	/// </summary>
-	static bool GaugeShake;
-	/// <summary>
-	/// Determines whether the XNCP port is enabled.
-	/// </summary>
-	static bool XNCPEnabled;
-
-	static float GaugeShakeAmountXNCP;
-
-	static bool EmptyBoost;
-
+	static bool IsColorsOG;
 	/// <summary>
 	/// The current UI type being used.
 	/// </summary>
 	static std::string UIType;
+	static enum class ButtonStyle : int {
+		Xbox,
+		Playstation,
+		Switch,
+		Wii
+	};
+	static ButtonStyle ButtonType;
+	
 };
 

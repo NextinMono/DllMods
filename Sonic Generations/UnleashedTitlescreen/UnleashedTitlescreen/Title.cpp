@@ -192,7 +192,6 @@ HOOK(int, __fastcall, CTitleMainFinish, 0x5727F0, void* Edx, Sonic::CGameObject*
 float m_applicationDeltaTimeT = 0.0f;
 HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
-	Title::camera->fieldOfView = 60;
 	m_applicationDeltaTimeT = elapsedTime;
 	timePassed += 1;
 	printf("\nDeltaTime: %d", m_applicationDeltaTimeT);
@@ -247,7 +246,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 		printf("Left Stick: %d", inputPtr->LeftStickVertical);
 
 
-		if (inputPtr->LeftStickHorizontal >= 0.5f && !moved)
+		if (inputPtr->LeftStickVertical >= 0.5f && !moved)
 		{
 			currentTitleIndex -= 1;
 			movementInt = 1;
@@ -256,7 +255,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 			moved = true;
 			inputPtr->LeftStickVertical = 0.5f;
 		}
-		if (inputPtr->LeftStickHorizontal < -0.5f && !moved)
+		if (inputPtr->LeftStickVertical < -0.5f && !moved)
 		{
 			currentTitleIndex += 1;
 			movementInt = -1;
@@ -266,7 +265,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 			inputPtr->LeftStickVertical = -0.5f;
 		}
 
-		if (inputPtr->LeftStickHorizontal == 0)
+		if (inputPtr->LeftStickVertical == 0)
 			moved = false;
 
 	}
@@ -303,9 +302,9 @@ HOOK(void, __fastcall, test, 0x5728F0, int This, void* Edx)
 }
 void Title::Install()
 {
-	INSTALL_HOOK(test);
-	WRITE_JUMP(0x005727FC, TitleUI_TitleScroll);
-	WRITE_JUMP(0x005729EF, TitleUI_TitleScrollT);
+	/*INSTALL_HOOK(test);*/
+	/*WRITE_JUMP(0x005727FC, TitleUI_TitleScroll);
+	WRITE_JUMP(0x005729EF, TitleUI_TitleScrollT);*/
 	INSTALL_HOOK(CMainCState_SelectMenuBegin);
 	INSTALL_HOOK(Title_UpdateApplication);
 	INSTALL_HOOK(CTitleMain);

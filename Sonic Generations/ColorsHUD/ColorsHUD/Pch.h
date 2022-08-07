@@ -30,3 +30,5 @@
 #include "HudSonicStage.h"
 #include "HudPause.h"
 #include "HudGate.h"
+
+#include "ArchivePatcher.h"

@@ -1,17 +1,13 @@
-bool Configuration::GaugeShake = true;
-std::string Configuration::UIType = "ui";
-bool Configuration::XNCPEnabled = true;
-float Configuration::GaugeShakeAmountXNCP = 2.5f;
-bool Configuration::EmptyBoost = true;
+std::string Configuration::UIType = "scu";
+bool Configuration::IsColorsOG = false;
+Configuration::ButtonStyle Configuration::ButtonType = ButtonStyle::Xbox;
+
 
 void Configuration::Read()
 {
 	INIReader reader(INI_FILE);
 
-	// Main
 	Configuration::UIType = reader.Get("Main", "IncludeDir2", UIType);
-	Configuration::GaugeShake = reader.GetBoolean("Main", "GaugeShake", GaugeShake);
-	Configuration::XNCPEnabled = reader.GetBoolean("XNCP", "XNCPEnabled", XNCPEnabled);
-	Configuration::EmptyBoost = reader.GetBoolean("XNCP", "EmptyBoost", EmptyBoost);
-	Configuration::GaugeShakeAmountXNCP = reader.GetFloat("XNCP", "GaugeShakePower", GaugeShakeAmountXNCP);
+	Configuration::IsColorsOG = /*Configuration::UIType == "2010"*/ true;
+	/*ButtonType = (ButtonStyle)reader.GetInteger("Appearance", "buttonType", (int)ButtonType);*/
 }
