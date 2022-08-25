@@ -9,7 +9,6 @@
 #include "Helpers.h"
 #include "Common.h"
 #include "ScoreGenerationsAPI.h"
-#include "LetterboxHelper.h"
 
 #include <cstdint>
 #include <cstdio>

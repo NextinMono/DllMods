@@ -1,10 +1,10 @@
 //CSD Object
-boost::shared_ptr<Sonic::CGameObjectCSD> spGameplayColors;
+boost::shared_ptr<Sonic::CGameObjectCSD> spGameInterface;
 //Projects
-Chao::CSD::RCPtr<Chao::CSD::CProject> rcGameplayColors;
+Chao::CSD::RCPtr<Chao::CSD::CProject> rcGameInterface;
 
 //Scenes of projects (ideally keep them all separate from each project, unless they're used together)
-Chao::CSD::RCPtr<Chao::CSD::CScene> lifeCount, rcRingCount, rcBoostBar, fullEffect, fullEffect2, loseRing, base, fullMask;
+Chao::CSD::RCPtr<Chao::CSD::CScene> lifeCount, ringCount, soulGauge, fullEffect, fullEffect2, loseRing, base, fullMask;
 
 bool isMission;
 //Parameters
@@ -20,15 +20,15 @@ bool isClassic = false;
 #pragma region XNCPStuff
 void HudSonicStage::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
-	if (rcGameplayColors && !spGameplayColors)
-		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spGameplayColors = boost::make_shared<Sonic::CGameObjectCSD>(rcGameplayColors, 0.5f, "HUD", false), "main", pParentGameObject);
+	if (rcGameInterface && !spGameInterface)
+		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spGameInterface = boost::make_shared<Sonic::CGameObjectCSD>(rcGameInterface, 0.5f, "HUD", false), "main", pParentGameObject);
 }
 void HudSonicStage::KillScreen()
 {
-	if (spGameplayColors)
+	if (spGameInterface)
 	{
-		spGameplayColors->SendMessage(spGameplayColors->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-		spGameplayColors = nullptr;
+		spGameInterface->SendMessage(spGameInterface->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		spGameInterface = nullptr;
 	}
 }
 
@@ -61,26 +61,21 @@ void GetTime(Sonic::CGameDocument* pGameDocument, size_t* minutes, size_t* secon
 		call[pAddr]
 	}
 }
-
-
-
 //REMEMBER TO CALL NULLPTR HERE!!!!
 void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
 	HudSonicStage::KillScreen();
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcRingCount);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcBoostBar);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), fullEffect);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), fullEffect2);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), lifeCount);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), loseRing);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), base);
-	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), fullMask);
-	rcGameplayColors = nullptr;
-	lifeCount, rcRingCount, rcBoostBar, fullEffect, fullEffect2, loseRing, base, fullMask = nullptr;
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), ringCount);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), soulGauge);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), fullEffect);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), fullEffect2);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), lifeCount);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), loseRing);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), base);
+	Chao::CSD::CProject::DestroyScene(rcGameInterface.Get(), fullMask);
+	rcGameInterface = nullptr;
+	lifeCount, ringCount, soulGauge, fullEffect, fullEffect2, loseRing, base, fullMask = nullptr;
 }
-
-
 HOOK(void, __fastcall, ProcMsgGetMissionCondition, 0xD0F130, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
 {
 	originalProcMsgGetMissionCondition(This, Edx, in_rMsg);
@@ -103,7 +98,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	else
 		xncpname = "GAME_INTERFACE";
 	auto spCsdProject = wrapper.GetCsdProject(xncpname.c_str());
-	rcGameplayColors = spCsdProject->m_rcProject;
+	rcGameInterface = spCsdProject->m_rcProject;
 	isMission = !Common::IsCurrentStageBossBattle() && (Common::GetCurrentStageID() & (SMT_Mission1 | SMT_Mission2 | SMT_Mission3 | SMT_Mission4 | SMT_Mission5));
 
 
@@ -113,61 +108,64 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	if (Configuration::IsBeta)
 	{
-		rcBoostBar = rcGameplayColors->CreateScene("Scene_Wgauge_gauge");
-		rcRingCount = rcGameplayColors->CreateScene("Scene_Ringcounter");
-		//rcGameplayColors->CreateScene("Scene_Ringcounter-20");
-		fullEffect = rcGameplayColors->CreateScene("Scene_Wgauge_gaugefull");
-		fullEffect2 = rcGameplayColors->CreateScene("Scene_Wgauge_gaugefull2");
-		fullMask = rcGameplayColors->CreateScene("Scene_Wgauge_mask");
-		loseRing = rcGameplayColors->CreateScene("Scene_Ringcounter-20");
-		base = rcGameplayColors->CreateScene("Scene_Wgauge_base");/*
-		rcGameplayColors->CreateScene("Scene_Wgauge_gauge2");*/
-		lifeCount = rcGameplayColors->CreateScene("Scene_Wgauge_count");/*
-		rcGameplayColors->CreateScene("Scene_Wgauge_gaugefull");
-		rcGameplayColors->CreateScene("Scene_Wgauge_gaugefull2");*/
+		soulGauge = rcGameInterface->CreateScene("Scene_Wgauge_gauge");
+		ringCount = rcGameInterface->CreateScene("Scene_Ringcounter");
+		//rcGameInterface->CreateScene("Scene_Ringcounter-20");
+		fullEffect = rcGameInterface->CreateScene("Scene_Wgauge_gaugefull");
+		fullEffect2 = rcGameInterface->CreateScene("Scene_Wgauge_gaugefull2");
+		fullMask = rcGameInterface->CreateScene("Scene_Wgauge_mask");
+		loseRing = rcGameInterface->CreateScene("Scene_Ringcounter-20");
+		base = rcGameInterface->CreateScene("Scene_Wgauge_base");/*
+		rcGameInterface->CreateScene("Scene_Wgauge_gauge2");*/
+		lifeCount = rcGameInterface->CreateScene("Scene_Wgauge_count");/*
+		rcGameInterface->CreateScene("Scene_Wgauge_gaugefull");
+		rcGameInterface->CreateScene("Scene_Wgauge_gaugefull2");*/
 		CSDCommon::PlayAnimation(*fullEffect, "gauge_full_effect", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 1);
 		CSDCommon::PlayAnimation(*fullEffect2, "gauge_full_effect", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 1);
 		fullMask->SetHideFlag(true);
 		CSDCommon::PlayAnimation(*loseRing, "lost_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0, 0);
 		CSDCommon::PlayAnimation(*lifeCount, "10_figure", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 1);
-		CSDCommon::PlayAnimation(*rcRingCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 0, 1);
-		rcRingCount->SetPosition(HudSonicStage::xAspectOffset, HudSonicStage::yAspectOffset);
+		CSDCommon::PlayAnimation(*ringCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 0, 1);
+		ringCount->SetPosition(HudSonicStage::xAspectOffset, HudSonicStage::yAspectOffset);
 		CSDCommon::FreezeMotion(*loseRing);
 
-		LetterboxHelper::ScaleScene(*rcBoostBar);
-		LetterboxHelper::ScaleScene(*rcRingCount);
+		LetterboxHelper::ScaleScene(*soulGauge);
+		LetterboxHelper::ScaleScene(*ringCount);
 		LetterboxHelper::ScaleScene(*lifeCount);
 		LetterboxHelper::ScaleScene(*base);
 		LetterboxHelper::ScaleScene(*loseRing);
 		LetterboxHelper::ScaleScene(*fullMask);
 		float boostPos = 0;
 		base->SetPosition(boostPos, 0);
-		rcBoostBar->SetPosition(boostPos, 0);
+		soulGauge->SetPosition(boostPos, 0);
 		lifeCount->SetPosition(boostPos, 0);
 		fullMask->SetPosition(boostPos, 0);
+		ringCount->GetNode("100_figures")->SetPatternIndex(10);
+		ringCount->GetNode("10_figures")->SetPatternIndex(10);
+		ringCount->GetNode("single_figure")->SetPatternIndex(10);
 	}
 	else
 	{
-		rcBoostBar = rcGameplayColors->CreateScene("Scene_Soul_gauge");
-		rcRingCount = rcGameplayColors->CreateScene("Scene_Ringcounter");
-		fullEffect = rcGameplayColors->CreateScene("Scene_Soul_gauge_add");
-		loseRing = rcGameplayColors->CreateScene("Scene_Ringcounter-20");
+		soulGauge = rcGameInterface->CreateScene("Scene_Soul_gauge");
+		ringCount = rcGameInterface->CreateScene("Scene_Ringcounter");
+		fullEffect = rcGameInterface->CreateScene("Scene_Soul_gauge_add");
+		loseRing = rcGameInterface->CreateScene("Scene_Ringcounter-20");
 		float x = 640;
 		float y = 363;
 		loseRing->SetHideFlag(true);
-		rcRingCount->SetPosition(x, y);
-		rcRingCount->GetNode("denominator")->SetPosition(45, 0.013333334f);
-		rcBoostBar->SetPosition(x, y);
+		ringCount->SetPosition(x, y);
+		ringCount->GetNode("denominator")->SetPosition(45, 0.013333334f);
+		soulGauge->SetPosition(x, y);
 		fullEffect->SetPosition(HudSonicStage::xAspectOffset, HudSonicStage::yAspectOffset);
 		loseRing->SetPosition(x, y);
 
-		if (isClassic) rcBoostBar->SetHideFlag(true);
-		else rcBoostBar->SetHideFlag(false);
-		CSDCommon::PlayAnimation(*rcBoostBar, "Loop", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-		CSDCommon::PlayAnimation(*rcRingCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+		if (isClassic) soulGauge->SetHideFlag(true);
+		else soulGauge->SetHideFlag(false);
+		CSDCommon::PlayAnimation(*soulGauge, "Loop", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+		CSDCommon::PlayAnimation(*ringCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 		CSDCommon::FreezeMotion(*fullEffect);
 		CSDCommon::FreezeMotion(*loseRing);
-		rcBoostBar->GetNode("Null_bluefire")->SetHideFlag(true);
+		soulGauge->GetNode("Null_bluefire")->SetHideFlag(true);
 
 	}
 
@@ -180,29 +178,30 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	originalCHudSonicStageUpdateParallel(This, Edx, in_rUpdateInfo);
 	HudSonicStage::ToggleScreen(*(bool*)0x1A430D8, This); // ms_IsRenderGameMainHud
 
-	if (!spGameplayColors)
+	if (!spGameInterface)
 		return;
 
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	const size_t liveCountAddr = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
 	char text[256];
 
-	if (Configuration::IsBeta)
+	if (Configuration::IsBeta) //E3
 	{
-		if (rcBoostBar)
+		if (soulGauge)
 		{
 			if (!isClassic)
 			{
-				CSDCommon::PlayAnimation(*rcBoostBar, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, playerContext->m_ChaosEnergy);
+				CSDCommon::PlayAnimation(*soulGauge, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, playerContext->m_ChaosEnergy);
 			}
 			else
 			{
-				printf("\n%f\n", playerContext->m_HorizontalVelocity.norm() / (playerContext->m_Is2DMode ? 45.0f : 90.0f) * 100.0f);
-				CSDCommon::PlayAnimation(*rcBoostBar, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, playerContext->m_HorizontalVelocity.norm() / (playerContext->m_Is2DMode ? 45.0f : 90.0f) * 100.0f);
+				CSDCommon::PlayAnimation(*soulGauge, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, playerContext->m_HorizontalVelocity.norm() / (playerContext->m_Is2DMode ? 45.0f : 90.0f) * 100.0f);
 			}
 		}
+
 		if (fullMask)
 			fullMask->SetHideFlag(!boostFull);
+
 		if (fullEffect && playerContext)
 		{
 			float value = playerContext->m_ChaosEnergy;
@@ -218,7 +217,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 			else if (value < 100)
 				boostFull = false;
 		}
-		if (rcRingCount && playerContext)
+
+		if (ringCount && playerContext)
 		{
 			if (spinningRing)
 			{
@@ -239,25 +239,28 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 			}
 
-			rcRingCount->GetNode("Ring")->SetPatternIndex(ringIndex);
+			ringCount->GetNode("Ring")->SetPatternIndex(ringIndex);
 
 			sprintf(text, "%03d", playerContext->m_RingCount);
 			if (prevRingCount != playerContext->m_RingCount && playerContext->m_RingCount < 1)
 			{
-				rcRingCount->GetNode("100_figures")->SetPatternIndex(10);
-				rcRingCount->GetNode("10_figures")->SetPatternIndex(10);
-				rcRingCount->GetNode("single_figure")->SetPatternIndex(10);
-				CSDCommon::PlayAnimation(*rcRingCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+				ringCount->GetNode("100_figures")->SetPatternIndex(10);
+				ringCount->GetNode("10_figures")->SetPatternIndex(10);
+				ringCount->GetNode("single_figure")->SetPatternIndex(10);
+				CSDCommon::PlayAnimation(*ringCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 			}
-			rcRingCount->GetNode("100_figures")->SetPatternIndex((int)text[0] - 48);
-			rcRingCount->GetNode("10_figures")->SetPatternIndex((int)text[1] - 48);
-			rcRingCount->GetNode("single_figure")->SetPatternIndex((int)text[2] - 48);
+			else if (prevRingCount != playerContext->m_RingCount && playerContext->m_RingCount >= 1)
+			{
+				ringCount->GetNode("100_figures")->SetPatternIndex((int)text[0] - 48);
+				ringCount->GetNode("10_figures")->SetPatternIndex((int)text[1] - 48);
+				ringCount->GetNode("single_figure")->SetPatternIndex((int)text[2] - 48);
+			}
 			if (prevRingCount < playerContext->m_RingCount)
 			{
 				repeatTime = 0;
 				spinningRing = true;
-				CSDCommon::PlayAnimation(*rcRingCount, "no_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0, 0);
-				CSDCommon::PlayAnimation(*rcRingCount, "get_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*ringCount, "no_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0, 0);
+				CSDCommon::PlayAnimation(*ringCount, "get_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			}
 			else if (prevRingCount > playerContext->m_RingCount)
 			{
@@ -265,7 +268,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 				loseRing->GetNode("-10_figures")->SetPatternIndex((int)text[0] - 48);
 				loseRing->GetNode("-single_figure")->SetPatternIndex((int)text[1] - 48);
 				CSDCommon::PlayAnimation(*loseRing, "lost_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-				CSDCommon::PlayAnimation(*rcRingCount, "lost_ring_damage", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*ringCount, "lost_ring_damage", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			}
 			prevRingCount = playerContext->m_RingCount;
 		}
@@ -281,13 +284,13 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		}
 
 	}
-	else
+	else //Retail
 	{
-		if (rcBoostBar)
+		if (soulGauge)
 		{
-			rcBoostBar->GetNode("Null_redfire")->SetScale(0.31640625f, playerContext->m_ChaosEnergy / 100);
+			soulGauge->GetNode("Null_redfire")->SetScale(0.36, playerContext->m_ChaosEnergy / 100);
 		}
-		if (rcRingCount && playerContext)
+		if (ringCount && playerContext)
 		{
 			if (loseRing->m_MotionDisableFlag)
 				loseRing->SetHideFlag(true);
@@ -310,25 +313,25 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 			}
 
-			rcRingCount->GetNode("Ring")->SetPatternIndex(ringIndex);
+			ringCount->GetNode("Ring")->SetPatternIndex(ringIndex);
 
 			sprintf(text, "%03d", playerContext->m_RingCount);
 			if (prevRingCount != playerContext->m_RingCount && playerContext->m_RingCount < 1)
 			{
-				rcRingCount->GetNode("100_figure")->SetPatternIndex(10);
-				rcRingCount->GetNode("10_figure")->SetPatternIndex(10);
-				rcRingCount->GetNode("single_figure")->SetPatternIndex(10);
-				CSDCommon::PlayAnimation(*rcRingCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+				ringCount->GetNode("100_figure")->SetPatternIndex(10);
+				ringCount->GetNode("10_figure")->SetPatternIndex(10);
+				ringCount->GetNode("single_figure")->SetPatternIndex(10);
+				CSDCommon::PlayAnimation(*ringCount, "no_ring", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 			}
-			rcRingCount->GetNode("100_figure")->SetPatternIndex((int)text[0] - 48);
-			rcRingCount->GetNode("10_figure")->SetPatternIndex((int)text[1] - 48);
-			rcRingCount->GetNode("single_figure")->SetPatternIndex((int)text[2] - 48);
+			ringCount->GetNode("100_figure")->SetPatternIndex((int)text[0] - 48);
+			ringCount->GetNode("10_figure")->SetPatternIndex((int)text[1] - 48);
+			ringCount->GetNode("single_figure")->SetPatternIndex((int)text[2] - 48);
 			if (prevRingCount < playerContext->m_RingCount)
 			{
 				repeatTime = 0;
 				spinningRing = true;
-				CSDCommon::PlayAnimation(*rcRingCount, "no_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0, 0);
-				CSDCommon::PlayAnimation(*rcRingCount, "get_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*ringCount, "no_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0, 0);
+				CSDCommon::PlayAnimation(*ringCount, "get_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			}
 			else if (prevRingCount > playerContext->m_RingCount)
 			{
@@ -342,75 +345,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 	}
 }
-HOOK(void, __fastcall, MsgChangeCustomHud, 0x10947A0, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
-{
-	const size_t iconType = *(size_t*)((char*)&in_rMsg + 16);
-	const size_t iconTypeT = *(size_t*)((char*)&in_rMsg + 8);
-	const size_t spriteCount = *(size_t*)((char*)&in_rMsg + 20);
-	/*WispSet(iconType);
-	printf("\nCURRENT SKILL: %d", iconType);
-	if (spriteCount < 1)
-	{
-		wispAcquired = false;
-		WispBarSet(false);
-		skillIndex = -1;
-	}
-	else
-	{
-		wispAcquired = true;
-		WispBarSet(true);
-		skillIndex = iconType;
-	}
-	skillIndex = iconType;*/
-
-}
-/// <summary>
-/// Findings:
-/// UI_GP_TRICK: 011B37A7, called the same as the xncp, i think this is how it actually controls it
-/// 
-/// </summary>
 
 
-HOOK(void, __fastcall, ProcMsgChangeWispHud, 0x1096050, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
-{
-	const size_t motionType = *(size_t*)((char*)&in_rMsg + 16);
-
-	const size_t wispType = *(size_t*)((char*)&in_rMsg + 20);
-
-	/*if (rcWispContainer && !isUsingWisp)
-	{
-		if (!wispAcquired)
-			WispBarSet(true);
-		wispAcquired = true;
-		if (wispType == 1)
-		{
-			WispSet(22);
-		}
-		if (wispType == 0)
-		{
-			WispSet(21);
-		}
-	}*/
-}
-HOOK(void, __stdcall, CPlayerGetLife, 0xE75520, Sonic::Player::CPlayerContext* context, int lifeCount, bool playSound)
-{
-	/*originalCPlayerGetLife(context, lifeCount, playSound);*/
-
-	//if (lifeCount > 0)
-	//{
-	//	if (rcLife)
-	//	{
-	//		rcLife->GetNode("icon")->SetPosition(1, 1);
-	//		CSDCommon::PlayAnimation(*rcLife, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, false);
-	//	}
-	//	lifeGoing = true;
-	//	lifeAnim = 1;
-	//	if (playSound)
-	//	{
-	//		context->PlaySound(4001009, 0);
-	//	}
-	//}
-}
 #pragma endregion
 #pragma region HyperBE32 Original Code
 // https://github.com/brianuuu/DllMods/blob/master/Source/Sonic06HUD/Stage.cpp#L166
@@ -434,51 +370,27 @@ HOOK(void, __fastcall, MsgStartCommonButtonSign, 0x5289A0, void* thisDeclaration
 	originalMsgStartCommonButtonSign(thisDeclaration, edx, a2);
 }
 #pragma endregion
-//Brianuu/Skyth
-
-/*
-	t;*/
-
 
 void HudSonicStage::Install()
 {
-	LetterboxHelper::Initialize(640, 480);
-	FUNCTION_PTR(void, __cdecl, Test67, 0x6754D0, float a1, float a2);
 	INSTALL_HOOK(CHudSonicStageUpdate);
-	//INSTALL_HOOK(MsgStartMode);
-	//INSTALL_HOOK(MsgRestartStage);
-	/*INSTALL_HOOK(TestRestart);*/
 	INSTALL_HOOK(ProcMsgGetMissionCondition);
 	INSTALL_HOOK(CHudSonicStageDelayProcessImp);
 	INSTALL_HOOK(CHudSonicStageUpdateParallel);
-	//INSTALL_HOOK(MsgChangeCustomHud);
-	//INSTALL_HOOK(ProcMsgChangeWispHud);
-	INSTALL_HOOK(CPlayerGetLife);
 	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
 	WRITE_MEMORY(0x01703B30, float, 4);
 	WRITE_MEMORY(0x01703B28, float, 3);
-	//WRITE_MEMORY(0x016D2E4C, float, 480);
-	//WRITE_MEMORY(0x01703B38, float, 640);
-	//WRITE_MEMORY(0x01B23F34, float, (640/480) * 2);
-	//WRITE_MEMORY(0x01B23F00, float, 640);
-	//WRITE_MEMORY(0x01B23F04, float, 480);
 	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives
 	WRITE_MEMORY(0x109B490, uint8_t, 0x90, 0xE9); // Disable time
 	WRITE_MEMORY(0x109B5AD, uint8_t, 0x90, 0xE9); // Disable rings
 	WRITE_MEMORY(0x109B8F5, uint8_t, 0x90, 0xE9); // Disable boost gauge
 	WRITE_MEMORY(0x109BC88, uint8_t, 0x90, 0xE9); // Disable boost button
-
-
 	INSTALL_HOOK(MsgStartCommonButtonSign);
-	// Patch ring counter to use four digits.
-	WRITE_MEMORY(0x168D33C, const char, "%04d");
-	WRITE_MEMORY(0x168E8E0, const char, "%04d");
-
-
-
-
 }
 
+/// <summary>
+/// Originally from Unleashed HUD by Skyth and Brianuuu
+/// </summary>
 void HudSonicStage::CalculateAspectOffsets()
 {
 	if (*(size_t*)0x6F23C6 != 0x75D8C0D9) // Widescreen Support
