@@ -888,6 +888,26 @@ enum StageMissionType : uint32_t
 
 namespace Common
 {
+	inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
+	{
+		if (!*PLAYER_CONTEXT) return false;
+
+		const uint32_t result = *(uint32_t*)((uint32_t) * (void**)((uint32_t)*PLAYER_CONTEXT + 0x110) + 0xAC);
+		if (!result) return false;
+
+		float* pPos = (float*)(*(uint32_t*)(result + 0x10) + 0x70);
+		position.x() = pPos[0];
+		position.y() = pPos[1];
+		position.z() = pPos[2];
+
+		float* pRot = (float*)(*(uint32_t*)(result + 0x10) + 0x60);
+		rotation.x() = pRot[0];
+		rotation.y() = pRot[1];
+		rotation.z() = pRot[2];
+		rotation.w() = pRot[3];
+
+		return true;
+	}
 	inline bool IsFileExist(std::string const& file)
 	{
 		struct stat buffer;
@@ -1040,6 +1060,30 @@ namespace Common
 		}
 		return false;
 	}	
+
+	static void* fGetScreenPosition
+	(
+		Eigen::Vector4f const& pos3D,
+		Eigen::Vector4f& pos2D
+	)
+	{
+		static void* const pfGetScreenPosition = (void*)0xD61C40;
+		__asm
+		{
+			mov		ecx, 0x1E0BE5C
+			mov		ecx, [ecx]
+			mov		eax, pos3D
+			mov		ebx, pos2D
+			push	ebx
+			call[pfGetScreenPosition]
+		}
+	}
+	static char* IntToString(int num, const char* format)
+	{
+		char returnable[16];
+		sprintf(returnable, format, num);
+		return returnable;
+	}
 	inline bool IsStageCompleted(uint32_t stageID)
 	{
 		FUNCTION_PTR(bool, __stdcall, fpIsStageCompleted, 0x107ADC0, uint32_t stageID);
@@ -1106,6 +1150,7 @@ namespace Common
 #define SONIC_SUPER_CONTEXT BlueBlurCommon::GetSonicSpContext()
 
 #define CHECK_CONTEXT_SAFE(returnValue) if (CONTEXT == nullptr) return returnValue;
+
 
 class BlueBlurCommon
 {

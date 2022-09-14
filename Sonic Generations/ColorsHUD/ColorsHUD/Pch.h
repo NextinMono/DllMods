@@ -22,6 +22,7 @@
 #include "detours\include\detours.h"
 
 #include "HudBtnGuide.h"
+#include "Test.h"
 #include "CSDCommon.h"
 #include "Title.h"
 #include "Configuration.h"
@@ -30,5 +31,6 @@
 #include "HudSonicStage.h"
 #include "HudPause.h"
 #include "HudGate.h"
+#include "TestingCode.h"
 
 #include "ArchivePatcher.h"

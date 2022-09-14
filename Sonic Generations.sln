@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnleashedTitle", "Sonic Gen
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SRHUD", "Sonic Generations\SRHUD\SRHUD\SRHUD.vcxproj", "{81FF2197-4586-4C43-BB91-47F6179B6E1B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FrontiersHUD", "Sonic Generations\FrontiersHud\FrontiersHUD\FrontiersHUD.vcxproj", "{776A098D-958C-46B1-958B-31E59F3DA638}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -38,6 +40,10 @@ Global
 		{81FF2197-4586-4C43-BB91-47F6179B6E1B}.Debug|x86.Build.0 = Debug|Win32
 		{81FF2197-4586-4C43-BB91-47F6179B6E1B}.Release|x86.ActiveCfg = Release|Win32
 		{81FF2197-4586-4C43-BB91-47F6179B6E1B}.Release|x86.Build.0 = Release|Win32
+		{776A098D-958C-46B1-958B-31E59F3DA638}.Debug|x86.ActiveCfg = Debug|Win32
+		{776A098D-958C-46B1-958B-31E59F3DA638}.Debug|x86.Build.0 = Debug|Win32
+		{776A098D-958C-46B1-958B-31E59F3DA638}.Release|x86.ActiveCfg = Release|Win32
+		{776A098D-958C-46B1-958B-31E59F3DA638}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

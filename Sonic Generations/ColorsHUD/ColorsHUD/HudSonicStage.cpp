@@ -259,8 +259,6 @@ void SetBoostValue(float value)
 	if(!isBoosting && !gettingWisp)
 	CSDCommon::PlayAnimation(*rcBoostBar, "gauge_energy", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
 
-	printf("\nBoosting: %d", isBoosting);
-	printf("\nGettingWisp: %d", gettingWisp);
 
 	//CSDCommon::PlayAnimation(*rcBoostBar, "size", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
 	//
@@ -613,9 +611,6 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 		if ((stateCheckS == "RocketLaunch" || stateCheckS == "RocketIdle") || ((stateCheckS.find("Spike") != std::string::npos) && stateCheckS != "TransformSpike"))
 		{
-			printf("\n");
-			printf("%d", currentTimeRocket);
-			printf("RunningAnimationWisp");
 			if (isClassic)
 				rcBoostBar->SetHideFlag(false);
 			if (!isUsingWisp)

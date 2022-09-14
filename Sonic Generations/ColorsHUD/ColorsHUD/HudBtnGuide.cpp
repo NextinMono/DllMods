@@ -1,6 +1,6 @@
 //for BtnGuide, I mean the HUD's BtnGuide. Although there's some stuff for the general BtnGuide
 //Thanks SEGA for the naming!
-
+Sonic::Player::CPlayerSpeedContext::EStateFlag state;
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcBtnGuideColors;
 Chao::CSD::RCPtr<Chao::CSD::CScene> trick_text, onebtn, sign;
 boost::shared_ptr<Sonic::CGameObjectCSD> spBtnGuideColors;
@@ -10,6 +10,7 @@ bool tricksStarted = false;
 bool introAnimPlayed = false;
 int textChoice = -1;
 float timeBetweenAnim = 0;
+bool endingQuickstep;
 int lastNavigationType = -1;
 inline FUNCTION_PTR(void, __fastcall, AdvanceTrickss, 0x52F390, Sonic::CGameObject* This, void* Edx, int a2);
 inline FUNCTION_PTR(void, __fastcall, FinalTricks, 0x52F8F0, Sonic::CGameObject* This, void* Edx, int a2);
@@ -103,6 +104,7 @@ HOOK(void, __fastcall, AdvanceTricks, 0x52F390, Sonic::CGameObject* This, void* 
 }
 HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
+	Configuration::Read();
 	switch (SignState)
 	{
 	case HudBtnGuide::None:
@@ -129,7 +131,12 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
 	std::string stateCheckS(stateCheck.c_str());
-	/*printf(stateCheck.c_str());*/
+	printf(stateCheck.c_str());
+	printf("\n");
+	if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_A)) {
+		
+		playerContext->m_pPlayer->SendMessage(playerContext->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgStartTrickSign>());
+	}
 	#pragma region Experimental A-Tricking (disabled)
 	/*
 	printf("\nBoost: %f\n", Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);*/
@@ -283,14 +290,42 @@ HOOK(int, __stdcall, sub_B21A30, 0xB21A30, Sonic::CGameObject* a1)
 {
 	return originalsub_B21A30(a1);
 }
+
+HOOK(int, __stdcall, Test8, 0xD6B310, int a1, int a2, int a3, Hedgehog::Base::CSharedString* a4, void* Edx)
+{
+	printf("TRIG");
+	return originalTest8(a1, a2, a3, a4,Edx);
+}
 HOOK(int, __cdecl, MsgStartQuickStepSign, 0x46F250, int a1, char* a2, hh::math::CVector* a3, int* a4)
 {	
 
 	return originalMsgStartQuickStepSign(a1, a2, a3, a4);
 }
+HOOK(void, __fastcall, MsgEndQuickStepSign, 0x10F9E80,DWORD* This, int a2, void* Edx)
+{
+
+	return originalMsgEndQuickStepSign(This, a2, Edx);
+}
+HOOK(char, *__fastcall, sub_E41840, 0xE41840, void* This, void* Edx) {
+	return originalsub_E41840(This, Edx);
+}
+HOOK(DWORD, *__cdecl, sub_525B70, 0x525B70,DWORD* This , void* Edx)
+{
+	printf("stuff");
+	return originalsub_525B70(This, Edx);
+}
+HOOK(Hedgehog::Universe::MessageTypeSet, *__fastcall,SendMessage, 0x76AA80, Hedgehog::Universe::MessageTypeSet* This, void* Edx)
+{
+
+	printf("\n%d\n", This->m_SenderActorID);
+	return originalSendMessage(This, Edx);
+}
 void HudBtnGuide::Install()
 {
 	INSTALL_HOOK(MsgStartQuickStepSign);
+	INSTALL_HOOK(sub_525B70);
+	INSTALL_HOOK(sub_E41840);
+	INSTALL_HOOK(MsgEndQuickStepSign);
 	INSTALL_HOOK(sub_B21A30);
 	INSTALL_HOOK(TestTh);
 	INSTALL_HOOK(TestTwo);

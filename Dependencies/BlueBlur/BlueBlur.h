@@ -49,6 +49,7 @@
 #include <Hedgehog/MirageCore/Misc/hhPrimitive.h>
 #include <Hedgehog/MirageCore/Misc/hhRenderingDevice.h>
 #include <Hedgehog/MirageCore/Misc/hhRenderingInfrastructure.h>
+#include <Hedgehog/MirageCore/Misc/hhSamplerState.h>
 #include <Hedgehog/MirageCore/Misc/hhStaticLightContext.h>
 #include <Hedgehog/MirageCore/Misc/hhTransform.h>
 #include <Hedgehog/MirageCore/Misc/hhVertexDeclarationPtr.h>
@@ -62,9 +63,12 @@
 #include <Hedgehog/MirageCore/RenderData/hhMirageDatabaseWrapper.h>
 #include <Hedgehog/MirageCore/RenderData/hhModelData.h>
 #include <Hedgehog/MirageCore/RenderData/hhNodeGroupModelData.h>
+#include <Hedgehog/MirageCore/RenderData/hhParameterElement.h>
 #include <Hedgehog/MirageCore/RenderData/hhPictureData.h>
 #include <Hedgehog/MirageCore/RenderData/hhPixelShaderData.h>
 #include <Hedgehog/MirageCore/RenderData/hhShaderListData.h>
+#include <Hedgehog/MirageCore/RenderData/hhTexsetData.h>
+#include <Hedgehog/MirageCore/RenderData/hhTextureData.h>
 #include <Hedgehog/MirageCore/RenderData/hhVertexShaderData.h>
 #include <Hedgehog/MotionCore/MotionData/hhLightMotionData.h>
 #include <Hedgehog/MotionCore/MotionData/hhMotionDatabaseWrapper.h>
@@ -136,6 +140,11 @@
 #include <Sonic/Message/MsgSetRotation.h>
 #include <Sonic/Message/MsgSetVisible.h>
 #include <Sonic/Message/MsgStartHomingChase.h>
+#include <Sonic/Object/ObjectBase.h>
+#include <Sonic/ObjectSystem/SetObjectEntry.h>
+#include <Sonic/ObjectSystem/SetObjectFactory.h>
+#include <Sonic/ObjectSystem/SetObjectInfo.h>
+#include <Sonic/ObjectSystem/SetObjectListener.h>
 #include <Sonic/Player/Character/Base/Player.h>
 #include <Sonic/Player/Character/Base/PlayerContext.h>
 #include <Sonic/Player/Character/Sonic/Sonic.h>

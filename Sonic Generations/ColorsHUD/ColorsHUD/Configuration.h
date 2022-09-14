@@ -21,6 +21,8 @@ public:
 		Switch,
 		Wii
 	};
+
+	static std::string stateNameDebug;
 	static ButtonStyle ButtonType;
 	
 };
