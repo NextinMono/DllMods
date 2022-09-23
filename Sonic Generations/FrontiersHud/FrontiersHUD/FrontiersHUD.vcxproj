@@ -1824,12 +1824,14 @@
     <ClInclude Include="include\Statistics.h" />
     <ClInclude Include="include\StringHelper.h" />
     <ClInclude Include="include\Tables.h" />
+    <ClInclude Include="LetterboxHelper.h" />
     <ClInclude Include="Pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="HudSonicStage.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="LetterboxHelper.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

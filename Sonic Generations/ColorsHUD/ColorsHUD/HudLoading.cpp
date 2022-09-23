@@ -339,6 +339,7 @@ void SetBestData() {
 	rcLoadingBG->GetNode("time_num")->SetText(m_stageData.m_bestTime);
 	rcLoadingBG->GetNode("score_num")->SetText(scoreCount);
 }
+
 HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	char const* eventName = *(char**)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x2C });

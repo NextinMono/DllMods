@@ -24,3 +24,4 @@
 #include "CSDCommon.h"
 #include "Configuration.h"
 #include "HudSonicStage.h"
+#include "LetterboxHelper.h"

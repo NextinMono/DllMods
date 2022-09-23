@@ -327,6 +327,10 @@ HOOK(void, __fastcall, ProcMsgGetMissionCondition, 0xD0F130, Sonic::CGameObject*
 
 HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObject* This)
 {
+
+	FUNCTION_PTR(void, __fastcall, Test, 0x10D94B0, void* This);
+	Test(This);
+	
 	ScoreGenerationsAPI::SetVisibility(false);
 	originalCHudSonicStageDelayProcessImp(This);
 	CHudSonicStageRemoveCallback(This, nullptr, nullptr);
@@ -808,14 +812,13 @@ void HudSonicStage::Install()
 	INSTALL_HOOK(ProcMsgChangeWispHud);
 	INSTALL_HOOK(CPlayerGetLife);
 	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
-
+	
 	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives
 	WRITE_MEMORY(0x109B490, uint8_t, 0x90, 0xE9); // Disable time
 	WRITE_MEMORY(0x109B5AD, uint8_t, 0x90, 0xE9); // Disable rings
 	WRITE_MEMORY(0x109B8F5, uint8_t, 0x90, 0xE9); // Disable boost gauge
 	WRITE_MEMORY(0x109BC88, uint8_t, 0x90, 0xE9); // Disable boost button
-
-
+	
 	INSTALL_HOOK(MsgStartCommonButtonSign);
 	// Patch ring counter to use four digits.
 	WRITE_MEMORY(0x168D33C, const char, "%04d");

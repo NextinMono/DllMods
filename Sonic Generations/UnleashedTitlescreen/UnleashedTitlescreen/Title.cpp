@@ -10,6 +10,8 @@ bool startAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
 bool moved = false;
 bool hasSavefile = false;
 bool reversedAnim = false;
+bool inTitle = true;
+bool enteredMenu = false;
 static int movementInt; //has to be -1 or 1
 
 inline FUNCTION_PTR(int, __fastcall, CTitleMainFinishH, 0x5727F0, void* Edx, Sonic::CGameObject* This);
@@ -84,8 +86,8 @@ void UnleashedTitleText()
 	rcTitleMenuTXT->SetPosition(0, 0);
 
 	if (currentTitleIndex < 0)
-		currentTitleIndex = 4;
-	else if (currentTitleIndex > 4)
+		currentTitleIndex = 3;
+	else if (currentTitleIndex > 3)
 		currentTitleIndex = 0;
 
 	rcTitleMenuTXT->GetNode("txt_0")->SetHideFlag(!(currentTitleIndex == 0));
@@ -101,6 +103,8 @@ void UnleashedTitleText()
 }
 HOOK(void, __fastcall, CMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+	if (entered)
+		return;
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	hasSavefile = *(bool*)(owner + 0x1AC);
 	currentTitleIndex = hasSavefile ? 1 : 0;
@@ -110,7 +114,6 @@ HOOK(void, __fastcall, CMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMac
 HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Edx, int a2, int a3, void** a4)
 {
 	rcTitleScreen = nullptr;
-	originalCTitleMain(This, Edx, a2, a3, a4);
 	rcTitleScreen = nullptr;
 
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
@@ -154,11 +157,13 @@ HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Ed
 	rcTitleMenuTXT->SetPosition(0, 650000);
 	Title::CreateScreen(This);
 
-	return 0;
+	return	originalCTitleMain(This, Edx, a2, a3, a4);
 }
 
 HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
 {
+	if(entered)
+		return originalCTitleMainSelect(a1);
 	Title::FreezeMotion(*rcTitleMenu);
 	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
@@ -182,21 +187,16 @@ HOOK(int, __fastcall, CTitleMainWait, 0x11D1410, int a1)
 	rcTitleMenuTXT->SetPosition(0, 65000);
 	rcTitleMenuScroll->SetPosition(0, 65000);
 	reversedAnim = true;
+	inTitle = true;
+	entered = false;
 	return originalCTitleMainWait(a1);
-}
-
-HOOK(int, __fastcall, CTitleMainFinish, 0x5727F0, void* Edx, Sonic::CGameObject* This)
-{
-	return 0;
 }
 float m_applicationDeltaTimeT = 0.0f;
 HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
 	m_applicationDeltaTimeT = elapsedTime;
 	timePassed += 1;
-	printf("\nDeltaTime: %d", m_applicationDeltaTimeT);
-	printf("| TimePassed: %d", timePassed);/*
-	FUNCTION_PTR(int, __cdecl, FirstSetup, 0x11D10A0, int);*/
+	/*	FUNCTION_PTR(int, __cdecl, FirstSetup, 0x11D10A0, int);*/
 	if (rcTitleLogo_1)
 	{
 		if (rcTitleLogo_1->m_MotionDisableFlag == 1 && !startAnimComplete)
@@ -246,26 +246,22 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 		printf("Left Stick: %d", inputPtr->LeftStickVertical);
 
 
-		if (inputPtr->LeftStickVertical >= 0.5f && !moved)
+		if (inputPtr->LeftStickHorizontal >= 1 && !moved)
 		{
 			currentTitleIndex -= 1;
-			movementInt = 1;
 			Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			UnleashedTitleText();
 			moved = true;
-			inputPtr->LeftStickVertical = 0.5f;
 		}
-		if (inputPtr->LeftStickVertical < -0.5f && !moved)
+		if (inputPtr->LeftStickHorizontal < -1 && !moved)
 		{
 			currentTitleIndex += 1;
-			movementInt = -1;
 			Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			UnleashedTitleText();
 			moved = true;
-			inputPtr->LeftStickVertical = -0.5f;
 		}
 
-		if (inputPtr->LeftStickVertical == 0)
+		if (inputPtr->LeftStickHorizontal == 0)
 			moved = false;
 
 	}
@@ -286,29 +282,59 @@ void __declspec(naked) TitleUI_TitleScroll()
 		jmp[pAddr]
 	}
 }
-void __declspec(naked) TitleUI_TitleScrollT()
+void __declspec(naked) TitleUI_MoveUp()
 {
-	static uint32_t pAddr = 0x00572A3F;
+	static uint32_t pAddr = 0x010BA693;
+	static uint32_t movement = 0x80000;
+	if (inTitle) //this is global to all of gens for some reason
+		movement = 0x200000;
+	else
+		movement = 0x80000;
 	__asm
 	{
-		mov edi, 8
-		mov ecx, 4
+		test    esi, movement
 		jmp[pAddr]
 	}
 }
-HOOK(void, __fastcall, test, 0x5728F0, int This, void* Edx)
+void __declspec(naked) TitleUI_MoveDown()
 {
-	originaltest(This, Edx);
+	static uint32_t pAddr = 0x010BA6A4;
+	static uint32_t movement = 0x40000;
+	if (inTitle) //this is global to all of gens for some reason
+		movement = 0x100000;
+	else
+		movement = 0x40000;
+	__asm
+	{
+		test    ebx, movement
+		jmp[pAddr]
+	}
+}
+
+void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
+{
+	Title::KillScreen();
+	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitlebg);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleLogo_1);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenu);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuScroll);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuTXT);
+	rcTitleScreen = nullptr;
+	entered = false;
+	inTitle = false;
+	currentTitleIndex = 0;
+
 }
 void Title::Install()
 {
 	/*INSTALL_HOOK(test);*/
-	/*WRITE_JUMP(0x005727FC, TitleUI_TitleScroll);
-	WRITE_JUMP(0x005729EF, TitleUI_TitleScrollT);*/
+	WRITE_JUMP(0x010BA68D, TitleUI_MoveUp);
+	WRITE_JUMP(0x010BA69E, TitleUI_MoveDown);
+	WRITE_MEMORY(0x016E11F4, void*, CHudSonicStageRemoveCallback);
+	//WRITE_MEMORY(0x010BA68D, Sonic::EKeyState, Sonic::EKeyState::eKeyState_Y);
 	INSTALL_HOOK(CMainCState_SelectMenuBegin);
 	INSTALL_HOOK(Title_UpdateApplication);
 	INSTALL_HOOK(CTitleMain);
-	INSTALL_HOOK(CTitleMainFinish);
 	INSTALL_HOOK(CTitleMainWait);
 	INSTALL_HOOK(CTitleMainSelect);
 }

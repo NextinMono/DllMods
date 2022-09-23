@@ -1,5 +1,6 @@
 extern "C" __declspec(dllexport) void Init(const char* path)
 {
+	LetterboxHelper::Initialize(1280, 720);
 	Configuration::Read();
 	HudSonicStage::Install();
 }
