@@ -8,6 +8,7 @@ HudBtnGuide::BtnGuideState SignState;
 bool moved = false;
 bool tricksStarted = false;
 bool introAnimPlayed = false;
+bool rightAfter = false;
 int textChoice = -1;
 float timeBetweenAnim = 0;
 bool endingQuickstep;
@@ -45,9 +46,9 @@ void __fastcall HGT_CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*
 
 	Chao::CSD::CProject::DestroyScene(rcBtnGuideColors.Get(), trick_text);
 	Chao::CSD::CProject::DestroyScene(rcBtnGuideColors.Get(), onebtn);
+	Chao::CSD::CProject::DestroyScene(rcBtnGuideColors.Get(), sign);
 	rcBtnGuideColors = nullptr;
-	tricksStarted = false;
-	introAnimPlayed = false;
+	tricksStarted, introAnimPlayed = false;
 	textChoice = -1;
 
 }
@@ -129,10 +130,10 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 	}
 	}
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
-	std::string stateCheckS(stateCheck.c_str());
-	printf(stateCheck.c_str());
-	printf("\n");
+	//Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
+	//std::string stateCheckS(stateCheck.c_str());
+	//printf(stateCheck.c_str());
+	//printf("\n");
 	if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_A)) {
 		
 		playerContext->m_pPlayer->SendMessage(playerContext->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgStartTrickSign>());
@@ -225,58 +226,119 @@ HOOK(void, *_fastcall, NavigationCollisionSignal, 0x1222CC0, int This, void* Edx
 {
 	int navigationType = *(DWORD*)(This + 348);
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
-	if (!stageID % 2)
+	if (!stageID % 2 || rightAfter)
 	{
+		rightAfter = false;
 		return originalNavigationCollisionSignal(This, Edx, a2);
 	}
 	//Check if any message enabled other stuff first
 	
-	//Toggle
-	if (lastNavigationType == navigationType && lastNavigationType != -1) //Hide
-	{
-		CSDCommon::PlayAnimation(*sign, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-		SignState = HudBtnGuide::None;
-		lastNavigationType = -1;
-	}
-	if (SignState != HudBtnGuide::None && lastNavigationType == -1)
+	////Toggle
+	//if (lastNavigationType == navigationType && lastNavigationType != -1) //Hide
+	//{
+	//	CSDCommon::PlayAnimation(*sign, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	//	SignState = HudBtnGuide::None;
+	//	lastNavigationType = -1;
+	//}
+	//if (SignState != HudBtnGuide::None && lastNavigationType == -1)
+	//{
+	//	switch (SignState)
+	//	{
+
+	//	}
+	//	lastNavigationType = 8;
+	//}
+	//else //Show
+	//{
+
+
+	if (sign->m_MotionDisableFlag)
 	{
 		switch (SignState)
 		{
-
-		}
-		lastNavigationType = 8;
-	}
-	else //Show
-	{
-		switch (navigationType)
-		{
-		case 0:
+		case HudBtnGuide::Quickstep:
 		{
 			//quickstep
-			SignState = HudBtnGuide::Quickstep;
+			SignState = HudBtnGuide::None;
 			sign->SetHideFlag(false);
-
-			CSDCommon::PlayAnimation(*sign, "Intro_Anim_qs", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			CSDCommon::PlayAnimation(*sign, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			lastNavigationType = 0;
 			break;
 		}
-		case 6:
-		{
-			//Button to Button
-			break;
-		}
-		case 7:
-		case 8:
-		{
-
-			SignState = HudBtnGuide::Drift;
-			sign->SetHideFlag(false);
-			CSDCommon::PlayAnimation(*sign, "Intro_Anim_df_r", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			lastNavigationType = 8;
-			break;
-		}
-		}
 	}
+		
+		//case 6:
+		//{
+		//	//Button to Button
+		//	break;
+		//}
+		//case 7:
+		//case 8:
+		//{
+
+		//	SignState = HudBtnGuide::Drift;
+		//	sign->SetHideFlag(false);
+		//	CSDCommon::PlayAnimation(*sign, "Intro_Anim_df_r", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		//	lastNavigationType = 8;
+		//	break;
+		//}
+		}
+	//}
+
+	//int navigationType = *(DWORD*)(This + 348);
+	//uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
+	//if (!stageID % 2)
+	//{
+	//	return originalNavigationCollisionSignal(This, Edx, a2);
+	//}
+	////Check if any message enabled other stuff first
+
+	////Toggle
+	//if (lastNavigationType == navigationType && lastNavigationType != -1) //Hide
+	//{
+	//	CSDCommon::PlayAnimation(*sign, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	//	SignState = HudBtnGuide::None;
+	//	lastNavigationType = -1;
+	//}
+	//if (SignState != HudBtnGuide::None && lastNavigationType == -1)
+	//{
+	//	switch (SignState)
+	//	{
+
+	//	}
+	//	lastNavigationType = 8;
+	//}
+	//else //Show
+	//{
+	//	switch (navigationType)
+	//	{
+	//	case 0:
+	//	{
+	//		//quickstep
+	//		SignState = HudBtnGuide::Quickstep;
+	//		sign->SetHideFlag(false);
+
+	//		CSDCommon::PlayAnimation(*sign, "Intro_Anim_qs", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	//		lastNavigationType = 0;
+	//		break;
+	//	}
+	//	case 6:
+	//	{
+	//		//Button to Button
+	//		break;
+	//	}
+	//	case 7:
+	//	case 8:
+	//	{
+
+	//		SignState = HudBtnGuide::Drift;
+	//		sign->SetHideFlag(false);
+	//		CSDCommon::PlayAnimation(*sign, "Intro_Anim_df_r", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	//		lastNavigationType = 8;
+	//		break;
+	//	}
+	//	}
+	//}
 
 
 	return originalNavigationCollisionSignal(This, Edx, a2);
@@ -297,9 +359,25 @@ HOOK(int, __stdcall, Test8, 0xD6B310, int a1, int a2, int a3, Hedgehog::Base::CS
 	return originalTest8(a1, a2, a3, a4,Edx);
 }
 HOOK(int, __cdecl, MsgStartQuickStepSign, 0x46F250, int a1, char* a2, hh::math::CVector* a3, int* a4)
-{	
+{
+	SignState = HudBtnGuide::Quickstep;
+			sign->SetHideFlag(false);
 
+			CSDCommon::PlayAnimation(*sign, "Intro_Anim_qs", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			lastNavigationType = 0;
+
+			rightAfter = true;
 	return originalMsgStartQuickStepSign(a1, a2, a3, a4);
+}
+
+HOOK(void, __stdcall, MsgStartLeftRightSign, 0xF09480, int a1)
+{
+	SignState = HudBtnGuide::Quickstep;
+	sign->SetHideFlag(false);
+
+	CSDCommon::PlayAnimation(*sign, "Intro_Anim_qs", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	lastNavigationType = 0;
+	originalMsgStartLeftRightSign(a1);
 }
 HOOK(void, __fastcall, MsgEndQuickStepSign, 0x10F9E80,DWORD* This, int a2, void* Edx)
 {
@@ -326,6 +404,7 @@ void HudBtnGuide::Install()
 	INSTALL_HOOK(sub_525B70);
 	INSTALL_HOOK(sub_E41840);
 	INSTALL_HOOK(MsgEndQuickStepSign);
+	INSTALL_HOOK(MsgStartLeftRightSign);
 	INSTALL_HOOK(sub_B21A30);
 	INSTALL_HOOK(TestTh);
 	INSTALL_HOOK(TestTwo);

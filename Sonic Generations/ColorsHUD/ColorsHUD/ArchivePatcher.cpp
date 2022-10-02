@@ -83,5 +83,10 @@ void ArchivePatcher::Install()
 	default:
 		break;
 	}
+
+	if (Configuration::IsColorsOG)
+	{
+		archiveDependencies.push_back(ArchiveDependency("WiiTextures", { "SonicActionCommonHud" }));
+	}
 	INSTALL_HOOK(ParseArchiveTree);
 }

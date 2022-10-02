@@ -9,6 +9,9 @@ public:
 	static void CreateScreen(Sonic::CGameObject* pParentGameObject);
 	static void ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject);
 	static void KillScreen();
+
+	static int redRingCount;
+	static int prevRedRingCount;
 	static enum StageAnimMode 
 	{
 		Idle,

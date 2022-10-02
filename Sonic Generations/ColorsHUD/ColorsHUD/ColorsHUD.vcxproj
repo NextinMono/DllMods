@@ -1838,6 +1838,7 @@
   <ItemGroup>
     <ClCompile Include="ArchivePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="CSDCommon.cpp" />
     <ClCompile Include="HudGate.cpp" />
     <ClCompile Include="HudLoading.cpp" />
     <ClCompile Include="HudPause.cpp" />

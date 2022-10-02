@@ -133,6 +133,7 @@
 #include <Sonic/Message/MsgGetHomingAttackPosition.h>
 #include <Sonic/Message/MsgGetHomingAttackPriority.h>
 #include <Sonic/Message/MsgGetPosition.h>
+#include <Sonic/Message/MsgDebugView.h>
 #include <Sonic/Message/MsgGetRotation.h>
 #include <Sonic/Message/MsgHitReactionPlate.h>
 #include <Sonic/Message/MsgKill.h>

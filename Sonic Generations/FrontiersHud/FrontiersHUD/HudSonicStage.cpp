@@ -137,6 +137,9 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	ringCount->SetPosition(0, 0); //for some reason this makes it follow the aspect ratio...
 
 	ringOverlay = pFrontiers_2->CreateScene("info_ring");
+	ringOverlay->SetPosition(0, 0);
+	CSDCommon::PlayAnimation(*ringOverlay, "get_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 100);
+	
 
 
 	Configuration::Read();
@@ -211,9 +214,10 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		boostCircle = pFrontiers_2->CreateScene("boostbar");
 		boostCircleEmpty = pFrontiers_2->CreateScene("boostbar_sdw");
 		boostCircle->SetScale(0.4f, 0.4f);
+		boostCircle->GetNode("circle")->SetRotation(90);
 		boostCircleEmpty->SetScale(0.4f, 0.4f);
 		boostTXT = pFrontiers_2->CreateScene("boostbar_txt");
-		boostTXT->SetScale(0.28f, 0.28f);
+		boostTXT->SetScale(0.3f, 0.3f);
 		CSDCommon::FreezeMotion(*boostTXT);
 		CSDCommon::FreezeMotion(*boostCircleEmpty);
 		CSDCommon::PlayAnimation(*boostCircle, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);

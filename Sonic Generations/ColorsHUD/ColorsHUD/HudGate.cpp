@@ -5,7 +5,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> colors_base, colors_act_name, colors_score, 
 bool switching;
 bool isClosing;
 bool classic = false;
-
+bool isBoss = false;
 
 void HudGate::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {	
@@ -38,14 +38,25 @@ HOOK(void, __fastcall, CHudGateMenuMainIntro, 0x10804C0, hh::fnd::CStateMachineB
 	originalCHudGateMenuMainIntro(This, Edx);
 }
 //Saying "outro" is a bit misleading, but it is essentially a state check to load info, like actinfo or informationpod
-HOOK(int, __fastcall, CHudGateMenuMainOutro, 0x1080C30, hh::fnd::CStateMachineBase::CStateBase* This, void* Edx)
+HOOK(int, __fastcall, CHudGateMenuMainOutro, 0x107B770, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	int* context = (int*)This->GetContextBase();
 	byte e = (byte)(context + 328);
+
+
+	if (og_Main && colors_act_name && colors_base)
+	{
+		CSDCommon::PlayAnimation(*colors_base, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, true);
+		CSDCommon::PlayAnimation(*colors_act_name, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	}
+	return originalCHudGateMenuMainOutro(This);
+}
+HOOK(int, __fastcall, CHudGateMenuMainUsual, 0x1080C30, hh::fnd::CStateMachineBase::CStateBase* This, void* Edx)
+{
 	if (og_Main && colors_act_name && colors_base)
 	{
 		//theres DEFINITELY a better way to do this, but i couldnt find any atm. so this is a bit jank
-		if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_Y) && !switching)
+		if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_Y) && !switching && !isBoss)
 		{
 			switching = true;
 			classic = !classic;
@@ -58,21 +69,11 @@ HOOK(int, __fastcall, CHudGateMenuMainOutro, 0x1080C30, hh::fnd::CStateMachineBa
 				colors_act_name->GetNode("act_name")->SetPatternIndex(1);
 			}
 		}
-		if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_B) && !switching)
-		{
-			CSDCommon::PlayAnimation(*colors_base, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, true);
-			CSDCommon::PlayAnimation(*colors_act_name, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-		}
-		printf("O");
-
+		printf("U");
 	}
-	return originalCHudGateMenuMainOutro(This, Edx);
-}
-HOOK(int, __fastcall, CHudGateMenuMainUsual, 0x1081170, int This, void* Edx)
-{
-	printf("U");	
 	return originalCHudGateMenuMainUsual(This, Edx);
 }
+
 HOOK(int, __fastcall, CHudGateMenuMainIntroInfo, 0x1080110, hh::fnd::CStateMachineBase::CStateBase* This, void* Edx)
 {
 	////Run function first, otherwise scenes won't be gettable
@@ -84,6 +85,7 @@ HOOK(int, __fastcall, CHudGateMenuMainIntroInfo, 0x1080110, hh::fnd::CStateMachi
 	og_Main = *(Chao::CSD::RCPtr<Chao::CSD::CScene>*)((uint32_t*)contextBase + 74);
 	og_Main->SetHideFlag(false);
 	og_Deco = *(Chao::CSD::RCPtr<Chao::CSD::CScene>*)((uint32_t*)contextBase + 76);
+	isBoss = contextBase[82] == 3;
 	og_Deco->GetNode("Null_deco")->SetHideFlag(true);
 
 	colors_base = projGate->CreateScene("base");
@@ -114,17 +116,24 @@ HOOK(int, __fastcall, CHudGateMenuMainIntroInfo, 0x1080110, hh::fnd::CStateMachi
 	colors_score->SetScale(1, 0.65f);
 
 
-	//classic??
-	if ((int)contextBase[83] == 0)
+	if(isBoss)
+		colors_act_name->GetNode("act_name")->SetPatternIndex(6);
+	else 
 	{
-		classic = true;
-		colors_act_name->GetNode("act_name")->SetPatternIndex(0);
+		//classic??
+		if ((int)contextBase[83] == 0)
+		{
+			classic = true;
+			colors_act_name->GetNode("act_name")->SetPatternIndex(0);
+		}
+		else if ((int)contextBase[83] == 4) //modern??
+		{
+			classic = false;
+			colors_act_name->GetNode("act_name")->SetPatternIndex(1);
+		}
+
 	}
-	else if ((int)contextBase[83] == 4) //modern??
-	{
-		classic = false;
-		colors_act_name->GetNode("act_name")->SetPatternIndex(1);
-	}
+	
 	//int e = contextBase;*//*
 	//printf("\n%d", e);*//*
 	//og_Deco->GetNode("style")->SetPatternIndex(e);	*/
@@ -177,12 +186,6 @@ HOOK(void, __fastcall, Test5, 0x107F470, int* This)
 
 HOOK(void*, __fastcall, Gate_UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
 {
-	if (projGate)
-	{
-		if (colors_base->m_MotionFrame < 0)
-			CSDCommon::PlayAnimation(*colors_base, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0, 1);
-	}
-	
 	return originalGate_UpdateApplication(This, Edx, elapsedTime, a3);
 }
 
@@ -217,8 +220,31 @@ HOOK(int, __fastcall, Gate_Test, 0x107DD70, hh::fnd::CStateMachineBase::CStateBa
 	printf("test");
 	return originalGate_Test(This);
 }
+
+
+uint32_t m_isRedRingCollected = 0;
+
+uint32_t RedRingCollectedCheckReturnAddress = 0x11A9EAF;
+void __declspec(naked) RedRingCollectedCheck()
+{
+	__asm
+	{
+		mov     m_isRedRingCollected, 0
+		jz      jump
+
+		// collected
+		mov     m_isRedRingCollected, 1
+
+		jump:
+		jmp[RedRingCollectedCheckReturnAddress]
+	}
+}
+
 void HudGate::Install()
 {
+	WRITE_JUMP(0x11A9EA9, RedRingCollectedCheck);
+	/*WRITE_MEMORY(0x01688CF0, const char, "Intro_mainstage");
+	WRITE_MEMORY(0x01688CFC, const char, "Intro_mainstage");*/
 	INSTALL_HOOK(Gate_Test);
 	INSTALL_HOOK(Gate_Test2);
 	INSTALL_HOOK(CHudGateMenuMainIntroInfo);

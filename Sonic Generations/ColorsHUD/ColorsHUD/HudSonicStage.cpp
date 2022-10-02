@@ -6,12 +6,14 @@ Chao::CSD::RCPtr<Chao::CSD::CProject> rcGameplayColors, rcMissionColors, rcLifeC
 
 //Scenes of projects (ideally keep them all separate from each project, unless they're used together)
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcPlayerCount, rcTimeCount, rcRingCount, rcBoostBar, rcBoostBarGlow,
-rcWispContainer, rcScoreCount, rcBonusCount, rcSkillCount;
+rcWispContainer, rcScoreCount, rcBonusCount, rcSkillCount, rcStarRing;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcMissionTimer, rcMissionSecondP;
-Chao::CSD::RCPtr<Chao::CSD::CScene> rcLife;
+Chao::CSD::RCPtr<Chao::CSD::CScene> rcLife, rcSpecialRing;
 
 int glowAnimState;
 float updateNumber;
+int HudSonicStage::redRingCount;
+int HudSonicStage::prevRedRingCount;
 //Parameters
 size_t prevRingCount;
 size_t itemCountDenominator;
@@ -34,6 +36,14 @@ int skillIndex = -1;
 size_t flagsStuff;
 bool lifeGoing = false;
 int lifeAnim;
+
+//Red ring acquired anim
+DWORD* getRedRinga3;
+int redStarCount = 0;
+bool spinningRedRing = false;
+int animStateSRing = 0;
+int spinTimes = 0;
+inline FUNCTION_PTR(int, __fastcall, GetRedRingCountt, 0xD591B0, int a1, int unused, DWORD* a3);
 
 #pragma region XNCPStuff
 void HudSonicStage::CreateScreen(Sonic::CGameObject* pParentGameObject)
@@ -65,11 +75,11 @@ void HudSonicStage::KillScreen()
 		spGaugeEff->SendMessage(spGaugeEff->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
 		spGaugeEff = nullptr;
 	}
-	/*if (spLifeColors)
+	if (spLifeColors)
 	{
-		spLifeColors->SendMessage(spMissionColors->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		spLifeColors->SendMessage(spLifeColors->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
 		spLifeColors = nullptr;
-	}*/
+	}
 }
 
 void HudSonicStage::HudSonicStage::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
@@ -283,6 +293,21 @@ void SetAllToIntroFirst()
 		HudSonicStage_IntroFirstFrame(rcWispContainer);
 	if (rcScoreCount)
 		HudSonicStage_IntroFirstFrame(rcScoreCount);
+	if (rcStarRing)
+		HudSonicStage_IntroFirstFrame(rcStarRing);
+}
+
+void SetRedStarCount(int count)
+{
+	if (rcStarRing)
+	{
+		redStarCount = count;
+		rcStarRing->GetNode("ring_0")->SetPatternIndex((int)count >= 1);
+		rcStarRing->GetNode("ring_1")->SetPatternIndex((int)count >= 2);
+		rcStarRing->GetNode("ring_2")->SetPatternIndex((int)count >= 3);
+		rcStarRing->GetNode("ring_3")->SetPatternIndex((int)count >= 4);
+		rcStarRing->GetNode("ring_4")->SetPatternIndex((int)count >= 5);
+	}
 }
 
 //REMEMBER TO CALL NULLPTR HERE!!!!
@@ -296,26 +321,22 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcBoostBar);
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcWispContainer);
 	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcScoreCount);
+	Chao::CSD::CProject::DestroyScene(rcGameplayColors.Get(), rcStarRing);
 	Chao::CSD::CProject::DestroyScene(rcMissionColors.Get(), rcMissionTimer);
 	Chao::CSD::CProject::DestroyScene(rcLifeColors.Get(), rcLife);
+	Chao::CSD::CProject::DestroyScene(rcLifeColors.Get(), rcSpecialRing);
 	Chao::CSD::CProject::DestroyScene(rcGaugeEff.Get(), rcBoostBarGlow);
 
-	isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone, gettingWisp, removingWisp = false;
-	boostTransitionPlayed = true;
+	isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone, gettingWisp, removingWisp, isMission = false;
+	boostTransitionPlayed, readyGoNone = true;
+	timeSinceStart = 0;
+	skillIndex = -1;
+
+	//Hide Projects
 	rcGameplayColors = nullptr;
 	rcMissionColors = nullptr;
 	rcLifeColors = nullptr;
 	rcGaugeEff = nullptr;
-	isMission = false;
-	timeSinceStart = 0;
-	timeStarted = false;
-	boostIntroPlayed = false;
-	isUsingWisp = false;
-	isBoosting = false;
-	wispAcquired = false;
-	isClassic = false;
-	readyGoNone = true;
-	skillIndex = -1;
 }
 
 
@@ -328,8 +349,6 @@ HOOK(void, __fastcall, ProcMsgGetMissionCondition, 0xD0F130, Sonic::CGameObject*
 HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObject* This)
 {
 
-	FUNCTION_PTR(void, __fastcall, Test, 0x10D94B0, void* This);
-	Test(This);
 	
 	ScoreGenerationsAPI::SetVisibility(false);
 	originalCHudSonicStageDelayProcessImp(This);
@@ -391,6 +410,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	}
 	else
 		offset = -48;
+
 	if (flags & 0x2) // Time
 	{
 		rcTimeCount = rcGameplayColors->CreateScene("info_2");
@@ -429,6 +449,12 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 			rcBoostBar->SetPosition(1000000, 0);
 		}
 	}
+
+	rcStarRing = rcGameplayColors->CreateScene("star_ring");
+	redStarCount = HudSonicStage::prevRedRingCount;
+	SetRedStarCount(GetRedRingCountt(Common::GetCurrentStageID(), 1, getRedRinga3));
+	rcSpecialRing = rcLifeColors->CreateScene("s_ring");
+	rcSpecialRing->SetHideFlag(true);
 	flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800); // Mask to prevent crash when game tries accessing the elements we disabled later on
 
 
@@ -452,9 +478,11 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	char text[256];
 	size_t rowIndex = 1;
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
 	updateNumber = in_rUpdateInfo.DeltaTime;
 	if (rcLife && lifeGoing)
 	{
+		rcLife->SetPosition(1280 / 2, 720 / 2);
 		switch (lifeAnim)
 		{
 		case 1:
@@ -463,7 +491,6 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 			if (rcLife->m_MotionDisableFlag == 1)
 			{
 				lifeAnim = 2;
-				CSDCommon::PlayAnimation(*rcLife, "countup_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, false);
 			}
 
 			break;
@@ -509,6 +536,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 			CSDCommon::IntroAnim(rcScoreCount);
 		if (rcWispContainer)
 			CSDCommon::IntroAnim(rcWispContainer);
+		if (rcStarRing)
+			CSDCommon::IntroAnim(rcStarRing);
 
 		timeStarted = true;
 	}
@@ -528,7 +557,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 			wispSet = true;
 		}
 		else
-			wispSet = true;
+			wispSet = false;
 	}
 	if (rcPlayerCount)
 	{
@@ -663,6 +692,46 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		if (rcWispContainer->m_MotionDisableFlag)
 			gettingWisp = false;
 	}
+
+	if (rcSpecialRing)
+	{
+		rcSpecialRing->SetPosition(1280 / 2, 720 / 2);
+		if (spinningRedRing)
+		{
+
+			if (animStateSRing == 1)
+			{
+				if (rcSpecialRing->m_MotionFrame == rcSpecialRing->m_MotionEndFrame)
+					spinTimes++;
+				if (spinTimes >= 3)
+				{
+					CSDCommon::PlayAnimation(*rcSpecialRing, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+					spinningRedRing = false;
+				}
+
+			}
+			if (rcSpecialRing->m_MotionDisableFlag)
+			{
+				switch (animStateSRing)
+				{
+				case 0:
+				{
+					CSDCommon::PlayAnimation(*rcSpecialRing, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+					animStateSRing = 1;
+					break;
+				}
+				case 2:
+				{
+					rcSpecialRing->SetHideFlag(true);
+					break;
+				}
+				default:
+					break;
+				}
+			}
+		}
+	}
+
 }
 HOOK(void, __fastcall, MsgChangeCustomHud, 0x10947A0, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
 {
@@ -686,12 +755,6 @@ HOOK(void, __fastcall, MsgChangeCustomHud, 0x10947A0, Sonic::CGameObject* This, 
 	skillIndex = iconType;
 
 }
-/// <summary>
-/// Findings:
-/// UI_GP_TRICK: 011B37A7, called the same as the xncp, i think this is how it actually controls it
-/// 
-/// </summary>
-
 
 HOOK(void, __fastcall, ProcMsgChangeWispHud, 0x1096050, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
 {
@@ -781,11 +844,13 @@ void HudSonicStage_CalculateAspectOffsets()
 	t;*/
 HOOK(int, __fastcall, MsgRestartStage, 0xE76810, Sonic::CGameObject* This, void* edx, int a2)
 {
+	WispBarSet(false);
 	timeSinceStart = 0;
 	boostIntroPlayed = false;
 	timeStarted = false;
-
+	wispSet = false;
 	SetAllToIntroFirst();
+	SetRedStarCount(GetRedRingCountt(Common::GetCurrentStageID(), 0, getRedRinga3));
 	return originalMsgRestartStage(This, edx, a2);
 }
 HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
@@ -796,16 +861,55 @@ HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
 #endif
 	return originalMsgStartMode(This);
 }
+HOOK(void*, __fastcall, SetConverseCommonInfo, 0x6AFBA0, void* This, void* Edx, uint32_t* info)
+{
 
+	printf("\n%zu\n", info[3]);
+	if (info[3] == 0xE2FFFFFF)
+	{
+		// Force black text to be white
+		info[3] = 0xFFFFFFFF;
+	}
+	return originalSetConverseCommonInfo(This, Edx, info);
+}
+//DEFINITELY need to find a better way to do this.
+HOOK(int, __fastcall, GetRedRingCount, 0xD591B0, int a1, int unused, DWORD* a3)
+{
+	getRedRinga3 = a3;
+	printf("\n%lu", a3);
+	HudSonicStage::prevRedRingCount = HudSonicStage::redRingCount;
+	HudSonicStage::redRingCount = originalGetRedRingCount(a1, unused, a3);
+
+	if (HudSonicStage::prevRedRingCount == 0)
+		HudSonicStage::prevRedRingCount = HudSonicStage::redRingCount;
+	return originalGetRedRingCount(a1, unused, a3);
+}
+
+HOOK(void, __fastcall, SpawnRedRingEffect, 0x11A9BA0, void* This, int a2, void* Edx)
+{
+	FUNCTION_PTR(int, __fastcall, GetRedRingCountt, 0xD591B0, int a1, int unused, DWORD * a3);
+
+	CSDCommon::PlayAnimation(*rcSpecialRing, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, false);
+	spinTimes = 0;
+	animStateSRing = 0;
+	spinningRedRing = true;
+	rcSpecialRing->SetHideFlag(false);
+
+	SetRedStarCount(redStarCount + 1);
+	return originalSpawnRedRingEffect(This, a2, Edx);
+}
 
 void HudSonicStage::Install()
 {
 	INSTALL_HOOK(CHudSonicStageUpdate);
 	INSTALL_HOOK(MsgStartMode);
 	INSTALL_HOOK(MsgRestartStage);
+	INSTALL_HOOK(GetRedRingCount);
+	INSTALL_HOOK(SpawnRedRingEffect);
 	/*INSTALL_HOOK(TestRestart);*/
 
 	INSTALL_HOOK(ProcMsgGetMissionCondition);
+	INSTALL_HOOK(SetConverseCommonInfo);
 	INSTALL_HOOK(CHudSonicStageDelayProcessImp);
 	INSTALL_HOOK(CHudSonicStageUpdateParallel);
 	INSTALL_HOOK(MsgChangeCustomHud);
