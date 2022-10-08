@@ -86,14 +86,15 @@ void UnleashedTitleText()
 	rcTitleMenuTXT->SetPosition(0, 0);
 
 	if (currentTitleIndex < 0)
-		currentTitleIndex = 3;
-	else if (currentTitleIndex > 3)
+		currentTitleIndex = 4;
+	else if (currentTitleIndex > 4)
 		currentTitleIndex = 0;
 
 	rcTitleMenuTXT->GetNode("txt_0")->SetHideFlag(!(currentTitleIndex == 0));
 	rcTitleMenuTXT->GetNode("txt_1")->SetHideFlag(!(currentTitleIndex == 1));
 	rcTitleMenuTXT->GetNode("txt_2")->SetHideFlag(!(currentTitleIndex == 2));
 	rcTitleMenuTXT->GetNode("txt_3")->SetHideFlag(!(currentTitleIndex == 3));
+	rcTitleMenuTXT->GetNode("txt_4")->SetHideFlag(!(currentTitleIndex == 4));
 
 #if _DEBUG
 	printf("\nCURRENT INDEX: %d", currentTitleIndex);
@@ -103,8 +104,7 @@ void UnleashedTitleText()
 }
 HOOK(void, __fastcall, CMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	if (entered)
-		return;
+	originalCMainCState_SelectMenuBegin(This);
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	hasSavefile = *(bool*)(owner + 0x1AC);
 	currentTitleIndex = hasSavefile ? 1 : 0;
@@ -160,10 +160,10 @@ HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Ed
 	return	originalCTitleMain(This, Edx, a2, a3, a4);
 }
 
-HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
+HOOK(DWORD, *__cdecl, CTitleMainSelect, 0x11D1210, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	if(entered)
-		return originalCTitleMainSelect(a1);
+		return originalCTitleMainSelect(This);
 	Title::FreezeMotion(*rcTitleMenu);
 	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
@@ -173,7 +173,7 @@ HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
 	UnleashedTitleText();
 	rcTitleMenuScroll->SetPosition(0, 0);
 
-	return originalCTitleMainSelect(a1);
+	return originalCTitleMainSelect(This);
 }
 
 HOOK(int, __fastcall, CTitleMainWait, 0x11D1410, int a1)
@@ -246,18 +246,25 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 		printf("Left Stick: %d", inputPtr->LeftStickVertical);
 
 
-		if (inputPtr->LeftStickHorizontal >= 1 && !moved)
+		if (inputPtr->LeftStickHorizontal >= 0.5f && !moved)
 		{
-			currentTitleIndex -= 1;
-			Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			UnleashedTitleText();
-			moved = true;
+			if (currentTitleIndex != 4)
+			{
+				currentTitleIndex += 1;
+				Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				UnleashedTitleText();
+				moved = true;
+
+			}
 		}
-		if (inputPtr->LeftStickHorizontal < -1 && !moved)
+		if (inputPtr->LeftStickHorizontal <= -0.5f && !moved  )
 		{
-			currentTitleIndex += 1;
-			Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			UnleashedTitleText();
+			if (currentTitleIndex != 0)
+			{
+				currentTitleIndex -= 1;
+				Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				UnleashedTitleText();
+			}
 			moved = true;
 		}
 
@@ -310,6 +317,16 @@ void __declspec(naked) TitleUI_MoveDown()
 		jmp[pAddr]
 	}
 }
+void __declspec(naked) TitleUI_MoveDowqgqqgn()
+{
+	static uint32_t pAddr = 0x00647CED;
+
+	
+	__asm
+	{
+		jmp[pAddr]
+	}
+}
 
 void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
@@ -325,15 +342,22 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	currentTitleIndex = 0;
 
 }
+
+HOOK(void, __fastcall, sub_647CB0, 0x647CB0, const char* This, int a2, int a3)
+{
+	return;
+}
 void Title::Install()
 {
 	/*INSTALL_HOOK(test);*/
 	WRITE_JUMP(0x010BA68D, TitleUI_MoveUp);
 	WRITE_JUMP(0x010BA69E, TitleUI_MoveDown);
+	WRITE_JUMP(0x00647CD2, TitleUI_MoveDowqgqqgn);
 	WRITE_MEMORY(0x016E11F4, void*, CHudSonicStageRemoveCallback);
 	//WRITE_MEMORY(0x010BA68D, Sonic::EKeyState, Sonic::EKeyState::eKeyState_Y);
 	INSTALL_HOOK(CMainCState_SelectMenuBegin);
 	INSTALL_HOOK(Title_UpdateApplication);
+	INSTALL_HOOK(sub_647CB0);
 	INSTALL_HOOK(CTitleMain);
 	INSTALL_HOOK(CTitleMainWait);
 	INSTALL_HOOK(CTitleMainSelect);

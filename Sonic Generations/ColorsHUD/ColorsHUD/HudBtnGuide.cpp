@@ -1,3 +1,4 @@
+#include <inttypes.h>
 //for BtnGuide, I mean the HUD's BtnGuide. Although there's some stuff for the general BtnGuide
 //Thanks SEGA for the naming!
 Sonic::Player::CPlayerSpeedContext::EStateFlag state;
@@ -72,6 +73,7 @@ HOOK(void, __fastcall, HGT_CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGam
 	trick_text->SetHideFlag(true);
 
 	onebtn->GetNode("icon_btn")->SetPatternIndex(35);
+	onebtn->GetNode("icon_btn_KB_text")->SetHideFlag(true);
 	CSDCommon::PlayAnimation(*onebtn, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	onebtn->SetHideFlag(true);
 
@@ -135,8 +137,8 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 	//printf(stateCheck.c_str());
 	//printf("\n");
 	if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_A)) {
-		
-		playerContext->m_pPlayer->SendMessage(playerContext->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgStartTrickSign>());
+		/*
+		Sonic::CInputState::GetInstance()->m_PadStates = Sonic::eKeyState_LeftStickUp;*/
 	}
 	#pragma region Experimental A-Tricking (disabled)
 	/*
@@ -392,24 +394,38 @@ HOOK(DWORD, *__cdecl, sub_525B70, 0x525B70,DWORD* This , void* Edx)
 	printf("stuff");
 	return originalsub_525B70(This, Edx);
 }
+//HOOK(void, __fastcall, TestSetTricksState, 0xE4B3F0, int This)
+//{
+//	originalTestSetTricksState(This);
+//}
 HOOK(Hedgehog::Universe::MessageTypeSet, *__fastcall,SendMessage, 0x76AA80, Hedgehog::Universe::MessageTypeSet* This, void* Edx)
 {
 
 	printf("\n%d\n", This->m_SenderActorID);
 	return originalSendMessage(This, Edx);
 }
+//void __declspec(naked) TestAButton()
+//{
+//	static uint32_t returnAddress = 0x0E4B53C;
+//	__asm
+//	{		
+//		jmp[returnAddress]
+//	}
+//}
+
 void HudBtnGuide::Install()
 {
-	INSTALL_HOOK(MsgStartQuickStepSign);
-	INSTALL_HOOK(sub_525B70);
-	INSTALL_HOOK(sub_E41840);
-	INSTALL_HOOK(MsgEndQuickStepSign);
-	INSTALL_HOOK(MsgStartLeftRightSign);
-	INSTALL_HOOK(sub_B21A30);
-	INSTALL_HOOK(TestTh);
-	INSTALL_HOOK(TestTwo);
-	INSTALL_HOOK(NavigationCollisionSignal);
-	INSTALL_HOOK(Test);
+	//INSTALL_HOOK(MsgStartQuickStepSign);/*
+	//INSTALL_HOOK(TestSetTricksState);*/
+	//INSTALL_HOOK(sub_525B70);
+	//INSTALL_HOOK(sub_E41840);
+	//INSTALL_HOOK(MsgEndQuickStepSign);
+	//INSTALL_HOOK(MsgStartLeftRightSign);
+	//INSTALL_HOOK(sub_B21A30);
+	//INSTALL_HOOK(TestTh);
+	//INSTALL_HOOK(TestTwo);
+	//INSTALL_HOOK(NavigationCollisionSignal);
+	//INSTALL_HOOK(Test);
 	INSTALL_HOOK(StartTricks);
 	INSTALL_HOOK(FinalTrick);
 	INSTALL_HOOK(AdvanceTricks);

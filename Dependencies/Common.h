@@ -1021,7 +1021,7 @@ namespace Common
 			std::string const& config = modIniList[i];
 			INIReader configReader(config);
 			std::string name = configReader.Get("Desc", "Title", "");
-			if (name == testModName)
+			if (name.find(testModName) != std::string::npos)
 			{
 				if (o_iniPath)
 				{
@@ -1042,7 +1042,16 @@ namespace Common
 	}
 
 
-	
+
+	inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
+	{
+		uint32_t* syncObject = *(uint32_t**)0x1E79044;
+		if (syncObject)
+		{
+			FUNCTION_PTR(void*, __thiscall, sub_75FA60, 0x75FA60, void* This, SharedPtrTypeless&, uint32_t cueId);
+			sub_75FA60((void*)syncObject[8], soundHandle, cueID);
+		}
+	}
 	inline bool DoesArchiveExist(std::string const& archiveName)
 	{
 		std::vector<std::string> modFolderList;

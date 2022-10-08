@@ -53,28 +53,28 @@ void ArchivePatcher::Install()
 	switch (Configuration::ButtonType)
 	{
 	case Configuration::ButtonStyle::Xbox:
-		archiveDependencies.push_back(ArchiveDependency("XboxSeriesButtons", { "SystemCommon" }));
+		archiveDependencies.push_back(ArchiveDependency("XboxSeriesButtons", { "SystemCommon", "HowTo"}));
 		WRITE_STRING(0x1688344, "ui_howxb");
 		WRITE_STRING(0x16886A8, "ui_howxb");
 		WRITE_STRING(0x1692BC4, "ui_howxb");
 		break;
 
 	case Configuration::ButtonStyle::Playstation:
-		archiveDependencies.push_back(ArchiveDependency("PlaystationButtons", { "SystemCommon" }));
+		archiveDependencies.push_back(ArchiveDependency("PlaystationButtons", { "SystemCommon", "HowTo" }));
 		WRITE_STRING(0x1688344, "ui_howps");
 		WRITE_STRING(0x16886A8, "ui_howps");
 		WRITE_STRING(0x1692BC4, "ui_howps");
 		break;
 
 	case Configuration::ButtonStyle::Switch:
-		archiveDependencies.push_back(ArchiveDependency("SwitchButtons", { "SystemCommon" }));
+		archiveDependencies.push_back(ArchiveDependency("SwitchButtons", { "SystemCommon", "HowTo" }));
 		WRITE_STRING(0x1688344, "ui_howns");
 		WRITE_STRING(0x16886A8, "ui_howns");
 		WRITE_STRING(0x1692BC4, "ui_howns");
 		break;
 
 	case Configuration::ButtonStyle::Wii:
-		archiveDependencies.push_back(ArchiveDependency("WiiButtons", { "SystemCommon" }));
+		archiveDependencies.push_back(ArchiveDependency("WiiButtons", { "SystemCommon", "HowTo" }));
 		WRITE_STRING(0x1688344, "ui_howrv");
 		WRITE_STRING(0x16886A8, "ui_howrv");
 		WRITE_STRING(0x1692BC4, "ui_howrv");
@@ -88,5 +88,12 @@ void ArchivePatcher::Install()
 	{
 		archiveDependencies.push_back(ArchiveDependency("WiiTextures", { "SonicActionCommonHud" }));
 	}
+
+	if (Common::IsModNameEnabled("Colors Project"))
+	{
+		archiveDependencies.push_back(ArchiveDependency("LoadingColors", { "Loading" }));
+	}
+
+	archiveDependencies.push_back(ArchiveDependency("ResultColors", { "SonicActionCommonHud" }));
 	INSTALL_HOOK(ParseArchiveTree);
 }

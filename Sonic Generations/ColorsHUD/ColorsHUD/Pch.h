@@ -18,6 +18,7 @@
 #include <windows.h>
 #include <winuser.h>
 #include <fstream>
+#include "ErrorMessageExplainer.h"
 
 #include "detours\include\detours.h"
 
@@ -32,5 +33,6 @@
 #include "HudPause.h"
 #include "HudGate.h"
 #include "TestingCode.h"
+#include "SubtitleOmochao.h"
 
 #include "ArchivePatcher.h"

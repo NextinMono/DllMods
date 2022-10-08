@@ -1,6 +1,6 @@
 std::string Configuration::UIType = "scu";
 bool Configuration::IsColorsOG;
-Configuration::ButtonStyle Configuration::ButtonType = ButtonStyle::Xbox;
+Configuration::ButtonStyle Configuration::ButtonType = ButtonStyle::Playstation;
 
 void Configuration::Read()
 {

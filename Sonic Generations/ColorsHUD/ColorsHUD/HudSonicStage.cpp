@@ -18,7 +18,7 @@ int HudSonicStage::prevRedRingCount;
 size_t prevRingCount;
 size_t itemCountDenominator;
 bool isMission;
-bool isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone, gettingWisp, removingWisp = false;
+bool isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone, gettingWisp, removingWisp, checkpoint = false;
 bool boostTransitionPlayed = true;
 //Boost Shake
 Hedgehog::Math::CVector2* shakeBoostValue;
@@ -43,7 +43,7 @@ int redStarCount = 0;
 bool spinningRedRing = false;
 int animStateSRing = 0;
 int spinTimes = 0;
-inline FUNCTION_PTR(int, __fastcall, GetRedRingCountt, 0xD591B0, int a1, int unused, DWORD* a3);
+inline FUNCTION_PTR(int, __fastcall, GetSpecialRingCount, 0xD591B0, int a1, int unused, DWORD* a3);
 
 #pragma region XNCPStuff
 void HudSonicStage::CreateScreen(Sonic::CGameObject* pParentGameObject)
@@ -190,7 +190,13 @@ void WispSet(int which)
 	if (!rcWispContainer || !boostIntroPlayed)
 		return;
 	// 2 - Spike
-	rcWispContainer->GetNode("icon_wisp")->SetPatternIndex(which);
+	if (gettingWisp)
+		rcWispContainer->GetNode("icon_wisp")->SetPatternIndex(which);
+	else
+	{
+		CSDCommon::PlayAnimation(*rcWispContainer, "mode_change", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		rcWispContainer->GetNode("icon_wisp")->SetPatternIndex(which);
+	}
 }
 void WispBarSet(bool wispInside, bool end = false)
 {
@@ -262,8 +268,10 @@ void SetBoostValue(float value)
 		CSDCommon::PlayAnimation(*rcBoostBar, "gauge_energy", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
 		CSDCommon::PlayAnimation(*rcBoostBarGlow, "Size_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
 		CSDCommon::PlayAnimation(*rcBoostBar, "get_wisp", Chao::CSD::eMotionRepeatType_PlayOnce, 1, frameBefore);
-		if (rcBoostBar->m_MotionDisableFlag)
-			gettingWisp = false;
+		if (rcBoostBar->m_MotionDisableFlag && rcWispContainer->m_MotionDisableFlag)
+		{
+			gettingWisp = false; CSDCommon::PlayAnimation(*rcWispContainer, "get_Usual_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, value);
+		}
 	}	
 	
 	if(!isBoosting && !gettingWisp)
@@ -327,7 +335,7 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	Chao::CSD::CProject::DestroyScene(rcLifeColors.Get(), rcSpecialRing);
 	Chao::CSD::CProject::DestroyScene(rcGaugeEff.Get(), rcBoostBarGlow);
 
-	isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone, gettingWisp, removingWisp, isMission = false;
+	isBoosting, isUsingWisp, wispAcquired, isClassic, boostIntroPlayed, timeStarted, wispSet, readyGoNone, gettingWisp, removingWisp, isMission, checkpoint = false;
 	boostTransitionPlayed, readyGoNone = true;
 	timeSinceStart = 0;
 	skillIndex = -1;
@@ -416,12 +424,12 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcTimeCount = rcGameplayColors->CreateScene("info_2");
 		rcTimeCount->SetPosition(0, offset);
 	}
-	if (flags & 0x4 || Common::GetCurrentStageID() == SMT_bsd) // Rings
+	if (flags & 0x4 || Common::GetCurrentStageID() == SMT_bsd || Common::GetCurrentStageID() == SMT_blb) // Rings
 	{
 		rcRingCount = rcGameplayColors->CreateScene("ring");
 		rcRingCount->SetPosition(0, offset);
 	}
-	isClassic = !flags & 0x200;
+	isClassic = !(flags & 0x200);
 	if (flags) // Boost Gauge
 	{
 		rcBoostBar = rcGameplayColors->CreateScene("gauge_energy");
@@ -446,16 +454,16 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcWispContainer->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 		if (isClassic)
 		{
-			rcBoostBar->SetPosition(1000000, 0);
+			rcBoostBar->SetHideFlag(true);
 		}
 	}
 
 	rcStarRing = rcGameplayColors->CreateScene("star_ring");
 	redStarCount = HudSonicStage::prevRedRingCount;
-	SetRedStarCount(GetRedRingCountt(Common::GetCurrentStageID(), 1, getRedRinga3));
+	SetRedStarCount(GetSpecialRingCount(Common::GetCurrentStageID(), 1, getRedRinga3));
 	rcSpecialRing = rcLifeColors->CreateScene("s_ring");
 	rcSpecialRing->SetHideFlag(true);
-	flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800); // Mask to prevent crash when game tries accessing the elements we disabled later on
+	flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800 | 0x200000); // Mask to prevent crash when game tries accessing the elements we disabled later on
 
 
 	if (ScoreGenerationsAPI::IsAttached() && !ScoreGenerationsAPI::IsStageForbidden()) // Score
@@ -844,13 +852,21 @@ void HudSonicStage_CalculateAspectOffsets()
 	t;*/
 HOOK(int, __fastcall, MsgRestartStage, 0xE76810, Sonic::CGameObject* This, void* edx, int a2)
 {
+	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+	if (playerContext)
+	{
+		if (!checkpoint)
+			timeSinceStart = 0;
+	}
+	else
+		timeSinceStart = 0;
 	WispBarSet(false);
-	timeSinceStart = 0;
 	boostIntroPlayed = false;
 	timeStarted = false;
 	wispSet = false;
 	SetAllToIntroFirst();
-	SetRedStarCount(GetRedRingCountt(Common::GetCurrentStageID(), 0, getRedRinga3));
+	SetRedStarCount(GetSpecialRingCount(Common::GetCurrentStageID(), 0, getRedRinga3));
 	return originalMsgRestartStage(This, edx, a2);
 }
 HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
@@ -861,9 +877,13 @@ HOOK(int, __fastcall, MsgStartMode, 0x109DAA0, Sonic::CGameObject* This)
 #endif
 	return originalMsgStartMode(This);
 }
+HOOK(void, __fastcall, Test, 0x1097640, DWORD* This, int a2, void* Edx)
+{	
+	checkpoint = true;
+	 originalTest(This, a2, Edx);
+}
 HOOK(void*, __fastcall, SetConverseCommonInfo, 0x6AFBA0, void* This, void* Edx, uint32_t* info)
 {
-
 	printf("\n%zu\n", info[3]);
 	if (info[3] == 0xE2FFFFFF)
 	{
@@ -887,7 +907,6 @@ HOOK(int, __fastcall, GetRedRingCount, 0xD591B0, int a1, int unused, DWORD* a3)
 
 HOOK(void, __fastcall, SpawnRedRingEffect, 0x11A9BA0, void* This, int a2, void* Edx)
 {
-	FUNCTION_PTR(int, __fastcall, GetRedRingCountt, 0xD591B0, int a1, int unused, DWORD * a3);
 
 	CSDCommon::PlayAnimation(*rcSpecialRing, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, false);
 	spinTimes = 0;
@@ -905,6 +924,7 @@ void HudSonicStage::Install()
 	INSTALL_HOOK(MsgStartMode);
 	INSTALL_HOOK(MsgRestartStage);
 	INSTALL_HOOK(GetRedRingCount);
+	INSTALL_HOOK(Test);
 	INSTALL_HOOK(SpawnRedRingEffect);
 	/*INSTALL_HOOK(TestRestart);*/
 
@@ -918,13 +938,22 @@ void HudSonicStage::Install()
 	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
 	
 	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives
+	WRITE_MEMORY(0X0109D328, uint8_t, 0x90, 0xE9); // Disable time
 	WRITE_MEMORY(0x109B490, uint8_t, 0x90, 0xE9); // Disable time
 	WRITE_MEMORY(0x109B5AD, uint8_t, 0x90, 0xE9); // Disable rings
 	WRITE_MEMORY(0x109B8F5, uint8_t, 0x90, 0xE9); // Disable boost gauge
 	WRITE_MEMORY(0x109BC88, uint8_t, 0x90, 0xE9); // Disable boost button
+	WRITE_MEMORY(0x109B6A7, uint8_t, 0x90, 0xE9); // Disable final boss rings
 	
+
+	WRITE_MEMORY(0xCFED0E, uint32_t, 4);
+	WRITE_JUMP(0xCFEC3D, (void*)0xCFEC94);
+	WRITE_JUMP(0xCFECB4, (void*)0xCFED0B);
+	WRITE_JUMP(0xCFEDC7, (void*)0xCFE888);
+	WRITE_MEMORY(0xCFE6FD, uint8_t, 0xEB); // Don't play Game Over ticking sfx
 	INSTALL_HOOK(MsgStartCommonButtonSign);
 	// Patch ring counter to use four digits.
 	WRITE_MEMORY(0x168D33C, const char, "%04d");
+
 	WRITE_MEMORY(0x168E8E0, const char, "%04d");
 }
