@@ -190,8 +190,6 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, void* This, void* Edx
 		movedT = false;
 		movementTest = 0;
 	}
-	printf("\nMovement: %d |", movementTest);
-	printf("MovementP: %d", movementTestPrev);
 
 	return originalTitle_UpdateApplication(This, Edx, elapsedTime, a3);
 }

@@ -88,12 +88,22 @@ void ArchivePatcher::Install()
 	{
 		archiveDependencies.push_back(ArchiveDependency("WiiTextures", { "SonicActionCommonHud" }));
 	}
+	//const char* loadingWordArchive = "LoadingGens";
+	//if (Common::IsModNameEnabled("Unleashed Project"))
+	//{
+	//	loadingWordArchive = "LoadingUP";
+	//}
+	//if (Common::IsModNameEnabled("Colors Project"))
+	//{
+	//	loadingWordArchive = "LoadingColors";
+	//}
+	//if (Common::DoesArchiveExist("LoadingCustom.ar.00"))
+	//{
+	//	loadingWordArchive = "LoadingCustom";
+	//}
 
-	if (Common::IsModNameEnabled("Colors Project"))
-	{
-		archiveDependencies.push_back(ArchiveDependency("LoadingColors", { "Loading" }));
-	}
 
+	//archiveDependencies.push_back(ArchiveDependency(loadingWordArchive, { "Loading" }));
 	archiveDependencies.push_back(ArchiveDependency("ResultColors", { "SonicActionCommonHud" }));
 	INSTALL_HOOK(ParseArchiveTree);
 }

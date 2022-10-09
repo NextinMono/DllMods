@@ -317,13 +317,36 @@ void __declspec(naked) TitleUI_MoveDown()
 		jmp[pAddr]
 	}
 }
-void __declspec(naked) TitleUI_MoveDowqgqqgn()
+void OnPressedUp()
 {
-	static uint32_t pAddr = 0x00647CED;
-
 	
+}
+
+void OnPressedDown() 
+{
+
+}
+void __declspec(naked) TitleUI_MoveUpPress()
+{
+	static uint32_t pAddr = 0x010BA69C;
 	__asm
 	{
+		call OnPressedUp
+		inc     dword ptr[edi + 14h]
+		mov     byte ptr[edi + 5], 0
+		jmp[pAddr]
+	}
+}
+void __declspec(naked) TitleUI_MoveDownPress()
+{
+	static uint32_t pAddr = 0x010BA695;
+	static uint32_t loc = 0x010BA69E;
+	__asm
+	{
+		call OnPressedUp
+		jz loc_10BA69E
+		loc_10BA69E : 
+			test    ebx, 40000h
 		jmp[pAddr]
 	}
 }
@@ -347,12 +370,13 @@ HOOK(void, __fastcall, sub_647CB0, 0x647CB0, const char* This, int a2, int a3)
 {
 	return;
 }
+
 void Title::Install()
 {
 	/*INSTALL_HOOK(test);*/
 	WRITE_JUMP(0x010BA68D, TitleUI_MoveUp);
 	WRITE_JUMP(0x010BA69E, TitleUI_MoveDown);
-	WRITE_JUMP(0x00647CD2, TitleUI_MoveDowqgqqgn);
+	WRITE_JUMP(0x010BA695, TitleUI_MoveUpPress);
 	WRITE_MEMORY(0x016E11F4, void*, CHudSonicStageRemoveCallback);
 	//WRITE_MEMORY(0x010BA68D, Sonic::EKeyState, Sonic::EKeyState::eKeyState_Y);
 	INSTALL_HOOK(CMainCState_SelectMenuBegin);

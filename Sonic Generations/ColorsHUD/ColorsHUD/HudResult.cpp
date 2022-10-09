@@ -1,11 +1,12 @@
-boost::shared_ptr<Sonic::CGameObjectCSD> spResult, spBtnGuide;
-Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectResult, rcProjectBtnGuide;
+boost::shared_ptr<Sonic::CGameObjectCSD> spResult, spBtnGuide, spCountdownTimer;
+Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectResult, rcProjectBtnGuide, rcProjectCountdownTimer;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultTitle;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultSideCounters;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultRankSprite;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultScoreNum[8];
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultRankScore;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcBtnGuide;
+Chao::CSD::RCPtr<Chao::CSD::CScene> rcCountdownTimer;
 
 float m_resultTimer = 0.0f;
 HudResult::ResultState m_resultState = HudResult::ResultState::Idle;
@@ -20,18 +21,17 @@ float m_trickFinishBonus = 0.0f;
 float m_rainbowRingBonus = 0.0f;
 bool m_ScoreEnabled = false;
 
-int stateSideCounter = 0;
+HudResult::SideState counterState = (HudResult::SideState)0;
+HudResult::ScoreState scoreState = (HudResult::ScoreState)0;
 //Timers
 float clickSoundTimer, scoreSpinTimer, delayRingAnim = 0;
 //Timer Toggles
 bool startClick, playedTick, delayRing = false;
-int scoreState = 0;
 float m_stageTime = 0.0f;
 HudResult::ResultData m_resultData;
 HudResult::StageData m_stageData;
 bool m_isEnemyChain = false;
 int m_trickChain = 0;
-HudResult::ResultSoundState m_soundState;
 static SharedPtrTypeless tickSoundEffect;
 
 HOOK(void, __fastcall, HudResult_MsgStartGoalResult, 0x10B58A0, uint32_t* This, void* Edx, void* message)
@@ -43,13 +43,11 @@ void __fastcall HudResult_CHudResultRemoveCallback(Sonic::CGameObject* This, voi
 {
 	if (spResult)
 	{
-		printf("[Unleashed HUD] Result destroyed\n");
 		spResult->SendMessage(spResult->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
 		spResult = nullptr;
 	}
 	if (spBtnGuide)
 	{
-		printf("[Unleashed HUD] Result destroyed\n");
 		spBtnGuide->SendMessage(spBtnGuide->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
 		spBtnGuide = nullptr;
 	}
@@ -59,16 +57,16 @@ void __fastcall HudResult_CHudResultRemoveCallback(Sonic::CGameObject* This, voi
 	Chao::CSD::CProject::DestroyScene(rcProjectResult.Get(), rcResultRankScore);
 	Chao::CSD::CProject::DestroyScene(rcProjectResult.Get(), rcResultRankSprite);
 	Chao::CSD::CProject::DestroyScene(rcProjectBtnGuide.Get(), rcBtnGuide);
-
+	Chao::CSD::CProject::DestroyScene(rcProjectCountdownTimer.Get(), rcCountdownTimer);
+	tickSoundEffect.reset();
 	for (size_t i = 0; i < 8; i++)
 	{
 		Chao::CSD::CProject::DestroyScene(rcProjectResult.Get(), rcResultScoreNum[i]);
-	}
-	startClick = false;
+	}startClick, playedTick, delayRing = false;
+	clickSoundTimer, scoreSpinTimer, delayRingAnim = 0;
 	clickSoundTimer = 0;
-	scoreState = 0;
-	scoreSpinTimer = 0;
-	stateSideCounter = 0;
+	scoreState = HudResult::ScoreIdle;
+	counterState = HudResult::WaitingForTime;
 	rcProjectResult = nullptr;
 }
 
@@ -152,8 +150,9 @@ void SetScoreText(const char* number)
 	rcResultRankScore->GetNode("num_a_6")->SetPatternIndex(number6);
 	rcResultRankScore->GetNode("num_a_7")->SetPatternIndex(number7);
 	rcResultRankScore->GetNode("num_a_8")->SetPatternIndex(number8);
-#pragma endregion
-	
+#pragma endregion	
+#pragma region scorenum
+
 	rcResultScoreNum[0]->GetNode("num_c")->SetPatternIndex(number1);
 	rcResultScoreNum[0]->GetNode("num_c_brilliance")->SetPatternIndex(number1);
 
@@ -180,6 +179,7 @@ void SetScoreText(const char* number)
 
 	//rcResultScoreNum[8]->GetNode("num_c")->SetPatternIndex(number8);
 	//rcResultScoreNum[8]->GetNode("num_c_brilliance")->SetPatternIndex(number8);
+#pragma endregion
 }
 HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameObject* This, void* Edx, int a2, int a3, int a4)
 {
@@ -191,8 +191,10 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 
 	auto spCsdProject = wrapper.GetCsdProject("ui_result_colors");
 	rcProjectResult = spCsdProject->m_rcProject;
-	 spCsdProject = wrapper.GetCsdProject("ui_btn_guide_colors");
-	 rcProjectBtnGuide = spCsdProject->m_rcProject;
+	spCsdProject = wrapper.GetCsdProject("ui_btn_guide_colors");
+	rcProjectBtnGuide = spCsdProject->m_rcProject;
+	spCsdProject = wrapper.GetCsdProject("ui_burndown-timer");
+	rcProjectCountdownTimer = spCsdProject->m_rcProject;
 
 	rcResultTitle = rcProjectResult->CreateScene("upper");
 	rcResultRankScore = rcProjectResult->CreateScene("result");
@@ -206,8 +208,10 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 	rcBtnGuide->GetNode("btn_4")->SetPatternIndex(11);
 	rcBtnGuide->GetNode("word_3")->SetPatternIndex(4);
 	rcBtnGuide->GetNode("word_4")->SetPatternIndex(3);
+	rcBtnGuide->GetNode("word_3")->SetScale(0.75f, 1);
+	rcBtnGuide->GetNode("word_4")->SetScale(0.75f, 1);
 
-	CSDCommon::FreezeMotion(*rcResultTitle);
+	CSDCommon::FreezeMotion(*rcResultTitle, 0);
 	CSDCommon::FreezeMotion(*rcResultRankScore);
 	CSDCommon::FreezeMotion(*rcResultSideCounters);
 	rcResultRankScore->SetHideFlag(true);
@@ -223,14 +227,25 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 		rcResultScoreNum[i]->SetHideFlag(true);
 
 	}
+
+	rcCountdownTimer = rcProjectCountdownTimer->CreateScene("Test_timer");
+	CSDCommon::FreezeMotion(*rcCountdownTimer, 0);
+	
 	if (rcProjectResult && !spResult)
 	{
 		spResult = boost::make_shared<Sonic::CGameObjectCSD>(rcProjectResult, 0.5f, "HUD", false);
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spResult, "main", This);
-	}if (rcProjectBtnGuide && !spBtnGuide)
+
+	}
+	if (rcProjectBtnGuide && !spBtnGuide)
 	{
 		spBtnGuide = boost::make_shared<Sonic::CGameObjectCSD>(rcProjectBtnGuide, 0.5f, "HUD", false);
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spBtnGuide, "main", This);
+	}
+	if (rcProjectCountdownTimer && !spCountdownTimer)
+	{
+		spCountdownTimer = boost::make_shared<Sonic::CGameObjectCSD>(rcProjectCountdownTimer, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(spCountdownTimer, "main", This);
 	}
 
 	return result;
@@ -280,19 +295,14 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 		{
 		case HudResult::ResultState::Idle:
 		{
-			printf("[Unleashed HUD] Result State: Idle\n");
 			break;
 		}
 		case HudResult::ResultState::MainWait:
 		{
-			printf("[Unleashed HUD] Result State: Main Wait\n");
-			
-			m_soundState = HudResult::ResultSoundState();
 			break;
 		}
 		case HudResult::ResultState::Main:
 		{
-			printf("[Unleashed HUD] Result State: Main\n");
 
 			rcResultTitle->SetHideFlag(false);
 			rcResultRankScore->SetHideFlag(false);
@@ -309,6 +319,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 
 				Hedgehog::Math::CVector2 posscore = rcResultRankScore->GetNode(name)->GetPosition();
 
+				CSDCommon::PlayAnimation(*rcResultScoreNum[i], intro, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				rcResultScoreNum[i]->SetHideFlag(false);
 				rcResultScoreNum[i]->SetPosition(posscore.x(), posscore.y());
 				rcResultScoreNum[i]->SetScale(2.5f, 2.5f);
@@ -316,7 +327,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			}
 			rcResultRankSprite->SetScale(2.5f, 2.5f);
 			Hedgehog::Math::CVector2 posrank = rcResultRankScore->GetNode("rank_bg_b")->GetPosition();
-			
+
 			rcResultRankSprite->SetPosition(posrank.x(), posrank.y());
 			int millisecond = (int)(m_stageTime * 100.0f) % 100;
 			int second = (int)m_stageTime % 60;
@@ -326,7 +337,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			sprintf(time, "%02d:%02d.%02d", minute, second, millisecond);
 			static char ring[16];
 			sprintf(ring, "%04d", Sonic::Player::CPlayerSpeedContext::GetInstance()->m_RingCount);
-			
+
 			static char score[16];
 			if (!m_ScoreEnabled)
 			{
@@ -343,12 +354,12 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 
 			Common::PlaySoundStatic(soundHandle, 1010005);
 			Common::PlaySoundStatic(soundHandle, 1010002);
+			Common::PlaySoundStatic(soundHandle, 1000000);
 
 			startClick = true;
 			clickSoundTimer = 0;
 			rcResultSideCounters->GetNode("num_ring")->SetText(ring);
 			rcResultSideCounters->GetNode("num_ring_shade")->SetText(ring);
-			scoreState = 1;
 			SetScoreText(score);
 
 
@@ -384,7 +395,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			//}
 
 
-			scoreSpinTimer = -10;
+			scoreSpinTimer = 00;
 			printf("[Unleashed HUD] Result State: Rank\n");
 
 			HudResult_PlayMotion(rcResultRankScore, "Intro_Anim");
@@ -600,9 +611,13 @@ HOOK(int, __fastcall, CStateGoalFadeBefore, 0xCFE080, uint32_t* thisDeclaration)
 HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
 {
 
+	printf("\nScoreSpinTimer: %f", scoreSpinTimer);
+	printf(" | DelayRingTimer: %f", delayRingAnim);
+	#pragma region Score Numbers
+
 	if (rcResultRankScore && rcResultSideCounters)
 	{
-		if (scoreState == 1)
+		if (scoreState == HudResult::ScoreRandomize) //Randomize Score Count
 		{
 			if (!playedTick)
 			{
@@ -611,11 +626,11 @@ HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void*
 			}
 
 			static char score[16];
-			if (scoreSpinTimer >= 75 /*&& rcResultSideCounters->m_MotionDisableFlag*/)
+			if (((delayRingAnim >= 5 && scoreSpinTimer == 75) || delayRingAnim < 5 && rcResultSideCounters->m_MotionFrame == 55) /*&& rcResultSideCounters->m_MotionDisableFlag*/)
 			{
 
 				tickSoundEffect.reset();
-				Common::PlaySoundStatic(tickSoundEffect, 1010000);				
+				Common::PlaySoundStatic(tickSoundEffect, 1010000);
 				scoreSpinTimer += 10;
 				playedTick = false;
 				if (!m_ScoreEnabled)
@@ -631,46 +646,57 @@ HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void*
 				{
 					CSDCommon::PlayAnimation(*rcResultScoreNum[i], "countup_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				}
-				scoreState = 0;
+				scoreState = HudResult::ScoreIdle;
 			}
 			else
 			{
-				sprintf(score, "%08d",  1 + (int)(100000000.0 * (rand() / (RAND_MAX + 1.0))));
+				sprintf(score, "%08d", 1 + (int)(100000000.0 * (rand() / (RAND_MAX + 1.0))));
 				SetScoreText(score);
 				scoreSpinTimer += 1;
 			}
 			printf("\n%f\n", scoreSpinTimer);
 		}
 	}
+#pragma endregion
+	#pragma region Side Counters
+
 	if (rcResultSideCounters) {
 
 		static SharedPtrTypeless soundHandle;
-		if (rcResultSideCounters->m_MotionDisableFlag && stateSideCounter == 0)
+		if (rcResultSideCounters->m_MotionFrame == 25 && counterState == HudResult::WaitingForTime) //Start spinning animation at the 25th frame in the counter
 		{
-			stateSideCounter = 1;
+			scoreState = HudResult::ScoreRandomize;
+			scoreSpinTimer = 0;
+		}
+		if (rcResultSideCounters->m_MotionDisableFlag && counterState == HudResult::WaitingForTime) //Set variables when the first animation is done
+		{
+			counterState = HudResult::WaitingForRings;
 			delayRing = true;
-			startClick = true;
 			clickSoundTimer = 0;
 			scoreSpinTimer = 0;
-			scoreState = 1;
-			Common::PlaySoundStatic(soundHandle, 1010005);
-			Common::PlaySoundStatic(soundHandle, 1010002);
 		}
-		if (delayRing)
-		{
-			delayRingAnim++;
-			if (delayRingAnim >= 5)
-			{
-				startClick = true;
-				clickSoundTimer = 0;
-				scoreSpinTimer = 0;
-				scoreState = 1;
-				delayRing = false;
 
+		if (delayRing) //Delay for ring count
+		{
+			if (delayRingAnim == 25)
+			{
+				Common::PlaySoundStatic(soundHandle, 1000000);
 				CSDCommon::PlayAnimation(*rcResultSideCounters, "Intro_Anim_ring", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			}
+			if (delayRingAnim >= 35) //Play sound with delay to match colors
+			{
+				clickSoundTimer = 0;
+				Common::PlaySoundStatic(soundHandle, 1010005);
+				Common::PlaySoundStatic(soundHandle, 1010002);
+				startClick = true;
+				scoreSpinTimer = 0;
+				scoreState = HudResult::ScoreRandomize;
+				delayRing = false;
+				counterState = HudResult::PlayEndSound;
+			}
+			delayRingAnim++;
 		}
-		
+		//Colors (for some reason) plays the sound twice with a small delay, this tries to replicate that.
 		if (clickSoundTimer >= 5 && startClick)
 		{
 			Common::PlaySoundStatic(soundHandle, 1010002);
@@ -678,11 +704,17 @@ HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void*
 		}
 		else
 			clickSoundTimer += 1;
-		
-	}return originalHudResult_UpdateApplication(This, Edx, elapsedTime, a3);
+
+		if (counterState == HudResult::PlayEndSound && rcResultSideCounters->m_MotionDisableFlag)
+		{
+			counterState = HudResult::Finished;
+			CSDCommon::PlayAnimation(*rcCountdownTimer, "burndown_timer", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			Common::PlaySoundStatic(soundHandle, 1010004);
+		}
+	}
+#pragma endregion
+	return originalHudResult_UpdateApplication(This, Edx, elapsedTime, a3);
 }
-
-
 
 void HudResult::Install()
 {
@@ -718,6 +750,12 @@ void HudResult::Install()
 	// Do not modify the results timer if Customizable Results Music is enabled.
 	if (GetModuleHandle(TEXT("CustomizableResultsMusic.dll")) == nullptr)
 		WRITE_JUMP(0xCFD55E, &ResultTimer_MidAsmHook);
+
+	/*if (*(uint8_t*)0x15EFE9D == 0x45)
+	{
+		MessageBoxA(0, "This mod is not compatible with E-Rank Generations! Please disable it.", "Ultimate Colors HUD", 0);
+		exit(0);
+	}*/
 
 	INSTALL_HOOK(CStateGoalFadeBefore);
 }
