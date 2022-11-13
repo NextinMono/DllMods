@@ -5,11 +5,14 @@ boost::shared_ptr<Sonic::CGameObjectCSD> goGameplay, goFrontiers_2;
 Chao::CSD::RCPtr<Chao::CSD::CProject> pGameplay, pFrontiers_2;
 
 //Scenes of projects (ideally keep them all separate from each project, unless they're used together)
-Chao::CSD::RCPtr<Chao::CSD::CScene> ringCount,ringOverlay, gearCount, keyCount, boostCircle, lifeCount, boostCircleEmpty, boostTXT, skills, speed_ind, speedometer, ringMax, speedometerNumber, score;
+Chao::CSD::RCPtr<Chao::CSD::CScene> ringCount,ringOverlay, gearCount, keyCount, boostCircle, oxygenCircle, lifeCount, boostCircleEmpty, oxygenCircleEmpty, boostTXT, oxygenTXT, skills, speed_ind, speedometer, ringMax, speedometerNumber, score;
 size_t prevRingCount = -1;
-float waitTimeBoost = 0;
+float waitTimeBoost, oxygenCount = 0;
+bool hiddenOxy = true;
 bool hiddenBoost = true;
 bool ringSpun = false;
+float xadd = 1280 / 2;
+float yadd = 720 / 2;
 Hedgehog::Math::CVector2* offsetAspect;
 Hedgehog::Math::CVector2* offsetRes;
 
@@ -84,13 +87,29 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 		Chao::CSD::CProject::DestroyScene(pGameplay.Get(), score);
 	}
 	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), boostCircle);
+	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), oxygenCircle);
 	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), boostCircleEmpty);
+	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), oxygenCircleEmpty);
 	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), boostTXT);
+	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), oxygenTXT);
+	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), ringOverlay);
 
 
 	pGameplay, pFrontiers_2 = nullptr;
 	goGameplay, goFrontiers_2 = nullptr;
-	/*gearCount, keyCount, boostCircle, lifeCount, boostCircleEmpty, boostTXT, skills, speed_ind, speedometer, ringMax, speedometerNumber = nullptr;*/
+
+}
+
+hh::math::CVector4 GetSonicBoostPosition()
+{
+	auto& position = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_spMatrixNode->m_Transform.m_Position;
+	const auto camera = Sonic::CGameDocument::GetInstance()->GetWorld()->GetCamera();
+	hh::math::CVector4 screenPosition = camera->m_MyCamera.m_View * hh::math::CVector4(position.x(), position.y(), position.z(), 1.0f);
+	screenPosition = camera->m_MyCamera.m_Projection * screenPosition;
+	screenPosition.head<2>() /= screenPosition.w();
+	screenPosition.x() = ((screenPosition.x() * 0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->x() + offsetAspect->x())) + 150;
+	screenPosition.y() = (screenPosition.y() * -0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->y() + offsetAspect->y()) - 100;
+	return screenPosition;
 
 }
 
@@ -137,8 +156,8 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	ringCount->SetPosition(0, 0); //for some reason this makes it follow the aspect ratio...
 
 	ringOverlay = pFrontiers_2->CreateScene("info_ring");
-	ringOverlay->SetPosition(0, 0);
-	CSDCommon::PlayAnimation(*ringOverlay, "get_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 100);
+	ringOverlay->SetPosition(1280 / 2,720/2 );
+	CSDCommon::PlayAnimation(*ringOverlay, "Intro_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 	
 
 
@@ -207,20 +226,37 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 
 
+	oxygenCircle = pFrontiers_2->CreateScene("oxygenbar");
+	oxygenCircle->SetScale(0.4f, 0.4f);
+	oxygenCircle->GetNode("circle")->SetRotation(90);
+	oxygenTXT = pFrontiers_2->CreateScene("boostbar_txt");
+	oxygenTXT->SetScale(0.3f, 0.3f);
+
+	oxygenTXT->GetNode("text")->SetPatternIndex(1);
+	oxygenCircleEmpty = pFrontiers_2->CreateScene("boostbar_sdw");
+	oxygenCircleEmpty->SetScale(0.4f, 0.4f);
+	CSDCommon::FreezeMotion(*oxygenCircleEmpty);
 	//Disable boost bar if classic
 	bool isClassic = !flags & 0x200;
 	if (!isClassic) // Boost Gauge
 	{
 		boostCircle = pFrontiers_2->CreateScene("boostbar");
+
 		boostCircleEmpty = pFrontiers_2->CreateScene("boostbar_sdw");
 		boostCircle->SetScale(0.4f, 0.4f);
 		boostCircle->GetNode("circle")->SetRotation(90);
 		boostCircleEmpty->SetScale(0.4f, 0.4f);
 		boostTXT = pFrontiers_2->CreateScene("boostbar_txt");
 		boostTXT->SetScale(0.3f, 0.3f);
+
+
 		CSDCommon::FreezeMotion(*boostTXT);
+		CSDCommon::FreezeMotion(*oxygenTXT);
 		CSDCommon::FreezeMotion(*boostCircleEmpty);
 		CSDCommon::PlayAnimation(*boostCircle, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
+		CSDCommon::PlayAnimation(*boostTXT, "fade", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
+
+		CSDCommon::PlayAnimation(*oxygenCircle, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
 	}
 
 	if (ScoreGenerationsAPI::IsAttached() && !ScoreGenerationsAPI::IsStageForbidden()) // Score
@@ -251,11 +287,20 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	if (!goFrontiers_2 || !goGameplay)
 		return;
 
-
+	if(ringOverlay)
+	ringOverlay->SetPosition(xadd, yadd);
+	printf("\n%ld", (DWORD)0x01B23FD8);
 	char text[256];
 	size_t rowIndex = 1;
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	xadd += Sonic::CInputState::GetInstance()->GetPadState().RightStickHorizontal /2;
+	yadd += Sonic::CInputState::GetInstance()->GetPadState().RightStickVertical /2;
+	if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_Y))
+	{
+		printf("\nPos X: %d", xadd);
+		printf("\nPos Y: %d", yadd);
 
+	}
 	if (playerContext->StateFlag(eStateFlag_Boost)
 		|| (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_X) && playerContext->m_ChaosEnergy == 0))
 	{
@@ -282,19 +327,14 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		sprintf(text, Configuration::ScoreGenerationsFormat.c_str(), ScoreGenerationsAPI::GetScore());
 		score->GetNode("num_sonic")->SetText(text);
 	}
+
 	if (boostCircle && playerContext)
 	{
 		if (!hiddenBoost)
 		{
 			//TYSM Skyth!
-			auto& position = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_spMatrixNode->m_Transform.m_Position;
-			const auto camera = Sonic::CGameDocument::GetInstance()->GetWorld()->GetCamera();
-			hh::math::CVector4 screenPosition = camera->m_MyCamera.m_View * hh::math::CVector4(position.x(), position.y(), position.z(), 1.0f);
-			screenPosition = camera->m_MyCamera.m_Projection * screenPosition;
-			screenPosition.head<2>() /= screenPosition.w();
-			screenPosition.x() = ((screenPosition.x() * 0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->x() + offsetAspect->x())) + 150;
-			screenPosition.y() = (screenPosition.y() * -0.5f + 0.5f) *(LetterboxHelper::OriginalResolution->y() + offsetAspect->y()) - 100;
-
+			hh::math::CVector4 screenPosition = GetSonicBoostPosition();
+			boostCircle->SetPosition(screenPosition.x(), screenPosition.y());
 			boostCircle->SetPosition(screenPosition.x(), screenPosition.y());
 			boostTXT->SetPosition(screenPosition.x(), screenPosition.y());
 			boostCircleEmpty->SetPosition(screenPosition.x(), screenPosition.y());
@@ -331,6 +371,36 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 
 		prevRingCount = playerContext->m_RingCount;
+	}
+
+
+	hh::math::CVector4 posOxy = GetSonicBoostPosition();
+	posOxy.y() = posOxy.y() + 50;
+	oxygenCircle->SetPosition(posOxy.x(), posOxy.y());	
+	oxygenTXT->SetPosition(posOxy.x(), posOxy.y());
+	oxygenCircleEmpty->SetPosition(posOxy.x(), posOxy.y());
+
+	oxygenCircle->SetHideFlag(hiddenOxy);
+	oxygenTXT->SetHideFlag(hiddenOxy);
+	oxygenCircleEmpty->SetHideFlag(hiddenOxy);
+	if (playerContext->StateFlag(eStateFlag_OnWaterSeEnabled) && !playerContext->StateFlag(eStateFlag_Dead))
+	{
+		hiddenOxy = false;
+		oxygenCount += in_rUpdateInfo.DeltaTime;	
+		CSDCommon::PlayAnimation(*oxygenCircle, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (32 - oxygenCount) / 32 *100);
+		printf("\nWATER %f\n", 32 - oxygenCount);
+	}
+	else
+	{
+		if (oxygenCount > 0)
+		{
+			oxygenCount -= in_rUpdateInfo.DeltaTime * 5;
+			CSDCommon::PlayAnimation(*oxygenCircle, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (32 - oxygenCount) / 32 * 100);
+		}
+		else
+		{
+			hiddenOxy = true;
+		}
 	}
 
 	if (speed_ind && playerContext)

@@ -112,70 +112,71 @@ HOOK(void, __fastcall, HudResult_CStateGoalFadeInEnd, 0xCFA470, hh::fnd::CStateM
 }
 void SetScoreText(const char* number)
 {
+	const char* newNumber = number;
 	//Yeah i know this is a bit spaghet, but the numbers are sprites.
-	int number1 = (int)number[0] - 48;
-	int number2 = (int)number[1] - 48;
-	int number3 = (int)number[2] - 48;
-	int number4 = (int)number[3] - 48;
-	int number5 = (int)number[4] - 48;
-	int number6 = (int)number[5] - 48;
-	int number7 = (int)number[6] - 48;
-	int number8 = (int)number[7] - 48;
+	int number1 = (int)(newNumber[0] -'0');
+	int number2 = (int)(newNumber[1] - '0');
+	int number3 = (int)(newNumber[2] - '0');
+	int number4 = (int)(newNumber[3] - '0');
+	int number5 = (int)(newNumber[4] - '0');
+	int number6 = (int)(newNumber[5] - '0');
+	int number7 = (int)(newNumber[6] - '0');
+	int number8 = (int)(newNumber[7] - '0');
 #pragma region num_score_frame
-	rcResultRankScore->GetNode("num_b_1")->SetPatternIndex(number1);
-	rcResultRankScore->GetNode("num_b_2")->SetPatternIndex(number2);
-	rcResultRankScore->GetNode("num_b_3")->SetPatternIndex(number3);
-	rcResultRankScore->GetNode("num_b_4")->SetPatternIndex(number4);
-	rcResultRankScore->GetNode("num_b_5")->SetPatternIndex(number5);
-	rcResultRankScore->GetNode("num_b_6")->SetPatternIndex(number6);
-	rcResultRankScore->GetNode("num_b_7")->SetPatternIndex(number7);
-	rcResultRankScore->GetNode("num_b_8")->SetPatternIndex(number8);
+	rcResultRankScore->GetNode("num_b_8")->SetPatternIndex(number1);
+	rcResultRankScore->GetNode("num_b_7")->SetPatternIndex(number2);
+	rcResultRankScore->GetNode("num_b_6")->SetPatternIndex(number3);
+	rcResultRankScore->GetNode("num_b_5")->SetPatternIndex(number4);
+	rcResultRankScore->GetNode("num_b_4")->SetPatternIndex(number5);
+	rcResultRankScore->GetNode("num_b_3")->SetPatternIndex(number6);
+	rcResultRankScore->GetNode("num_b_2")->SetPatternIndex(number7);
+	rcResultRankScore->GetNode("num_b_1")->SetPatternIndex(number8);
 #pragma endregion
 #pragma region num_score_bg_brilliance
-	rcResultRankScore->GetNode("num_d_1")->SetPatternIndex(number1);
-	rcResultRankScore->GetNode("num_d_2")->SetPatternIndex(number2);
-	rcResultRankScore->GetNode("num_d_3")->SetPatternIndex(number3);
-	rcResultRankScore->GetNode("num_d_4")->SetPatternIndex(number4);
-	rcResultRankScore->GetNode("num_d_5")->SetPatternIndex(number5);
-	rcResultRankScore->GetNode("num_d_6")->SetPatternIndex(number6);
-	rcResultRankScore->GetNode("num_d_7")->SetPatternIndex(number7);
-	rcResultRankScore->GetNode("num_d_8")->SetPatternIndex(number8);
+	rcResultRankScore->GetNode("num_d_8")->SetPatternIndex(number1);
+	rcResultRankScore->GetNode("num_d_7")->SetPatternIndex(number2);
+	rcResultRankScore->GetNode("num_d_6")->SetPatternIndex(number3);
+	rcResultRankScore->GetNode("num_d_5")->SetPatternIndex(number4);
+	rcResultRankScore->GetNode("num_d_4")->SetPatternIndex(number5);
+	rcResultRankScore->GetNode("num_d_3")->SetPatternIndex(number6);
+	rcResultRankScore->GetNode("num_d_2")->SetPatternIndex(number7);
+	rcResultRankScore->GetNode("num_d_1")->SetPatternIndex(number8);
 #pragma endregion
 #pragma region num_score_brilliance
-	rcResultRankScore->GetNode("num_a_1")->SetPatternIndex(number1);
-	rcResultRankScore->GetNode("num_a_2")->SetPatternIndex(number2);
-	rcResultRankScore->GetNode("num_a_3")->SetPatternIndex(number3);
-	rcResultRankScore->GetNode("num_a_4")->SetPatternIndex(number4);
-	rcResultRankScore->GetNode("num_a_5")->SetPatternIndex(number5);
-	rcResultRankScore->GetNode("num_a_6")->SetPatternIndex(number6);
-	rcResultRankScore->GetNode("num_a_7")->SetPatternIndex(number7);
-	rcResultRankScore->GetNode("num_a_8")->SetPatternIndex(number8);
+	rcResultRankScore->GetNode("num_a_8")->SetPatternIndex(number1);
+	rcResultRankScore->GetNode("num_a_7")->SetPatternIndex(number2);
+	rcResultRankScore->GetNode("num_a_6")->SetPatternIndex(number3);
+	rcResultRankScore->GetNode("num_a_5")->SetPatternIndex(number4);
+	rcResultRankScore->GetNode("num_a_4")->SetPatternIndex(number5);
+	rcResultRankScore->GetNode("num_a_3")->SetPatternIndex(number6);
+	rcResultRankScore->GetNode("num_a_2")->SetPatternIndex(number7);
+	rcResultRankScore->GetNode("num_a_1")->SetPatternIndex(number8);
 #pragma endregion	
 #pragma region scorenum
 
-	rcResultScoreNum[0]->GetNode("num_c")->SetPatternIndex(number1);
-	rcResultScoreNum[0]->GetNode("num_c_brilliance")->SetPatternIndex(number1);
+	rcResultScoreNum[7]->GetNode("num_c")->SetPatternIndex(number1);
+	rcResultScoreNum[7]->GetNode("num_c_brilliance")->SetPatternIndex(number1);
 
-	rcResultScoreNum[1]->GetNode("num_c")->SetPatternIndex(number2);
-	rcResultScoreNum[1]->GetNode("num_c_brilliance")->SetPatternIndex(number2);
+	rcResultScoreNum[6]->GetNode("num_c")->SetPatternIndex(number2);
+	rcResultScoreNum[6]->GetNode("num_c_brilliance")->SetPatternIndex(number2);
 
-	rcResultScoreNum[2]->GetNode("num_c")->SetPatternIndex(number3);
-	rcResultScoreNum[2]->GetNode("num_c_brilliance")->SetPatternIndex(number3);
+	rcResultScoreNum[5]->GetNode("num_c")->SetPatternIndex(number3);
+	rcResultScoreNum[5]->GetNode("num_c_brilliance")->SetPatternIndex(number3);
 
-	rcResultScoreNum[3]->GetNode("num_c")->SetPatternIndex(number4);
-	rcResultScoreNum[3]->GetNode("num_c_brilliance")->SetPatternIndex(number4);
+	rcResultScoreNum[4]->GetNode("num_c")->SetPatternIndex(number4);
+	rcResultScoreNum[4]->GetNode("num_c_brilliance")->SetPatternIndex(number4);
 
-	rcResultScoreNum[4]->GetNode("num_c")->SetPatternIndex(number5);
-	rcResultScoreNum[4]->GetNode("num_c_brilliance")->SetPatternIndex(number5);
+	rcResultScoreNum[3]->GetNode("num_c")->SetPatternIndex(number5);
+	rcResultScoreNum[3]->GetNode("num_c_brilliance")->SetPatternIndex(number5);
 
-	rcResultScoreNum[5]->GetNode("num_c")->SetPatternIndex(number6);
-	rcResultScoreNum[5]->GetNode("num_c_brilliance")->SetPatternIndex(number6);
+	rcResultScoreNum[2]->GetNode("num_c")->SetPatternIndex(number6);
+	rcResultScoreNum[2]->GetNode("num_c_brilliance")->SetPatternIndex(number6);
 
-	rcResultScoreNum[6]->GetNode("num_c")->SetPatternIndex(number7);
-	rcResultScoreNum[6]->GetNode("num_c_brilliance")->SetPatternIndex(number7);
+	rcResultScoreNum[1]->GetNode("num_c")->SetPatternIndex(number7);
+	rcResultScoreNum[1]->GetNode("num_c_brilliance")->SetPatternIndex(number7);
 
-	rcResultScoreNum[7]->GetNode("num_c")->SetPatternIndex(number8);
-	rcResultScoreNum[7]->GetNode("num_c_brilliance")->SetPatternIndex(number8);
+	rcResultScoreNum[0]->GetNode("num_c")->SetPatternIndex(number8);
+	rcResultScoreNum[0]->GetNode("num_c_brilliance")->SetPatternIndex(number8);
 
 	//rcResultScoreNum[8]->GetNode("num_c")->SetPatternIndex(number8);
 	//rcResultScoreNum[8]->GetNode("num_c_brilliance")->SetPatternIndex(number8);
@@ -303,42 +304,47 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 		}
 		case HudResult::ResultState::Main:
 		{
-
+			//Unhide UI
 			rcResultTitle->SetHideFlag(false);
 			rcResultRankScore->SetHideFlag(false);
 			rcResultSideCounters->SetHideFlag(false);
 			rcResultRankSprite->SetHideFlag(false);
+
+			//Set intro
 			CSDCommon::PlayAnimation(*rcResultTitle, intro, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			CSDCommon::PlayAnimation(*rcResultRankScore, intro, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-
 			CSDCommon::PlayAnimation(*rcResultRankSprite, intro, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			CSDCommon::PlayAnimation(*rcResultSideCounters, "Intro_Anim_time", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+
 			for (size_t i = 0; i < 8; i++)
 			{
 				static char name[16];
 				sprintf(name, "num_c_%d", i + 1);
 
 				Hedgehog::Math::CVector2 posscore = rcResultRankScore->GetNode(name)->GetPosition();
-
 				CSDCommon::PlayAnimation(*rcResultScoreNum[i], intro, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				rcResultScoreNum[i]->SetHideFlag(false);
 				rcResultScoreNum[i]->SetPosition(posscore.x(), posscore.y());
 				rcResultScoreNum[i]->SetScale(2.5f, 2.5f);
 
 			}
+			//Rank fill
 			rcResultRankSprite->SetScale(2.5f, 2.5f);
 			Hedgehog::Math::CVector2 posrank = rcResultRankScore->GetNode("rank_bg_b")->GetPosition();
-
 			rcResultRankSprite->SetPosition(posrank.x(), posrank.y());
+
+			//Set time, ring, score counts
 			int millisecond = (int)(m_stageTime * 100.0f) % 100;
 			int second = (int)m_stageTime % 60;
 			int minute = (int)m_stageTime / 60;
 
 			static char time[16];
-			sprintf(time, "%02d:%02d.%02d", minute, second, millisecond);
+			static char score[16];
 			static char ring[16];
+			sprintf(time, "%02d:%02d.%02d", minute, second, millisecond);
 			sprintf(ring, "%04d", Sonic::Player::CPlayerSpeedContext::GetInstance()->m_RingCount);
 
-			static char score[16];
+			//Set score number
 			if (!m_ScoreEnabled)
 			{
 				sprintf(score, "%08d", m_resultData.m_score);
@@ -347,13 +353,11 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			{
 				sprintf(score, "%08d", ScoreGenerationsAPI::GetScore());
 			}
+
 			rcResultSideCounters->GetNode("num_time")->SetText(time);
 			rcResultSideCounters->GetNode("num_time_shade")->SetText(time);
-			CSDCommon::PlayAnimation(*rcResultSideCounters, "Intro_Anim_time", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			static SharedPtrTypeless soundHandle;
 
-			Common::PlaySoundStatic(soundHandle, 1010005);
-			Common::PlaySoundStatic(soundHandle, 1010002);
+			static SharedPtrTypeless soundHandle;
 			Common::PlaySoundStatic(soundHandle, 1000000);
 
 			startClick = true;
@@ -363,8 +367,6 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			SetScoreText(score);
 
 
-
-			printf("[Unleashed HUD] Result State: New Record\n");
 
 			hasNewRecord = false;
 			constexpr float newRecordX = 0.628125f * 1280.0f;
@@ -396,7 +398,6 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 
 
 			scoreSpinTimer = 00;
-			printf("[Unleashed HUD] Result State: Rank\n");
 
 			HudResult_PlayMotion(rcResultRankScore, "Intro_Anim");
 
@@ -558,59 +559,15 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	case HudResult::ResultState::FadeOut: break;
 	}
 }
-
-void DebugCombinedScore()
-{
-	printf("[Unleashed HUD] Score: %.f\n", m_stageData.m_enemyScore + m_stageData.m_trickScore);
-}
-
 HOOK(int, __fastcall, HudResult_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
 	m_stageData = HudResult::StageData();
 	return originalHudResult_MsgRestartStage(This, Edx, message);
 }
 
-
-#pragma region Hyper
-
-// https://github.com/ActualMandM/DllMods/blob/master/Source/CustomizableResultsMusic/Mod.cpp#L163
-__declspec(naked) void ResultTimer_MidAsmHook()
-{
-	static void* returnAddress = (void*)0x00CFD566;
-	static double timer = 8.56;
-
-	__asm
-	{
-		push eax
-		lea eax, timer
-		movsd xmm1, [eax]
-		pop eax
-		jmp[returnAddress]
-	}
-}
-
-// https://github.com/brianuuu/DllMods/blob/master/Source/Sonic06HUD/ResultUI.cpp#L38
-HOOK(int, __fastcall, CStateGoalFadeBefore, 0xCFE080, uint32_t* thisDeclaration)
-{
-	/* Adjust the results camera position so Sonic appears to
-	   be sitting on top of the bottom UI element like Colours. */
-
-	if (!StringHelper::IsEmpty(Configuration::UIType.c_str()))
-	{
-		WRITE_MEMORY(0x1A48C7C, float, -0.2f);   // X Position
-		WRITE_MEMORY(0x1A48C80, float, 1.25f);   // Y Position
-		WRITE_MEMORY(0x1A48C84, float, 9);       // Z Position
-		WRITE_MEMORY(0x1A48C88, float, 2);       // X Rotation
-		WRITE_MEMORY(0x1A48C8C, float, -10.25f); // Y Rotation
-	}
-
-	return originalCStateGoalFadeBefore(thisDeclaration);
-}
-
-#pragma endregion
 HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
 {
-
+	
 	printf("\nScoreSpinTimer: %f", scoreSpinTimer);
 	printf(" | DelayRingTimer: %f", delayRingAnim);
 	#pragma region Score Numbers
@@ -666,6 +623,9 @@ HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void*
 		if (rcResultSideCounters->m_MotionFrame == 25 && counterState == HudResult::WaitingForTime) //Start spinning animation at the 25th frame in the counter
 		{
 			scoreState = HudResult::ScoreRandomize;
+
+			Common::PlaySoundStatic(soundHandle, 1010005);
+			Common::PlaySoundStatic(soundHandle, 1010002);
 			scoreSpinTimer = 0;
 		}
 		if (rcResultSideCounters->m_MotionDisableFlag && counterState == HudResult::WaitingForTime) //Set variables when the first animation is done
@@ -716,6 +676,43 @@ HOOK(void*, __fastcall, HudResult_UpdateApplication, 0xE7BED0, void* This, void*
 	return originalHudResult_UpdateApplication(This, Edx, elapsedTime, a3);
 }
 
+#pragma region Hyper
+
+// https://github.com/ActualMandM/DllMods/blob/master/Source/CustomizableResultsMusic/Mod.cpp#L163
+__declspec(naked) void ResultTimer_MidAsmHook()
+{
+	static void* returnAddress = (void*)0x00CFD566;
+	static double timer = 8.56;
+
+	__asm
+	{
+		push eax
+		lea eax, timer
+		movsd xmm1, [eax]
+		pop eax
+		jmp[returnAddress]
+	}
+}
+
+// https://github.com/brianuuu/DllMods/blob/master/Source/Sonic06HUD/ResultUI.cpp#L38
+HOOK(int, __fastcall, CStateGoalFadeBefore, 0xCFE080, uint32_t* thisDeclaration)
+{
+	/* Adjust the results camera position so Sonic appears to
+	   be sitting on top of the bottom UI element like Colours. */
+
+	if (!StringHelper::IsEmpty(Configuration::UIType.c_str()))
+	{
+		WRITE_MEMORY(0x1A48C7C, float, -0.2f);   // X Position
+		WRITE_MEMORY(0x1A48C80, float, 1.25f);   // Y Position
+		WRITE_MEMORY(0x1A48C84, float, 9);       // Z Position
+		WRITE_MEMORY(0x1A48C88, float, 2);       // X Rotation
+		WRITE_MEMORY(0x1A48C8C, float, -10.25f); // Y Rotation
+	}
+
+	return originalCStateGoalFadeBefore(thisDeclaration);
+}
+
+#pragma endregion
 void HudResult::Install()
 {
 	// Get score multiplier so we can track them

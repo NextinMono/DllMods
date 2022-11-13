@@ -260,6 +260,7 @@ void HudLoading_CreateScene(hh::fnd::CStateMachineBase::CStateBase* This)
 
 	rcLoadingBG->SetPosition(0, 0/*, 720 / 2*/);
 	rcActInfo->GetNode("position")->SetScale(2.25f, 2.25f);
+	rcActInfo->GetNode("planet")->SetHideFlag(true);
 	rcLoadingBG->GetNode("top_shutter")->SetScale(2.25f, 2.25f);
 	rcLoadingBG->GetNode("top_shutter")->SetPosition(608, 0);
 	rcLoadingBG->GetNode("bottom_shutter")->SetScale(2.25f, 2.25f);
@@ -421,15 +422,6 @@ HOOK(void*, __fastcall, HudLoading_UpdateApplication, 0xE7BED0, void* This, void
 
 HOOK(int, __fastcall, HudLoading_CHudLoadingCStateUsualAdvance, 0x10926E0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	/*HudLoading_SetTailsText();
-
-	m_tailsTextScrollTimer -= m_applicationDeltaTime;
-	if (m_tailsTextScrollTimer < 0.0f)
-	{
-		m_tailsTextScrollTimer = 0.1f;
-		m_tailsTextStart = (m_tailsTextStart + 1) % m_tailsTextSize;
-	}*/
-
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 	rcActInfo->SetHideFlag(stageID == SMT_pam000);
 	rcLoadingBG->SetHideFlag(stageID == SMT_pam000);
@@ -510,7 +502,7 @@ HOOK(void, __fastcall, HudLoading_CHudGateMenuMainCStateOutroBegin, 0x107B770, h
 		{
 			if (v8 == 2)
 			{
-				/*HudLoading::StartFadeOut();*/
+				HudLoading::StartFadeOut();
 			}
 		}
 		else
@@ -519,7 +511,7 @@ HOOK(void, __fastcall, HudLoading_CHudGateMenuMainCStateOutroBegin, 0x107B770, h
 			uint32_t v9 = *(uint32_t*)(contextBase + 520);
 			if (v9 != 7 && v9 != 11 && v9 != 13)
 			{
-				/*HudLoading::StartFadeOut();*/
+				HudLoading::StartFadeOut();
 			}
 		}
 	}
@@ -545,6 +537,7 @@ void __declspec(naked) HudLoading_ExitStage()
 
 		// exit stage
 		mov		m_exitingStage, 1
+		call    HudLoading::StartFadeOut
 		jmp[skipAddress]
 
 		// restart stage
@@ -708,7 +701,7 @@ void HudLoading::Install()
 
 void HudLoading::StartFadeOut()  
 {
-	if (!rcLoadingBG) return;
+	if (!ogLoad) return;
 	m_isBG1Intro = true;
 	HudLoading_PlayMotion(ogLoad, "Intro_Anim");
 }
@@ -721,7 +714,7 @@ bool HudLoading::IsFadeOutCompleted()
 
 void HudLoading::StartResidentLoading()
 {
-	if (!rcLoadingBG) return;
+	if (!ogLoad) return;
 	m_isBG1Intro = true;
 	ogLoad->SetHideFlag(false);
 	HudLoading_PlayMotion(ogLoad, "Intro_Anim");/*
@@ -730,7 +723,8 @@ void HudLoading::StartResidentLoading()
 
 void HudLoading::EndResidentLoading()
 {
-	if (!rcLoadingBG) return;
+	if (!ogLoad) return;
+	ogLoad->SetHideFlag(false);
 	HudLoading_PlayMotion(ogLoad, "Outro_Anim");	/*
 	HudLoading_PlayMotion(rcLoadingBG, "Outro_Anim");*/
 }

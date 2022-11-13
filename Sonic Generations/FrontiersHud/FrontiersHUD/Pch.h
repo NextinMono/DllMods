@@ -24,4 +24,6 @@
 #include "CSDCommon.h"
 #include "Configuration.h"
 #include "HudSonicStage.h"
+#include "HudResult.h"
 #include "LetterboxHelper.h"
+#include "ArchivePatcher.h"

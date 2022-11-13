@@ -105,8 +105,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ArchivePatcher.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="CSDCommon.h" />
+    <ClInclude Include="HudResult.h" />
     <ClInclude Include="HudSonicStage.h" />
     <ClInclude Include="detours\include\detours.h" />
     <ClInclude Include="detours\include\detver.h" />
@@ -1828,7 +1830,9 @@
     <ClInclude Include="Pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ArchivePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="HudResult.cpp" />
     <ClCompile Include="HudSonicStage.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="LetterboxHelper.cpp" />

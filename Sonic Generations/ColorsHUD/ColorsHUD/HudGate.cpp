@@ -112,8 +112,8 @@ HOOK(int, __fastcall, CHudGateMenuMainIntroInfo, 0x1080110, hh::fnd::CStateMachi
 	colors_score->GetNode("act_6")->SetHideFlag(true);
 	CSDCommon::PlayAnimation(*colors_score, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 	colors_score->SetPosition(1280 / 2, 720 / 2 - 100);
-	colors_stageContainer->SetPosition(1280 / 2 - 8, 720 / 2 - 140);
-	colors_score->SetScale(1, 0.65f);
+	colors_stageContainer->SetPosition(1280 / 2 - 9, 720 / 2 - 138);
+	colors_score->SetScale(1.05f, 0.7f);
 
 
 	if(isBoss)

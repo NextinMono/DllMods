@@ -11,6 +11,8 @@ bool moved = false;
 bool hasSavefile = false;
 bool reversedAnim = false;
 bool inTitle = true;
+bool holdingStick = false;
+int holdTimer = 0;
 bool enteredMenu = false;
 static int movementInt; //has to be -1 or 1
 
@@ -86,8 +88,8 @@ void UnleashedTitleText()
 	rcTitleMenuTXT->SetPosition(0, 0);
 
 	if (currentTitleIndex < 0)
-		currentTitleIndex = 4;
-	else if (currentTitleIndex > 4)
+		currentTitleIndex = 3;
+	else if (currentTitleIndex > 3)
 		currentTitleIndex = 0;
 
 	rcTitleMenuTXT->GetNode("txt_0")->SetHideFlag(!(currentTitleIndex == 0));
@@ -191,6 +193,16 @@ HOOK(int, __fastcall, CTitleMainWait, 0x11D1410, int a1)
 	entered = false;
 	return originalCTitleMainWait(a1);
 }
+bool IsLeftDown() {
+	auto inputState = Sonic::CInputState::GetInstance();
+	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
+	return inputPtr->IsDown(Sonic::eKeyState_LeftStickLeft) || inputPtr->IsDown(Sonic::eKeyState_DpadLeft);
+}
+bool IsRightDown() {
+	auto inputState = Sonic::CInputState::GetInstance();
+	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
+	return inputPtr->IsDown(Sonic::eKeyState_LeftStickRight) || inputPtr->IsDown(Sonic::eKeyState_DpadRight);
+}
 float m_applicationDeltaTimeT = 0.0f;
 HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
@@ -240,36 +252,52 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 	}
 	if (rcTitleMenu) {
 
-		auto inputState = Sonic::CInputState::GetInstance();
-		auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
-
-		printf("Left Stick: %d", inputPtr->LeftStickVertical);
 
 
-		if (inputPtr->LeftStickHorizontal >= 0.5f && !moved)
+
+		if (IsRightDown() && !moved)
 		{
-			if (currentTitleIndex != 4)
-			{
-				currentTitleIndex += 1;
-				Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-				UnleashedTitleText();
-				moved = true;
+			if (currentTitleIndex > 3)
+				currentTitleIndex = 0;
 
-			}
+			currentTitleIndex += 1;
+			Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			UnleashedTitleText();
+			moved = true;
+
+
 		}
-		if (inputPtr->LeftStickHorizontal <= -0.5f && !moved  )
+		if (IsLeftDown() && !moved)
 		{
-			if (currentTitleIndex != 0)
-			{
-				currentTitleIndex -= 1;
-				Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-				UnleashedTitleText();
-			}
+			if (currentTitleIndex < 0)
+				currentTitleIndex = 3;
+
+			currentTitleIndex -= 1;
+			Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			UnleashedTitleText();
+
 			moved = true;
 		}
-
-		if (inputPtr->LeftStickHorizontal == 0)
+		
+		if ((!IsLeftDown() && !IsRightDown()) && moved)
+		{
+			holdTimer += 1;
 			moved = false;
+			holdTimer = 0;
+		}
+
+		if ((IsLeftDown() || IsRightDown()) && moved)
+		{
+			holdTimer = holdTimer + 1.0f;
+			printf("\nTIMER %d", holdTimer);
+			if (holdTimer > 20 )
+			{
+				if(currentTitleIndex > 0 && currentTitleIndex < 3)
+				moved = false;
+				holdTimer = 0;
+			}
+		}
+
 
 	}
 
@@ -303,6 +331,22 @@ void __declspec(naked) TitleUI_MoveUp()
 		jmp[pAddr]
 	}
 }
+void __declspec(naked) TitleUI_DisableOnlineModeButton()
+{
+	static uint32_t pAddr = 0x005708D7;
+	static uint32_t pAddr2 = 0x00570905;
+	__asm
+	{
+		cmp     ebp, -1
+		jmp[pAddr2]
+	}
+}
+void OnPressedUp() {
+	printf("Pressed up");
+}
+void OnPressedDown() {
+	printf("Pressed down");
+}
 void __declspec(naked) TitleUI_MoveDown()
 {
 	static uint32_t pAddr = 0x010BA6A4;
@@ -317,15 +361,7 @@ void __declspec(naked) TitleUI_MoveDown()
 		jmp[pAddr]
 	}
 }
-void OnPressedUp()
-{
-	
-}
 
-void OnPressedDown() 
-{
-
-}
 void __declspec(naked) TitleUI_MoveUpPress()
 {
 	static uint32_t pAddr = 0x010BA69C;
@@ -339,17 +375,21 @@ void __declspec(naked) TitleUI_MoveUpPress()
 }
 void __declspec(naked) TitleUI_MoveDownPress()
 {
-	static uint32_t pAddr = 0x010BA695;
+	static uint32_t pAddr = 0x010BA6A4;
 	static uint32_t loc = 0x010BA69E;
 	__asm
-	{
-		call OnPressedUp
-		jz loc_10BA69E
-		loc_10BA69E : 
+	{		
+		
+		test    esi, 80000h
+		jnz      downpress
+
+		downpress:
 			test    ebx, 40000h
+			call OnPressedDown
 		jmp[pAddr]
 	}
 }
+
 
 void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
@@ -363,7 +403,6 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	entered = false;
 	inTitle = false;
 	currentTitleIndex = 0;
-
 }
 
 HOOK(void, __fastcall, sub_647CB0, 0x647CB0, const char* This, int a2, int a3)
@@ -371,17 +410,34 @@ HOOK(void, __fastcall, sub_647CB0, 0x647CB0, const char* This, int a2, int a3)
 	return;
 }
 
+HOOK(int, __fastcall, ExecSubMenu, 0x572D00, DWORD* This)
+{
+	FUNCTION_PTR(int, __fastcall, sub_772C20, 0x772C20, DWORD* This);
+	auto v2 = sub_772C20(This);
+	auto result = (*(int(__thiscall**)(int))(*(DWORD*)v2 + 56))(v2);
+
+	///2: online mode
+	///3: options
+	///6: quit
+	switch (result)
+	{
+	case 2: return 0;
+	default:return originalExecSubMenu(This);
+	}
+}
 void Title::Install()
 {
-	/*INSTALL_HOOK(test);*/
 	WRITE_JUMP(0x010BA68D, TitleUI_MoveUp);
 	WRITE_JUMP(0x010BA69E, TitleUI_MoveDown);
 	WRITE_JUMP(0x010BA695, TitleUI_MoveUpPress);
+	WRITE_JUMP(0x005708DB, TitleUI_DisableOnlineModeButton);
 	WRITE_MEMORY(0x016E11F4, void*, CHudSonicStageRemoveCallback);
-	//WRITE_MEMORY(0x010BA68D, Sonic::EKeyState, Sonic::EKeyState::eKeyState_Y);
+	WRITE_MEMORY(0X005709F0, uint8_t, 3);
+	WRITE_MEMORY(0x015686E4, float, 93); //Set title AFK wait amount
 	INSTALL_HOOK(CMainCState_SelectMenuBegin);
 	INSTALL_HOOK(Title_UpdateApplication);
 	INSTALL_HOOK(sub_647CB0);
+	INSTALL_HOOK(ExecSubMenu);
 	INSTALL_HOOK(CTitleMain);
 	INSTALL_HOOK(CTitleMainWait);
 	INSTALL_HOOK(CTitleMainSelect);
