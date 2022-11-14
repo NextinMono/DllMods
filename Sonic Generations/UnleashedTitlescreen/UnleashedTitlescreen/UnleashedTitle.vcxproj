@@ -1826,6 +1826,7 @@
     <ClInclude Include="include\Tables.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="Title.h" />
+    <ClInclude Include="TitleOption.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Configuration.cpp" />
@@ -1836,6 +1837,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Title.cpp" />
+    <ClCompile Include="TitleOption.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="detours\lib\x64\detours.lib" />
