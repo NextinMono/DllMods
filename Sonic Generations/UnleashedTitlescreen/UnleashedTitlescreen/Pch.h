@@ -9,6 +9,7 @@
 #include "Helpers.h"
 #include "Common.h"
 #include "ScoreGenerationsAPI.h"
+#include "ArchivePatcher.h"
 
 #include <cstdint>
 #include <cstdio>

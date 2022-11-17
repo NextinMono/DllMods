@@ -105,6 +105,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ArchivePatcher.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="CSDCommon.h" />
@@ -1829,6 +1830,7 @@
     <ClInclude Include="TitleOption.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ArchivePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CSDCommon.cpp" />
     <ClCompile Include="dllmain.cpp" />

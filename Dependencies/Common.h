@@ -888,6 +888,11 @@ enum StageMissionType : uint32_t
 
 namespace Common
 {
+	inline void ClampFloat(float& number, float min, float max)
+	{
+		if (number < min) number = min;
+		if (number > max) number = max;
+	}
 	inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
 	{
 		if (!*PLAYER_CONTEXT) return false;

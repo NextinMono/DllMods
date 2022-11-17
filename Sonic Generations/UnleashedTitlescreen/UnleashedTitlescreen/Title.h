@@ -17,5 +17,6 @@ public:
 	static void KillScreen();
 	static void SetHideEverything(const bool visible);
 	static void SetSubmenu(bool enabled);
+	static void SetScrollDirection(bool horizontal);
 	static void IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene);
 };
