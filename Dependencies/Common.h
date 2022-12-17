@@ -893,6 +893,16 @@ namespace Common
 		if (number < min) number = min;
 		if (number > max) number = max;
 	}
+	inline uint32_t RepeatUInt32(uint32_t value, uint32_t min, uint32_t max)
+	{
+		if (value > max)
+			return min;
+		else if (value < min)
+			return max;
+		else
+			return value;
+	}
+
 	inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
 	{
 		if (!*PLAYER_CONTEXT) return false;

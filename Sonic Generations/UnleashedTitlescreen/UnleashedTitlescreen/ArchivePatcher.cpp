@@ -49,6 +49,5 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 void ArchivePatcher::Install()
 {
-	archiveDependencies.push_back(ArchiveDependency("TitleUI", { "Title" }));
 	INSTALL_HOOK(ParseArchiveTree);
 }

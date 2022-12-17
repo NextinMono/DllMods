@@ -1,15 +1,20 @@
 #pragma once
-#include "Camera.h"
 class Title
 {
 	
 public:
-	Camera* camera;
 
 	enum TitleState {
 		WaitForMovie,
 		ExecSubmenu,
 
+	};
+
+	static enum TitleIndexState {
+		New_Game,
+		Continue,
+		Options,
+		Quit
 	};
 	static void Install();
 	static void CreateScreen(Sonic::CGameObject* pParentGameObject);

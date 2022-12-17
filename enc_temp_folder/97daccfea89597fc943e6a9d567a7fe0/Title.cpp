@@ -28,7 +28,7 @@ void __declspec(naked) TitleUI_SetCutsceneTimer()
 {
 	static uint32_t pAddr = 0x00571FD1;
 	static uint32_t pAddr2 = 0x05722FF;
-	static float f = 93.0f;
+	static uint32_t f = 93.0f;
 	__asm
 	{	
 		movss xmm1, f
@@ -37,10 +37,10 @@ void __declspec(naked) TitleUI_SetCutsceneTimer()
 		jmp Goto1
 		Goto2 :
 
-		jmp[pAddr]
+		jmp[pAddr2]
 
 	Goto1:
-		jmp[pAddr2]
+		jmp[pAddr]
 	}
 }
 void __declspec(naked) TitleUI_DisableScrollSound()
@@ -374,8 +374,6 @@ HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 	if (rcTitleMenuScroll)
 	rcTitleMenuScroll->SetPosition(0, 65000);
 	reversedAnim = true;
-	playingStart = true;
-	startAnimComplete = false;
 	inTitle = true;
 	entered = false;
 	return originalTitle_CMain_CState_WaitStart(a1);
@@ -406,13 +404,6 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 			startAnimComplete = true;
 			CSDCommon::PlayAnimation(*rcTitleLogo_1, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 
-		}
-	}
-	if (rcTitleMenu && inTitle)
-	{
-		if (rcTitleMenu->m_MotionDisableFlag == 1 && !startAnimComplete && playingStart)
-		{
-			CSDCommon::PlayAnimation(*rcTitleMenu, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 		}
 	}
 	
@@ -513,19 +504,20 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 void Title::Install()
 {
 	//Set up title screen so that it resembles Unleashed function-wise
-	WRITE_JUMP(0x00571FCA, TitleUI_SetCutsceneTimer); //Set title AFK wait amount - it varies depending on framerate
-	//WRITE_JUMP(0x010BA68D, TitleUI_MoveUp); //Set Left instead of Up
-	//WRITE_JUMP(0x010BA69E, TitleUI_MoveDown); //Set Right instead of Down
+	//WRITE_MEMORY(0x015686E4, float, 93); //Set title AFK wait amount - it varies depending on framerate
+	WRITE_JUMP(0x00571FCA, TitleUI_SetCutsceneTimer); //Set Left instead of Up
+	WRITE_JUMP(0x010BA68D, TitleUI_MoveUp); //Set Left instead of Up
+	WRITE_JUMP(0x010BA69E, TitleUI_MoveDown); //Set Right instead of Down
 	WRITE_JUMP(0x00572D23, TitleUI_SetCustomExecFunction); //Override Button Function
 	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance);
 	WRITE_JUMP(0x00572B2E, TitleUI_DisableScrollSound);
 
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);
-	WRITE_MEMORY(0x016E11F4, void*, CTitleRemoveCallback);
-	WRITE_JUMP(0x572D3A, (void*)0x57326B); // Don't create delete save dialog
-	WRITE_NOP(0x00572976, 6); //Always skip waiting for anim in ExecSubMenu
-	WRITE_NOP(0x00572930, 6); //Always skip waiting for anim in ExecSubMenu
+	//WRITE_MEMORY(0x016E11F4, void*, CTitleRemoveCallback);
+	//WRITE_JUMP(0x572D3A, (void*)0x57326B); // Don't create delete save dialog
+	//WRITE_NOP(0x00572976, 6); //Always skip waiting for anim in ExecSubMenu
+	//WRITE_NOP(0x00572930, 6); //Always skip waiting for anim in ExecSubMenu
 
 
 	//State Hooks

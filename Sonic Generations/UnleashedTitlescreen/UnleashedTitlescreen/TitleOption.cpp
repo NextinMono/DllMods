@@ -90,7 +90,7 @@ void __declspec(naked) TitleUI_DisableOptionsMusic()
 {
 	//https://godbolt.org/
 	static uint32_t pAddr = 0x00573142;
-	__asm // this is an else if chain. i wanted to do a switch statement but it didnt work.
+	__asm 
 	{
 		jmp[pAddr]
 	}
