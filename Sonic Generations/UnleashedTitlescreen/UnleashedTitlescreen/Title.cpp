@@ -3,13 +3,13 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcTitleLogo_1, rcTitlebg, rcTitleMenu, rcTit
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreen;
 
 Title::TitleIndexState currentTitleIndex = Title::TitleIndexState::New_Game;
-bool entered, submenu, moved, hasSavefile, playingStart, reversedAnim, holdingStick, fadeOut,startAnimComplete, startButtonAnimComplete, startBgAnimComplete, pressedA, enteredMenu, parsedSave = false;
+bool enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim,isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete, parsedSave = false;
 bool inTitle, scrollHorizontally = true;
 int holdTimer = 0;
 
 void Title::SetSubmenu(bool enabled)
 {
-	submenu = enabled;
+	isInSubmenu = enabled;
 }
 void Title::SetScrollDirection(bool horizontal)
 {
@@ -20,7 +20,7 @@ void ExitingTitle()
 	Title::SetScrollDirection(false);
 	Title::SetSubmenu(false);
 	inTitle = false;
-	startAnimComplete = false;
+	isStartAnimComplete = false;
 }
 
 
@@ -96,7 +96,7 @@ void __declspec(naked) TitleUI_SetCustomExecFunction()
 			Quit :
 		cmp     currentTitleIndex, 3
 			jne	FunctionFinish
-			mov submenu, 1
+			mov isInSubmenu, 1
 			jmp[adQuit]
 
 			FunctionFinish :
@@ -115,7 +115,7 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 	{
 		cmp     currentTitleIndex, 0
 		jne	Continue
-		mov submenu, 0
+		mov isInSubmenu, 0
 		call ExitingTitle
 		jmp[adNewGame]
 		jmp	FunctionFinish
@@ -137,40 +137,42 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 			cmp     currentTitleIndex, 3
 			jne	FunctionFinish
 			jmp[adQuit]
-			mov submenu, 1
+			mov isInSubmenu, 1
 
 		FunctionFinish :
 			jmp[pAddr]
 	}
 }
-void __declspec(naked) TitleUI_MoveUp()
-{
-	static uint32_t pAddr = 0x010BA693;
-	static uint32_t movement = 0x80000;
-	if (inTitle && scrollHorizontally && !submenu) //this is global to all of gens for some reason
-		movement = 0x200000;
-	else
-		movement = 0x80000;
-	__asm
-	{
-		test    esi, movement
-		jmp[pAddr]
-	}
-}
-void __declspec(naked) TitleUI_MoveDown()
-{
-	static uint32_t pAddr = 0x010BA6A4;
-	static uint32_t movement = 0x40000;
-	if (inTitle && scrollHorizontally) //this is global to all of gens for some reason
-		movement = 0x100000;
-	else
-		movement = 0x40000;
-	__asm
-	{
-		test    ebx, movement
-		jmp[pAddr]
-	}
-}
+//old but dont remove
+
+//void __declspec(naked) TitleUI_MoveUp()
+//{
+//	static uint32_t pAddr = 0x010BA693;
+//	static uint32_t movement = 0x80000;
+//	if (inTitle && scrollHorizontally && !isInSubmenu) //this is global to all of gens for some reason
+//		movement = 0x200000;
+//	else
+//		movement = 0x80000;
+//	__asm
+//	{
+//		test    esi, movement
+//		jmp[pAddr]
+//	}
+//}
+//void __declspec(naked) TitleUI_MoveDown()
+//{
+//	static uint32_t pAddr = 0x010BA6A4;
+//	static uint32_t movement = 0x40000;
+//	if (inTitle && scrollHorizontally) //this is global to all of gens for some reason
+//		movement = 0x100000;
+//	else
+//		movement = 0x40000;
+//	__asm
+//	{
+//		test    ebx, movement
+//		jmp[pAddr]
+//	}
+//}
 
 void __fastcall CTitleRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
@@ -181,7 +183,7 @@ void __fastcall CTitleRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGa
 	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuScroll);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuTXT);
 	rcTitleScreen = nullptr;
-	entered, submenu, moved, hasSavefile, playingStart, reversedAnim, holdingStick, fadeOut, startAnimComplete, startButtonAnimComplete, startBgAnimComplete, pressedA, enteredMenu = false;
+	enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim,isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
 	inTitle, parsedSave = false;
 	currentTitleIndex = Title::TitleIndexState::New_Game;
 	holdTimer = 0;
@@ -246,7 +248,7 @@ void UpdateTitleText()
 HOOK(void, __fastcall, Title_CMain_CState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	/*originalTitle_CMain_CState_SelectMenuBegin(This);*/
-	submenu = false;
+	isInSubmenu = false;
 	if (!parsedSave)
 	{
 		uint32_t owner = (uint32_t)(This->GetContextBase());
@@ -271,14 +273,7 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 	CTitleRemoveCallback(This, nullptr, nullptr);
 	Title::SetScrollDirection(true);
 	/*MakeTitleLight();*/
-
-
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-
-
-
-
-
 	auto spCsdProject = wrapper.GetCsdProject("ui_title_unleashed");
 	rcTitleScreen = spCsdProject->m_rcProject;
 	Configuration::Read();
@@ -330,7 +325,7 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 	if(rcTitleLogo_1)
 	CSDCommon::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
-	playingStart = true;
+	playingStartAnim = true;
 	Title::CreateScreen(This);
 	
 	return originalTitle_CMain(This, Edx, a2, a3, a4);
@@ -338,7 +333,7 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 
 HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	if (entered)
+	if (enteredStart)
 		return originalTitle_CMain_CState_SelectMenu(This);
 
 	if(rcTitleMenu)
@@ -355,7 +350,7 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 	if (rcTitleMenuScroll)	
 		rcTitleMenuScroll->SetPosition(0, 0);
 	
-	entered = true;
+	enteredStart = true;
 	UpdateTitleText();
 
 	return originalTitle_CMain_CState_SelectMenu(This);
@@ -363,7 +358,7 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 
 HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 {
-	if (entered && rcTitleMenu && rcTitlebg)
+	if (enteredStart && rcTitleMenu && rcTitlebg)
 	{
 		CSDCommon::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, false, true);
 		CSDCommon::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 30, 100, false, true);
@@ -374,10 +369,10 @@ HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 	if (rcTitleMenuScroll)
 	rcTitleMenuScroll->SetPosition(0, 65000);
 	reversedAnim = true;
-	playingStart = true;
-	startAnimComplete = false;
+	playingStartAnim = true;
+	isStartAnimComplete = false;
 	inTitle = true;
-	entered = false;
+	enteredStart = false;
 	return originalTitle_CMain_CState_WaitStart(a1);
 }
 bool IsLeftDown() {
@@ -393,84 +388,82 @@ bool IsRightDown() {
 
 HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
-	auto inputState = Sonic::CInputState::GetInstance();
-	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
-	pressedA = inputPtr->IsDown(Sonic::eKeyState_A);
-	if (currentTitleIndex == 3 && submenu && inputPtr->IsDown(Sonic::eKeyState_B)) //janky way of knowing when the quit prompt is aborted
-		submenu = false;
-
-	if (rcTitleLogo_1 && inTitle)
+	if (inTitle)
 	{
-		if (rcTitleLogo_1->m_MotionDisableFlag == 1 && !startAnimComplete && playingStart)
-		{
-			startAnimComplete = true;
-			CSDCommon::PlayAnimation(*rcTitleLogo_1, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+		auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 
-		}
-	}
-	if (rcTitleMenu && inTitle)
-	{
-		if (rcTitleMenu->m_MotionDisableFlag == 1 && !startAnimComplete && playingStart)
-		{
-			CSDCommon::PlayAnimation(*rcTitleMenu, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-		}
-	}
-	
-	if (rcTitlebg && entered && inTitle)
-	{
-		if (rcTitlebg->m_MotionDisableFlag == 1 && !startBgAnimComplete && playingStart)
-		{
-			startBgAnimComplete = true;
-			CSDCommon::PlayAnimation(*rcTitlebg, "Usual_Anim_2", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-		}
-	}
+		if (currentTitleIndex == 3 && isInSubmenu && inputPtr->IsDown(Sonic::eKeyState_B)) //janky way of knowing when the quit prompt is aborted
+			isInSubmenu = false;
 
-#pragma region UIScroll
-	if (rcTitleMenu && !submenu && entered)
-	{
-		if (IsRightDown() && !moved)
+		if (rcTitleLogo_1) //Logo loop anim
 		{
-			currentTitleIndex = (Title::TitleIndexState)((int)(currentTitleIndex)+1);
-			if (currentTitleIndex > 3)
-				currentTitleIndex = Title::TitleIndexState::New_Game;
-
-			CSDCommon::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			CSDCommon::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 100, false, true);
-			UpdateTitleText();
-			moved = true;
-		}
-		if (IsLeftDown() && !moved)
-		{
-			currentTitleIndex = (Title::TitleIndexState)((int)(currentTitleIndex)-1);
-			if (currentTitleIndex < 0 || currentTitleIndex > 3) //uint32s become huge when going negative
-				currentTitleIndex = Title::TitleIndexState::Quit;
-
-			CSDCommon::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			CSDCommon::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 100, false, true);
-			UpdateTitleText();
-			moved = true;
-		}
-		if ((!IsLeftDown() && !IsRightDown()) && moved)
-		{
-			holdTimer += 1;
-			moved = false;
-			holdTimer = 0;
-		}
-		if ((IsLeftDown() || IsRightDown()) && moved)
-		{
-			holdTimer = holdTimer + 1.0f;
-			printf("\nTIMER %d", holdTimer);
-			if (holdTimer > 20)
+			if (rcTitleLogo_1->m_MotionDisableFlag == 1 && !isStartAnimComplete && playingStartAnim)
 			{
-				if (currentTitleIndex > 0 && currentTitleIndex < 3)
-					moved = false;
-				holdTimer = 0;
+				isStartAnimComplete = true;
+				CSDCommon::PlayAnimation(*rcTitleLogo_1, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+
 			}
 		}
-	}
-#pragma endregion
+		if (rcTitleMenu) //PRESS START loop anim
+		{
+			if (rcTitleMenu->m_MotionDisableFlag == 1 && !isStartAnimComplete && playingStartAnim)
+			{
+				CSDCommon::PlayAnimation(*rcTitleMenu, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+			}
+		}
+		if (rcTitlebg && enteredStart) //Pulse header anim
+		{
+			if (rcTitlebg->m_MotionDisableFlag == 1 && !startBgAnimComplete && playingStartAnim)
+			{
+				startBgAnimComplete = true;
+				CSDCommon::PlayAnimation(*rcTitlebg, "Usual_Anim_2", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+			}
+		}
+#pragma region UIScroll
+		if (rcTitleMenu && !isInSubmenu && enteredStart)
+		{
+			if (IsRightDown() && !moved)
+			{
+				currentTitleIndex = (Title::TitleIndexState)((int)(currentTitleIndex)+1);
+				if (currentTitleIndex > 3)
+					currentTitleIndex = Title::TitleIndexState::New_Game;
 
-	
+				CSDCommon::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 100, false, true);
+				UpdateTitleText();
+				moved = true;
+			}
+			if (IsLeftDown() && !moved)
+			{
+				currentTitleIndex = (Title::TitleIndexState)((int)(currentTitleIndex)-1);
+				if (currentTitleIndex < 0 || currentTitleIndex > 3) //uint32s become huge when going negative
+					currentTitleIndex = Title::TitleIndexState::Quit;
+
+				CSDCommon::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 100, false, true);
+				UpdateTitleText();
+				moved = true;
+			}
+			if ((!IsLeftDown() && !IsRightDown()) && moved)
+			{
+				holdTimer += 1;
+				moved = false;
+				holdTimer = 0;
+			}
+			if ((IsLeftDown() || IsRightDown()) && moved)
+			{
+				holdTimer = holdTimer + 1.0f;
+				printf("\nTIMER %d", holdTimer);
+				if (holdTimer > 20)
+				{
+					if (currentTitleIndex > 0 && currentTitleIndex < 3)
+						moved = false;
+					holdTimer = 0;
+				}
+			}
+		}
+#pragma endregion
+	}
 	return originalTitle_UpdateApplication(This, Edx, elapsedTime, a3);
 }
 
@@ -478,47 +471,37 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 {
 	int returned = 0;
-	if (currentTitleIndex >2 && !submenu)
+	if (currentTitleIndex >2 && !isInSubmenu)
 	{
-		submenu = true;
+		isInSubmenu = true;
 		returned = originalTitle_CMain_ExecSubMenu(This);
 	}
 	else if (currentTitleIndex < 2)
-		submenu = false;
+		isInSubmenu = false;
 
-	if(!submenu)
+	if(!isInSubmenu)
 		return originalTitle_CMain_ExecSubMenu(This);
 	else 
 		return returned; //will 9/10 times return 0
 	
 }
-HOOK(void, __fastcall, afgafagag, 0x58C710, Sonic::CGameObject* This, int a2, void*Edx)
-{
-	auto lightObject = (Sonic::CGameObject3D*)((UINT32)This + 0xA8);
-
-	if (static_cast<uint8_t>(GetAsyncKeyState('K')))
-		lightObject->SendMessageImm(lightObject->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-	originalafgafagag(This, a2, Edx);
-}
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	if (!submenu)
+	if (!isInSubmenu)
 		return originalTitleUI_TitleCMainCState_SelectMenuAdvance(This);
 	else
 	{
 		originalTitleUI_TitleCMainCState_SelectMenuAdvance(This);
-		submenu = true;
+		isInSubmenu = true;
 	}
 }
 void Title::Install()
 {
 	//Set up title screen so that it resembles Unleashed function-wise
 	WRITE_JUMP(0x00571FCA, TitleUI_SetCutsceneTimer); //Set title AFK wait amount - it varies depending on framerate
-	//WRITE_JUMP(0x010BA68D, TitleUI_MoveUp); //Set Left instead of Up
-	//WRITE_JUMP(0x010BA69E, TitleUI_MoveDown); //Set Right instead of Down
 	WRITE_JUMP(0x00572D23, TitleUI_SetCustomExecFunction); //Override Button Function
-	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance);
-	WRITE_JUMP(0x00572B2E, TitleUI_DisableScrollSound);
+	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance); //Override button after-function
+	WRITE_JUMP(0x00572B2E, 0x00572B45); //Disable scroll sound
 
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);
@@ -533,7 +516,6 @@ void Title::Install()
 	INSTALL_HOOK(Title_CMain_ExecSubMenu);
 	INSTALL_HOOK(Title_CMain_CState_SelectMenuBegin);
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuAdvance);
-	INSTALL_HOOK(afgafagag);
 	INSTALL_HOOK(Title_CMain_CState_WaitStart);
 	INSTALL_HOOK(Title_CMain_CState_SelectMenu);
 }

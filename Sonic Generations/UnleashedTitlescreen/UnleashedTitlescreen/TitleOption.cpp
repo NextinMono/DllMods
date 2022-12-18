@@ -44,6 +44,7 @@ HOOK(void, __fastcall, TitleOption_CMain_CStateOutro, 0xD22A70, int a1,int a2, D
 	leaving = true;
 	Title::SetScrollDirection(true);
 	Title::SetHideEverything(false);
+	Title::SetSubmenu(false);
 	if(headerBG)
 	CSDCommon::PlayAnimation(*headerBG, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 60, 0, false, true);
 	if (headerIMG)
