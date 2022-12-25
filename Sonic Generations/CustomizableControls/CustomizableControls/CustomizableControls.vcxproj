@@ -12,11 +12,11 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{C59A48F1-7673-4A1E-B829-D5FC590CB594}</ProjectGuid>
+    <ProjectGuid>{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>UnleashedTitle</RootNamespace>
+    <RootNamespace>CustomizableControls</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>UnleashedTitle</ProjectName>
+    <ProjectName>CustomizableControls</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -46,14 +46,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\UnleashedTitlescreenGens</OutDir>
+    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\CustomizableControls</OutDir>
     <IncludePath>$(SolutionDir)Dependencies\BlueBlur\;$(SolutionDir)Dependencies;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Dependencies\BlueBlur;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(SolutionDir)$(Configuration)\objects\</IntDir>
-    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\UnleashedTitlescreenGens</OutDir>
+    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\CustomizableControls</OutDir>
     <IncludePath>$(SolutionDir)Dependencies\BlueBlur\;$(SolutionDir)Dependencies;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Dependencies\BlueBlur;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -107,7 +107,6 @@
   <ItemGroup>
     <ClInclude Include="ArchivePatcher.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="CSDCommon.h" />
     <ClInclude Include="detours\include\detours.h" />
     <ClInclude Include="detours\include\detver.h" />
     <ClInclude Include="detours\include\syelog.h" />
@@ -1824,25 +1823,18 @@
     <ClInclude Include="include\Statistics.h" />
     <ClInclude Include="include\StringHelper.h" />
     <ClInclude Include="include\Tables.h" />
-    <ClInclude Include="LetterboxHelper.h" />
     <ClInclude Include="Pch.h" />
-    <ClInclude Include="Title.h" />
-    <ClInclude Include="TitleOption.h" />
-    <ClInclude Include="TitleWorldMap.h" />
+    <ClInclude Include="SonicPlugin.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArchivePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="CSDCommon.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="LetterboxHelper.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Title.cpp" />
-    <ClCompile Include="TitleOption.cpp" />
-    <ClCompile Include="TitleWorldMap.cpp" />
+    <ClCompile Include="SonicPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="detours\lib\x64\detours.lib" />

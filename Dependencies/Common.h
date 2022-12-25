@@ -12,6 +12,7 @@
 #include <fstream>
 #include <filesystem>
 #include "IniReader.h"
+#include "CustomBlueBlur.h"
 
 typedef void CSonicContext;
 CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;

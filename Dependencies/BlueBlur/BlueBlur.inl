@@ -61,6 +61,10 @@ namespace Hedgehog::Math
     using CVector = Eigen::AlignedVector3<float>;
     using CVector2 = Eigen::Vector2f;
     using CVector4 = Eigen::Vector4f;
+    CVector Up()
+    {
+        return CVector(0, 1, 0);
+    }
 }
 
 struct bb_null_ctor{};

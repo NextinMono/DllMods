@@ -8,8 +8,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{0D6EA3
 		Sonic Generations\BlueBlurCommon.h = Sonic Generations\BlueBlurCommon.h
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlackKnightHUD", "Sonic Generations\BlackKnightHUD\BlackKnightHUD.vcxproj", "{5BD6599F-193F-4019-9940-60CD2F88B924}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCU", "Sonic Generations\ColorsHUD\ColorsHUD\ColorsHUD.vcxproj", "{30C32A8F-341B-42EB-AE08-43119AB25E46}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnleashedTitle", "Sonic Generations\UnleashedTitlescreen\UnleashedTitlescreen\UnleashedTitle.vcxproj", "{C59A48F1-7673-4A1E-B829-D5FC590CB594}"
@@ -18,16 +16,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SRHUD", "Sonic Generations\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FrontiersHUD", "Sonic Generations\FrontiersHud\FrontiersHUD\FrontiersHUD.vcxproj", "{776A098D-958C-46B1-958B-31E59F3DA638}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomizableControls", "Sonic Generations\CustomizableControls\CustomizableControls\CustomizableControls.vcxproj", "{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5BD6599F-193F-4019-9940-60CD2F88B924}.Debug|x86.ActiveCfg = Debug|Win32
-		{5BD6599F-193F-4019-9940-60CD2F88B924}.Debug|x86.Build.0 = Debug|Win32
-		{5BD6599F-193F-4019-9940-60CD2F88B924}.Release|x86.ActiveCfg = Release|Win32
-		{5BD6599F-193F-4019-9940-60CD2F88B924}.Release|x86.Build.0 = Release|Win32
 		{30C32A8F-341B-42EB-AE08-43119AB25E46}.Debug|x86.ActiveCfg = Debug|Win32
 		{30C32A8F-341B-42EB-AE08-43119AB25E46}.Debug|x86.Build.0 = Debug|Win32
 		{30C32A8F-341B-42EB-AE08-43119AB25E46}.Release|x86.ActiveCfg = Release|Win32
@@ -44,6 +40,10 @@ Global
 		{776A098D-958C-46B1-958B-31E59F3DA638}.Debug|x86.Build.0 = Debug|Win32
 		{776A098D-958C-46B1-958B-31E59F3DA638}.Release|x86.ActiveCfg = Release|Win32
 		{776A098D-958C-46B1-958B-31E59F3DA638}.Release|x86.Build.0 = Release|Win32
+		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Debug|x86.ActiveCfg = Debug|Win32
+		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Debug|x86.Build.0 = Debug|Win32
+		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Release|x86.ActiveCfg = Release|Win32
+		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

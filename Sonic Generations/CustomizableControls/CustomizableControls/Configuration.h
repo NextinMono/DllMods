@@ -10,7 +10,6 @@ public:
 	/// </summary>
 	static void Read();
 
-	static int LogoType;
-	static bool IgnoreWarnings;
+	static int BoostButton;
 };
 

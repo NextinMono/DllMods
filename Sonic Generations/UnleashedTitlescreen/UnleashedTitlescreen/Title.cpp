@@ -3,10 +3,12 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcTitleLogo_1, rcTitlebg, rcTitleMenu, rcTit
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreen;
 
 Title::TitleIndexState currentTitleIndex = Title::TitleIndexState::New_Game;
-bool enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim,isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete, parsedSave = false;
+bool enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim, isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete, parsedSave = false;
 bool inTitle, scrollHorizontally = true;
 int holdTimer = 0;
-
+boost::shared_ptr<Sonic::CCamera> spCamera;
+Sonic::CCamera* cameraa2;
+static uint32_t cameraInitRan = 0;
 void Title::SetSubmenu(bool enabled)
 {
 	isInSubmenu = enabled;
@@ -30,7 +32,7 @@ void __declspec(naked) TitleUI_SetCutsceneTimer()
 	static uint32_t pAddr2 = 0x05722FF;
 	static float f = 93.0f;
 	__asm
-	{	
+	{
 		movss xmm1, f
 		comiss xmm0, xmm1
 		jg Goto2
@@ -39,14 +41,14 @@ void __declspec(naked) TitleUI_SetCutsceneTimer()
 
 		jmp[pAddr]
 
-	Goto1:
-		jmp[pAddr2]
+			Goto1 :
+			jmp[pAddr2]
 	}
 }
 void __declspec(naked) TitleUI_DisableScrollSound()
 {
 	static uint32_t pAddr = 0x00572B45;
-	__asm 
+	__asm
 	{
 		jmp[pAddr]
 	}
@@ -54,14 +56,14 @@ void __declspec(naked) TitleUI_DisableScrollSound()
 void __declspec(naked) TitleUI_test()
 {
 	static uint32_t pAddr = 0x0058C453;
-	__asm 
+	__asm
 	{
 		jmp[pAddr]
 	}
 }void __declspec(naked) TitleUI_test2()
 {
 	static uint32_t pAddr = 0x0058C69F;
-	__asm 
+	__asm
 	{
 		jmp[pAddr]
 	}
@@ -121,25 +123,25 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 		jmp	FunctionFinish
 
 		Continue :
-			cmp     currentTitleIndex, 1
+		cmp     currentTitleIndex, 1
 			jne	Options
 			call ExitingTitle
 			jmp[adContinue]
 			jmp	FunctionFinish
 
-		Options :
-			cmp     currentTitleIndex, 2
+			Options :
+		cmp     currentTitleIndex, 2
 			jne Quit
 			jmp[adOptions]
 			jmp	FunctionFinish
 
-		Quit :
-			cmp     currentTitleIndex, 3
+			Quit :
+		cmp     currentTitleIndex, 3
 			jne	FunctionFinish
 			jmp[adQuit]
 			mov isInSubmenu, 1
 
-		FunctionFinish :
+			FunctionFinish :
 			jmp[pAddr]
 	}
 }
@@ -183,7 +185,7 @@ void __fastcall CTitleRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGa
 	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuScroll);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuTXT);
 	rcTitleScreen = nullptr;
-	enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim,isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
+	enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim, isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
 	inTitle, parsedSave = false;
 	currentTitleIndex = Title::TitleIndexState::New_Game;
 	holdTimer = 0;
@@ -198,7 +200,11 @@ void Title::SetHideEverything(bool visible) {
 void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
 	if (rcTitleScreen && !spTitleScreen)
+	{
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreen, 0.5f, "HUD", false), "main", pParentGameObject);
+
+		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(Hedgehog::math::CQuaternion(1, 1, 1, 1)));
+	}
 }
 
 void Title::KillScreen()
@@ -265,14 +271,14 @@ void MakeTitleLight()
 	auto rcLight = boost::make_shared<Hedgehog::Mirage::CLightData>();
 	rcLight->m_Color = { 0.5976471f, 0.5835295f,0.5364707f, 1 };
 	rcLight->m_Position = pos;
-	rcLight->m_Type = Hedgehog::Mirage::ELightType::eLightType_Directional;
-	gameDocument->m_pMember->m_spLightManager->AddLocalLight(rcLight);
+	rcLight->m_Type = Hedgehog::Mirage::ELightType::eLightType_Point;
+	gameDocument->m_pMember->m_spLightManager->AddPointLight(rcLight);
 }
 HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* Edx, int a2, int a3, void** a4)
 {
 	CTitleRemoveCallback(This, nullptr, nullptr);
 	Title::SetScrollDirection(true);
-	/*MakeTitleLight();*/
+	//MakeTitleLight();
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 	auto spCsdProject = wrapper.GetCsdProject("ui_title_unleashed");
 	rcTitleScreen = spCsdProject->m_rcProject;
@@ -322,12 +328,13 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 		CSDCommon::FreezeMotion(*rcTitlebg);
 		CSDCommon::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	}
-	if(rcTitleLogo_1)
-	CSDCommon::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	if (rcTitleLogo_1)
+		CSDCommon::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
 	playingStartAnim = true;
+	Title::SetHideEverything(true);
 	Title::CreateScreen(This);
-	
+
 	return originalTitle_CMain(This, Edx, a2, a3, a4);
 }
 
@@ -336,20 +343,20 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 	if (enteredStart)
 		return originalTitle_CMain_CState_SelectMenu(This);
 
-	if(rcTitleMenu)
-	CSDCommon::FreezeMotion(*rcTitleMenu);
-	if (rcTitlebg)
-	CSDCommon::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	if (rcTitleMenu)
-	CSDCommon::PlayAnimation(*rcTitleMenu, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		CSDCommon::FreezeMotion(*rcTitleMenu);
+	if (rcTitlebg)
+		CSDCommon::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	if (rcTitleMenu)
+		CSDCommon::PlayAnimation(*rcTitleMenu, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	if (rcTitleMenuTXT)
 	{
 		CSDCommon::PlayAnimation(*rcTitleMenuTXT, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		rcTitleMenuTXT->SetPosition(0, 0);
 	}
-	if (rcTitleMenuScroll)	
+	if (rcTitleMenuScroll)
 		rcTitleMenuScroll->SetPosition(0, 0);
-	
+
 	enteredStart = true;
 	UpdateTitleText();
 
@@ -364,10 +371,10 @@ HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 		CSDCommon::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 30, 100, false, true);
 		currentTitleIndex = Title::TitleIndexState::New_Game;
 	}
-	if(rcTitleMenuTXT)
-	rcTitleMenuTXT->SetPosition(0, 65000);
+	if (rcTitleMenuTXT)
+		rcTitleMenuTXT->SetPosition(0, 65000);
 	if (rcTitleMenuScroll)
-	rcTitleMenuScroll->SetPosition(0, 65000);
+		rcTitleMenuScroll->SetPosition(0, 65000);
 	reversedAnim = true;
 	playingStartAnim = true;
 	isStartAnimComplete = false;
@@ -386,11 +393,36 @@ bool IsRightDown() {
 	return inputPtr->IsDown(Sonic::eKeyState_LeftStickRight) || inputPtr->IsDown(Sonic::eKeyState_DpadRight);
 }
 
+
+//HOOK(int, __cdecl, sub_6F2370, 0x6F2370, int a2, float a3, float aspectRatio, float camNear, float camFar)
+//{
+//	if (!cameraa)
+//		return originalsub_6F2370(a2, a3, aspectRatio, camNear, camFar);
+//	if (aspectRatio != cameraa->aspectRatio && camNear != cameraa->zNear && camFar != cameraa->zFar && !inTitle)
+//		return originalsub_6F2370(a2, a3, aspectRatio, camNear, camFar);
+//	else
+//	{
+//		auto v6 = a3 * 0.5;
+//		auto v7 = tan(v6);
+//		auto v8 = 1.0 / v7;
+//		auto v9 = 1.0 / (camNear - camFar);
+//		//auto e = originalsub_6F2370(a2, a3, aspectRatio, camNear, camFar);
+//		cameraa->position = Eigen::Vector3f(100, 100, 100);
+//		cameraa->aspectRatio = v8 / aspectRatio;
+//		cameraa->zFar = camFar;
+//		cameraa->zNear = camNear;
+//
+//		return a2;
+//	}
+//}
+
 HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
+	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
+
+
 	if (inTitle)
 	{
-		auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 
 		if (currentTitleIndex == 3 && isInSubmenu && inputPtr->IsDown(Sonic::eKeyState_B)) //janky way of knowing when the quit prompt is aborted
 			isInSubmenu = false;
@@ -471,7 +503,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 {
 	int returned = 0;
-	if (currentTitleIndex >2 && !isInSubmenu)
+	if (currentTitleIndex > 2 && !isInSubmenu)
 	{
 		isInSubmenu = true;
 		returned = originalTitle_CMain_ExecSubMenu(This);
@@ -479,11 +511,11 @@ HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 	else if (currentTitleIndex < 2)
 		isInSubmenu = false;
 
-	if(!isInSubmenu)
+	if (!isInSubmenu)
 		return originalTitle_CMain_ExecSubMenu(This);
-	else 
+	else
 		return returned; //will 9/10 times return 0
-	
+
 }
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
@@ -495,6 +527,49 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		isInSubmenu = true;
 	}
 }
+
+//FUNCTION_PTR(int, __fastcall, sub_D131B0, 0xD131B0, Hedgehog::math::CVector* This, int a2);
+//void Setlightdir() {
+//	sub_D131B0(Hedgehog::math::CVector(0,0,0), )
+//}
+
+
+
+void __declspec(naked) setlightposX()
+{
+	//https://godbolt.org/
+	static uint32_t pAddr = 0x0058D54B;
+	static float x = -79.8565f;
+
+	__asm // NEW: 0| CONTINUE:1 | OPTIONS: 3 | QUIT:  4
+	{
+		movss xmm0, x;
+		jmp[pAddr]
+	}
+}
+void __declspec(naked) setlightposY()
+{
+	//https://godbolt.org/
+	static uint32_t pAddr = 0x0058D559;
+	static float y = 0;
+
+	__asm // NEW: 0| CONTINUE:1 | OPTIONS: 3 | QUIT:  4
+	{
+		movss xmm0, y;
+		jmp[pAddr]
+	}
+}void __declspec(naked) setlightposZ()
+{
+	//https://godbolt.org/
+	static uint32_t pAddr = 0x0058D567;
+	static float z = 4.78983f;
+
+	__asm // NEW: 0| CONTINUE:1 | OPTIONS: 3 | QUIT:  4
+	{
+		movss xmm0, z;
+		jmp[pAddr]
+	}
+}
 void Title::Install()
 {
 	//Set up title screen so that it resembles Unleashed function-wise
@@ -502,6 +577,42 @@ void Title::Install()
 	WRITE_JUMP(0x00572D23, TitleUI_SetCustomExecFunction); //Override Button Function
 	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance); //Override button after-function
 	WRITE_JUMP(0x00572B2E, 0x00572B45); //Disable scroll sound
+
+
+	WRITE_JUMP(0x0058CE33, 0x0058CEAB);
+
+	WRITE_JUMP(0x0058D543, setlightposX);
+	WRITE_JUMP(0x0058D551, setlightposY);
+	WRITE_JUMP(0x0058D55F, setlightposZ);
+	//WRITE_MEMORY(0x01A42318, DWORD, 0);
+	//WRITE_MEMORY(0x01A422FC, float, 100);
+	//WRITE_MEMORY(0x01559A98, float, 1);
+	//WRITE_MEMORY(0x01559A9C, float, 1);
+	//float* floatt = (float*)0x01704490;
+	//float* ggggggg = (float*)0x01704478;
+	//WRITE_MEMORY(0x01A42258, float, -120.5f);
+	//WRITE_MEMORY(0x01559A98, float, 0.5f);
+
+	///*WRITE_MEMORY(0x158B520, float, 5);
+	//WRITE_MEMORY(0x01704478, float, 0);
+	//WRITE_MEMORY(0x01704490, float, 0);
+
+	//WRITE_MEMORY(0x01704488, float, 0);
+	//WRITE_MEMORY(0x01704490, float, 0);*/
+	WRITE_MEMORY(0x1704474, float, 0.4f); //FOV
+	//Eigen::Vector3f* ggggg = (Eigen::Vector3f*)0x1A42260;
+	//ggggg->x() = -100;
+	//ggggg->y() = -100;
+	//ggggg->z() = -100;
+	Eigen::Vector2f* qa = (Eigen::Vector2f*)0x1A42300;
+	qa->x() = -0.8544828f;
+	qa->y() = -0.0472794f;
+
+
+	Eigen::Vector3f* lightColor = (Eigen::Vector3f*)0x01A42308;
+	lightColor->x() = 0.5976471f;
+	lightColor->y() = 0.5835295f;
+	lightColor->z() = 0.5364707f;
 
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);

@@ -725,7 +725,6 @@ void HudResult::Install()
 	m_trickFinishBonus = reader.GetFloat("Score", "TrickFinish", 2000.0f);
 	m_rainbowRingBonus = reader.GetFloat("Score", "RainbowRing", 1000.0f);
 
-
 	// Prevent using Gen's result
 	INSTALL_HOOK(HudResult_MsgStartGoalResult);
 

@@ -1,7 +1,11 @@
 ﻿#pragma once
 
 #define WIN32_LEAN_AND_MEAN
+constexpr float RAD2DEGf = 57.2958f;
+constexpr float DEG2RADf = 0.0174533f;
 
+constexpr double RAD2DEG = 57.29578018188477;
+constexpr double DEG2RAD = 0.01745329238474369;
 #include <BlueBlur.h>
 #include "INIReader.h"
 #include "ModLoader.h"
@@ -30,6 +34,8 @@
 #include "detours\include\detours.h"
 
 #include "Configuration.h"
+#include "TitleWorldMap.h"
+#include "LetterboxHelper.h"
 #include "CSDCommon.h"
 #include "Title.h"
 #include "TitleOption.h"

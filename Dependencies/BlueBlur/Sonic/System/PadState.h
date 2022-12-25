@@ -58,7 +58,13 @@ namespace Sonic
         float RightStickHorizontal;
         float RightStickVertical;
 
-        BB_INSERT_PADDING(0x2C);
+        //BB_INSERT_PADDING(0x2C); // Before, he didnt know what this was
+
+        BB_INSERT_PADDING(0x4);
+
+        float LeftTrigger;
+        float RightTrigger;
+        BB_INSERT_PADDING(0x20);
 
         bool IsDown(const EKeyState keys) const
         {

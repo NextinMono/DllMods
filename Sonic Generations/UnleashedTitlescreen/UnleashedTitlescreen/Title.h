@@ -1,4 +1,5 @@
 #pragma once
+
 class Title
 {
 	
@@ -24,4 +25,19 @@ public:
 	static void SetSubmenu(bool enabled);
 	static void SetScrollDirection(bool horizontal);
 	static void IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene);
+	/*struct RGBColor
+	{
+		float r;
+		float g;
+		float b;
+
+		RGBColor operator*(const float& f)
+		{
+			return RGBColor(r * f, g * f, b * f);
+		}
+	};*/
 };
+// Custom class definition so we have fields mapped out that BlueBlur does not yet.
+// In the future, you will want to replace all references to "CustomCamera" with "Sonic::CCamera" when those fields get committed.
+
+
