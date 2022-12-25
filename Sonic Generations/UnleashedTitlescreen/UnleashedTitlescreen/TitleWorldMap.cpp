@@ -348,7 +348,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					introPlayed = true;
 				}
 				if(introPlayed && flag[i]->m_MotionDisableFlag)
-				CSDCommon::PlayAnimation(*flag[i], "Fade_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*flag[i], "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, g);
 				
 				flag[i]->SetPosition(uiPos.x(), uiPos.y());
 			}
