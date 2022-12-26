@@ -1,8 +1,10 @@
+#include <algorithm>
 using namespace hh::math;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreenW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> infobg1, infoimg1, infoimg2, infoimg3, infoimg4, headerBGW, headerIMGW, footerBGW, footerIMGW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> cursorL, cursorT, cursorB, cursorR;
+Chao::CSD::RCPtr<Chao::CSD::CScene> cts_name, cts_guide_window, cts_guide_ss, cts_guide_txt;
 Chao::CSD::RCPtr<Chao::CSD::CScene> flag[9];
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreenW;
 std::vector < CVector> flagPositions[9];
@@ -13,35 +15,68 @@ CVector2* offsetAspect;
 CVector2* offsetRes;
 const CVector TitleWorldMap::TitleWorldMap::emblemPosition = CVector(0, 0, -2.34f);
 const CustomCamera* TitleWorldMap::Camera;
+ CVector2 posT;
+ CVector2 posB;
+ CVector2 posL;
+ CVector2 posR;
+ bool disabledStick = true;
+ bool disabledTarget = true;
+ bool cursorSelected = false;
 
+ bool playingPan = false;
+ float timePan = 0;
+ float camHeight = -20;
 
+ void PlayCursorAnim(const char* name, bool reverse = false) 
+ {
+	 CSDCommon::PlayAnimation(*cursorL, name, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0,0,false,reverse);
+	 CSDCommon::PlayAnimation(*cursorR, name, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, reverse);
+	 CSDCommon::PlayAnimation(*cursorT, name, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, reverse);
+	 CSDCommon::PlayAnimation(*cursorB, name, Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, reverse);
+ }
+ void TitleWorldMap::PlayPanningAnim()
+ {
+	 disabledTarget = true;
+	 disabledStick = true;
+	 playingPan = true;
+ }
+ void TitleWorldMap::EnableInput()
+ {
+	 disabledStick = false;
+ }
+ void SetHideEverythingWM(bool hide)
+ {
+	 infobg1->SetHideFlag(hide);
+	 infoimg1->SetHideFlag(hide);
+	 infoimg2->SetHideFlag(hide);
+	 infoimg3->SetHideFlag(hide);
+	 infoimg4->SetHideFlag(hide);
+	 headerBGW->SetHideFlag(hide);
+	 headerIMGW->SetHideFlag(hide);
+	 footerBGW->SetHideFlag(hide);
+	 if (footerIMGW)
+		 footerIMGW->SetHideFlag(hide);
+	 cursorL->SetHideFlag(hide);
+	 cursorT->SetHideFlag(hide);
+	 cursorB->SetHideFlag(hide);
+	 cursorR->SetHideFlag(hide);
+	 cts_name->SetHideFlag(hide);
+	 cts_guide_ss->SetHideFlag(hide);
+	 cts_guide_window->SetHideFlag(hide);
+	 cts_guide_txt->SetHideFlag(hide);
+	for (size_t i = 0; i < 9; i++)
+	{
+		flag[i]->SetHideFlag(hide);
+	}
+ }
 void TitleWorldMap::Start() 
 {
 	introPlayed = false;
-	infobg1->SetHideFlag(false);
-	infoimg1->SetHideFlag(false);
-	infoimg2->SetHideFlag(false);
-	infoimg3->SetHideFlag(false);
-	infoimg4->SetHideFlag(false);
-	headerBGW->SetHideFlag(false);
-	headerIMGW->SetHideFlag(false);
-	footerBGW->SetHideFlag(false);
-	if(footerIMGW)
-	footerIMGW->SetHideFlag(false);
-	cursorL->SetHideFlag(false);
-	cursorT->SetHideFlag(false);
-	cursorB->SetHideFlag(false);
-	cursorR->SetHideFlag(false);
+	SetHideEverythingWM(false);	
 	for (size_t i = 0; i < 9; i++)
 	{
-		flag[i]->SetHideFlag(false);
-
 		CSDCommon::PlayAnimation(*flag[i], "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	}
-	for (auto e : flag) 
-	{
-		
-	}
+	}		
 	CSDCommon::PlayAnimation(*infobg1, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*infoimg1, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*infoimg2, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
@@ -49,11 +84,11 @@ void TitleWorldMap::Start()
 	CSDCommon::PlayAnimation(*infoimg4, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*headerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 60);
 	CSDCommon::PlayAnimation(*footerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 60);
-	CSDCommon::PlayAnimation(*headerIMGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorR, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorL, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorB, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorT, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*headerIMGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0); 
+	PlayCursorAnim("Intro_Anim");
+	CSDCommon::PlayAnimation(*cts_guide_ss, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cts_guide_txt, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cts_guide_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 }
 #pragma region FromCeramic
 
@@ -105,7 +140,24 @@ float inline WrapAroundFloat(const float number, const float bounds)
 
 	return result;
 }
+float lerpWithEaseInOut(float start, float end, float t) 
+{
+	Common::ClampFloat(t, 0, 1);
+	t = (t < 0.5f) ? (2.0f * t * t) : (-1.0f + (4.0f - 2.0f * t) * t);  // Ease in/out
+	return start + (end - start) * t;  // Interpolate and return result
+}
 
+void PlayPan(CustomCamera* camera, const Hedgehog::Universe::SUpdateInfo& updateInfo)
+{
+	if (timePan >= 2.5f)
+	{
+		playingPan = false;
+		disabledTarget = false;
+	}
+	timePan += updateInfo.DeltaTime;
+	camHeight = lerpWithEaseInOut(-20, 0, timePan / 2.5f);
+
+}
 HOOK(void, __fastcall, _TitleCameraUpdate, 0x0058CDA0, TransitionTitleCamera* This, void*, const Hedgehog::Universe::SUpdateInfo& updateInfo)
 {
 	using namespace hh::math;
@@ -124,12 +176,9 @@ HOOK(void, __fastcall, _TitleCameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 		camera->m_Position = CVector(0, 0, cameraDistance);
 		camera->m_TargetPosition = CVector(0, 0, 0);
 	}
-
-
-
 	// Some stuff that'll help us in the future.
 
-	const CVector cameraTargetPosition = CVector(0, 0, 0);
+	 CVector cameraTargetPosition = CVector(0, camHeight, 0);
 	const CVector cameraVector = CVector(0, 0, cameraDistance);
 	const CVector cameraPosition = cameraVector + cameraTargetPosition;
 
@@ -137,11 +186,14 @@ HOOK(void, __fastcall, _TitleCameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 	constexpr float rotationPitchRate = 2.0f;
 	constexpr float rotationYawRate = 2.0f;
 
-	rotationPitch += -input.RightStickVertical * rotationPitchRate * updateInfo.DeltaTime;
-	rotationYaw += input.RightStickHorizontal * rotationYawRate * updateInfo.DeltaTime;
+	if (!disabledStick) 
+	{
+		rotationPitch += -input.RightStickVertical * rotationPitchRate * updateInfo.DeltaTime;
+		rotationYaw += input.RightStickHorizontal * rotationYawRate * updateInfo.DeltaTime;
+	}
 
 	// Gotta do this nonsense.
-	constexpr float pitchMaxExtents = 65.0f * DEG2RAD; // Max rotation is 65 degrees in either direction,
+	constexpr float pitchMaxExtents = 70.0f * DEG2RAD; // Max rotation is 70 degrees in either direction,
 													   // rather than 90, which would get us to the poles of the earth.
 	// Now limit
 	rotationPitch = fmax(-pitchMaxExtents, fmin(rotationPitch, pitchMaxExtents));
@@ -153,10 +205,13 @@ HOOK(void, __fastcall, _TitleCameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 
 	const CQuaternion rotation = yaw * pitch;
 
-
-	// Now we rotate everything.
-	camera->m_Position = rotation * (cameraPosition - TitleWorldMap::emblemPosition) + TitleWorldMap::emblemPosition;
-	camera->m_TargetPosition = rotation * (cameraTargetPosition - TitleWorldMap::emblemPosition) + TitleWorldMap::emblemPosition;
+	if(playingPan)
+	PlayPan(camera, updateInfo);
+	
+		// Now we rotate everything.
+		camera->m_Position = rotation * (cameraPosition - TitleWorldMap::emblemPosition) + TitleWorldMap::emblemPosition;
+		camera->m_TargetPosition = rotation * (cameraTargetPosition - TitleWorldMap::emblemPosition) + TitleWorldMap::emblemPosition;
+	
 	// This happens after the fact for some reason. Wonder why...
 
 	const float FOV = 0.44906584f;
@@ -210,6 +265,11 @@ void __fastcall CTitleWRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CG
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cursorT);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cursorB);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cursorR);
+
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_name);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_ss);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_window);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_txt);
 	rcTitleScreenW = nullptr;
 
 }
@@ -239,42 +299,59 @@ void TitleWorldMap::ToggleScreen(const bool visible, Sonic::CGameObject* pParent
 	else
 		KillScreen();
 }
-
-void TitleWorldMap::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
+int lastFlagIn = 0;
+bool IsInsideCursorRange(const CVector2& input, float visibility, int flagID)
 {
-	scene->SetMotion("Intro_Anim");
-	scene->SetMotionFrame(0.0f);
-	scene->m_MotionSpeed = 1;
-	scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-	scene->Update(0.0f);
-}
-bool IsInsideCursorRange(const CVector& input)
-{
-	if (!cursorL)
+	if (!cursorL || disabledStick)
 		return false;
 	bool result = false;
-	auto posL = cursorL->GetNode("center_position")->GetPosition();
-	auto posT = cursorT->GetNode("center_position")->GetPosition();
-	auto posR = cursorR->GetNode("center_position")->GetPosition();
-	auto posB = cursorB->GetNode("center_position")->GetPosition();
-	if (input.x() >= posL.x() && input.x() <= posR.x() && input.y() >= posB.x() && input.y() <= posT.x())
+	float divider = 1.5f;
+	// Compute the normal vectors of the four edges of the box
+	CVector2 norm = input.normalized();
+	CVector2 n1 = ((posR - posT) /divider).normalized();
+	CVector2 n2 = ((posB - posR) / divider).normalized();
+	CVector2 n3 = ((posL - posB) / divider).normalized();
+	CVector2 n4 = ((posT - posL) / divider).normalized();
+
+	// Check if the point p is on the same side of each edge as the other three corners
+	bool inside = ((norm - posT).dot(n1) >= 0.8f) &&
+		((norm - posR).dot(n2) >= 0.8f) &&
+		((norm - posB).dot(n3) >= 0.8f) &&
+		((norm - posL).dot(n4) >= 0.8f);
+	if (inside)
 	{
-		MessageBoxA(NULL, "f", "f", 0);
-		result = true;
+		if (visibility >= 80 && flagID != lastFlagIn)
+		{
+			printf("\nIN %d", flagID);			
+			lastFlagIn = flagID;
+			//for eventual night versions, add 9
+			cts_guide_ss->GetNode("town_ss_img")->SetPatternIndex(flagID);
+			cts_guide_txt->GetNode("text_size")->SetPatternIndex(flagID);
+
+			cts_name->GetNode("img")->SetPatternIndex(flagID);
+			result = true;
+		}
+	}
+	else 
+	{
+		lastFlagIn = -1;
 	}
 
+	cts_name->SetHideFlag(result);
+	cts_guide_ss->SetHideFlag(result);
+	cts_guide_window->SetHideFlag(result);
 	return result;
 }
-CVector4 WorldToUIPosition(const CVector& input)
+CVector2 WorldToUIPosition(const CVector& input)
 {
 	const auto camera = TitleWorldMap::Camera;
-	if (!camera) return CVector4(0, 0, 0, 0);
+	if (!camera) return CVector2(0, 0);
 	auto screenPosition = camera->m_MyCamera.m_View * CVector4(input.x(), input.y(), input.z(), 1.0f);
 	screenPosition = camera->m_MyCamera.m_Projection * screenPosition;
 	screenPosition.head<2>() /= screenPosition.w();
 	screenPosition.x() = ((screenPosition.x() * 0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->x() + offsetAspect->x()));
 	screenPosition.y() = (screenPosition.y() * -0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->y() + offsetAspect->y());
-	return screenPosition;
+	return CVector2(screenPosition.x(), screenPosition.y());
 }
 
 //float GetFlagVisibility(const CVector& input) {
@@ -294,11 +371,15 @@ void SetCursorPos(const CVector& pos)
 		soundHandle.reset();
 	}
 	float sizeBox = 100;
-
-	cursorL->SetPosition(pos.x() - (sizeBox / 2), pos.y());
-	cursorR->SetPosition(pos.x() + sizeBox / 2, pos.y());
-	cursorT->SetPosition(pos.x(), pos.y() + sizeBox / 2);
-	cursorB->SetPosition(pos.x(), pos.y() - (sizeBox / 2));
+	posL = CVector2(pos.x() - (sizeBox / 2), pos.y());
+	posR = CVector2(pos.x() + sizeBox / 2, pos.y());
+	posT = CVector2(pos.x(), pos.y() + sizeBox / 2);
+	posB = CVector2(pos.x(), pos.y() - (sizeBox / 2));
+	
+	cursorL->SetPosition(posL.x() + LetterboxHelper::ScreenHalfPoint->x(), posL.y() + LetterboxHelper::ScreenHalfPoint->y());
+	cursorR->SetPosition(posR.x() + LetterboxHelper::ScreenHalfPoint->x(), posR.y() + LetterboxHelper::ScreenHalfPoint->y());
+	cursorT->SetPosition(posT.x() + LetterboxHelper::ScreenHalfPoint->x(), posT.y() + LetterboxHelper::ScreenHalfPoint->y());
+	cursorB->SetPosition(posB.x() + LetterboxHelper::ScreenHalfPoint->x(), posB.y() + LetterboxHelper::ScreenHalfPoint->y());
 	cursorR->GetNode("arrow_position_9")->SetRotation(180);
 	cursorT->GetNode("arrow_position_9")->SetRotation(90);
 	cursorB->GetNode("arrow_position_9")->SetRotation(-90);
@@ -321,6 +402,10 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	footerBGW = rcTitleScreenW->CreateScene("worldmap_footer_bg");
 	footerIMGW = rcTitleScreenW->CreateScene("worldmap_footer_img");
 	headerIMGW = rcTitleScreenW->CreateScene("worldmap_header_img");
+	cts_guide_window = rcTitleScreenW->CreateScene("cts_guide_window");
+	cts_guide_ss = rcTitleScreenW->CreateScene("cts_guide_ss");
+	cts_guide_txt = rcTitleScreenW->CreateScene("cts_guide_txt");
+	cts_name = rcTitleScreenW->CreateScene("cts_name");
 	CSDCommon::PlayAnimation(*infobg1, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*infoimg1, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*infoimg2, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
@@ -330,6 +415,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	CSDCommon::PlayAnimation(*footerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*footerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*headerIMGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cts_name, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
 	for (size_t i = 0; i < 9; i++)
 	{
@@ -342,10 +428,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	cursorT = rcTitleScreenW->CreateScene("cts_cursor");
 	cursorB = rcTitleScreenW->CreateScene("cts_cursor");
 	cursorR = rcTitleScreenW->CreateScene("cts_cursor");
-	CSDCommon::PlayAnimation(*cursorR, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorL, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorB, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	CSDCommon::PlayAnimation(*cursorT, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	PlayCursorAnim("Intro_Anim");
 	float earthRadius = 5.575f;
 	//flagPositions->push_back((CVector(0.31f, 0.36f, 2.28f) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
 	//flagPositions->push_back((CVector(2.310000f, 2.360000f, 1.111371f) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
@@ -376,20 +459,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 		e->SetHideFlag(true);
 	}
 
-	infobg1->SetHideFlag(true);
-	infoimg1->SetHideFlag(true);
-	infoimg2->SetHideFlag(true);
-	infoimg3->SetHideFlag(true);
-	infoimg4->SetHideFlag(true);
-	headerBGW->SetHideFlag(true);
-	headerIMGW->SetHideFlag(true);
-	footerBGW->SetHideFlag(true);
-	if(footerIMGW)
-	footerIMGW->SetHideFlag(true);
-	cursorL->SetHideFlag(true);
-	cursorT->SetHideFlag(true);
-	cursorB->SetHideFlag(true);
-	cursorR->SetHideFlag(true);
+	SetHideEverythingWM(true);
 	return originalTitleW_CMain(This, Edx, a2, a3, a4);
 }
 
@@ -399,6 +469,10 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 	float multiplier = 24;
 	SetCursorPos(CVector(inputPtr->RightStickHorizontal * multiplier, -inputPtr->RightStickVertical * multiplier, 0));
+	if (introPlayed)
+	{
+		/*if(inputPtr->IsTapped())*/
+	}
 	if (flag[0])
 	{
 		/*if (static_cast<uint8_t>(GetAsyncKeyState(VK_CONTROL))) {
@@ -413,10 +487,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 
 		flagPositions->at(7).y() += static_cast<uint8_t>(GetAsyncKeyState(VK_UP)) * editorMulti;
 		flagPositions->at(7).y() -= static_cast<uint8_t>(GetAsyncKeyState(VK_DOWN)) * editorMulti;*/
-
 		/*flagPositions->at(7).z() -= inputPtr->RightTrigger;
 		flagPositions->at(7).z() += inputPtr->LeftTrigger;*/
-
 		/*if (inputPtr->IsDown(Sonic::eKeyState_LeftBumper))
 		{
 			MessageBoxA(NULL, "Check Console for Output", "", 0);
@@ -425,13 +497,14 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 			printf(" z: %f", flagPositions->at(7).z());
 		}*/
 
+		int amountSel = 0;
 		if (TitleWorldMap::Camera)
 		{
 			for (size_t i = 0; i < 9; i++)
 			{
 				float g = fmax(0.0f, -(TitleWorldMap::Camera->m_MyCamera.m_Direction.dot((flagPositions->at(i) - CVector(0, 0, -2.34f)).normalized()))) * 100;
 				auto uiPos = WorldToUIPosition(flagPositions->at(i));
-				uiPos = (uiPos - CVector4(1280 / 2, 720 / 2,0,1).normalized() * 5.575f);
+				uiPos = (uiPos - CVector2(1280 / 2, 720 / 2).normalized() * 5.575f);
 				if (flag[i]->m_MotionDisableFlag && !introPlayed)
 				{
 					introPlayed = true;
@@ -440,7 +513,22 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					CSDCommon::PlayAnimation(*flag[i], "Fade_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 0, g, g);
 
 				flag[i]->SetPosition(uiPos.x() , uiPos.y());
+				bool inrange = IsInsideCursorRange(uiPos, g, i);
+				amountSel += inrange;
+			}
+			if (amountSel > 0 && !cursorSelected)
+			{
+				cursorSelected = true;
+				CSDCommon::PlayAnimation(*cts_name, "Intro_1_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				PlayCursorAnim("Select_Anim");
 
+				CSDCommon::PlayAnimation(*cts_guide_ss, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*cts_guide_txt, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+				CSDCommon::PlayAnimation(*cts_guide_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			}
+			else if(amountSel == 0 && cursorSelected) {
+				cursorSelected = false;
+				PlayCursorAnim("Select_Anim", true);
 			}
 		}
 	}

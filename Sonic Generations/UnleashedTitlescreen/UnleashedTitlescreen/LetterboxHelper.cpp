@@ -1,5 +1,6 @@
 Hedgehog::Math::CVector2* LetterboxHelper::Resolution;
 Hedgehog::Math::CVector2* LetterboxHelper::OriginalResolution;
+Hedgehog::Math::CVector2* LetterboxHelper::ScreenHalfPoint;
 
 HOOK(double, __fastcall, GetWidth, 0x675420)
 {
@@ -28,6 +29,7 @@ void LetterboxHelper::Initialize(float resW = 1280, float resH = 720)
 {
 	Resolution = new Hedgehog::Math::CVector2(resW, resH);
 	OriginalResolution = new Hedgehog::Math::CVector2(0, 0);
+	ScreenHalfPoint = new Hedgehog::Math::CVector2(Resolution->x() / 2, Resolution->y() / 2);
 	INSTALL_HOOK(GetWidth);
 	INSTALL_HOOK(GetHeight);
 }

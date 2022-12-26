@@ -37,6 +37,9 @@ public:
 	static void SetHideEverything(const bool visible);
 	static void IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene);
 	static hh::math::CQuaternion QuaternionFromAngleAxis(float angle, const hh::math::CVector& axis);
+	static void PlayPanningAnim();
+	static void EnableInput();
+
 
 	/*struct RGBColor
 	{

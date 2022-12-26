@@ -74,6 +74,7 @@ void ContinueToWM()
 	if (!inWM) {
 		Title::SetHideEverything(true);
 		TitleWorldMap::Start();
+		TitleWorldMap::EnableInput();
 		inWM = true;
 	}
 }
@@ -352,7 +353,7 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 {
 	if (enteredStart)
 		return originalTitle_CMain_CState_SelectMenu(This);
-
+	TitleWorldMap::PlayPanningAnim();
 	if (rcTitleMenu)
 		CSDCommon::FreezeMotion(*rcTitleMenu);
 	if (rcTitlebg)
@@ -506,6 +507,7 @@ HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 }
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+
 	if (!isInSubmenu)
 		return originalTitleUI_TitleCMainCState_SelectMenuAdvance(This);
 	else
