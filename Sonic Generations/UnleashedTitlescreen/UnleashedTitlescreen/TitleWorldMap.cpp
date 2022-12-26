@@ -1,16 +1,60 @@
+using namespace hh::math;
+
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreenW;
-Chao::CSD::RCPtr<Chao::CSD::CScene> infobg1, infoimg1,infoimg2, infoimg3, infoimg4, headerBGW, headerIMGW, footerBGW, footerIMGW;
-Chao::CSD::RCPtr<Chao::CSD::CScene> cursorL,cursorT,cursorB,cursorR;
+Chao::CSD::RCPtr<Chao::CSD::CScene> infobg1, infoimg1, infoimg2, infoimg3, infoimg4, headerBGW, headerIMGW, footerBGW, footerIMGW;
+Chao::CSD::RCPtr<Chao::CSD::CScene> cursorL, cursorT, cursorB, cursorR;
 Chao::CSD::RCPtr<Chao::CSD::CScene> flag[9];
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreenW;
-std::vector < Hedgehog::math::CVector> flagPositions[9];
+std::vector < CVector> flagPositions[9];
 static SharedPtrTypeless soundHandle;
 bool playingPointerMove;
 bool introPlayed = false;
-Hedgehog::Math::CVector2* offsetAspect;
-Hedgehog::Math::CVector2* offsetRes;
-const Hedgehog::Math::CVector TitleWorldMap::TitleWorldMap::emblemPosition = Hedgehog::Math::CVector(0, 0, -2.34f);
-const CustomCamera*  TitleWorldMap::Camera;
+CVector2* offsetAspect;
+CVector2* offsetRes;
+const CVector TitleWorldMap::TitleWorldMap::emblemPosition = CVector(0, 0, -2.34f);
+const CustomCamera* TitleWorldMap::Camera;
+
+
+void TitleWorldMap::Start() 
+{
+	introPlayed = false;
+	infobg1->SetHideFlag(false);
+	infoimg1->SetHideFlag(false);
+	infoimg2->SetHideFlag(false);
+	infoimg3->SetHideFlag(false);
+	infoimg4->SetHideFlag(false);
+	headerBGW->SetHideFlag(false);
+	headerIMGW->SetHideFlag(false);
+	footerBGW->SetHideFlag(false);
+	if(footerIMGW)
+	footerIMGW->SetHideFlag(false);
+	cursorL->SetHideFlag(false);
+	cursorT->SetHideFlag(false);
+	cursorB->SetHideFlag(false);
+	cursorR->SetHideFlag(false);
+	for (size_t i = 0; i < 9; i++)
+	{
+		flag[i]->SetHideFlag(false);
+
+		CSDCommon::PlayAnimation(*flag[i], "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	}
+	for (auto e : flag) 
+	{
+		
+	}
+	CSDCommon::PlayAnimation(*infobg1, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*infoimg1, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*infoimg2, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*infoimg3, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*infoimg4, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*headerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 60);
+	CSDCommon::PlayAnimation(*footerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 60);
+	CSDCommon::PlayAnimation(*headerIMGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cursorR, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cursorL, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cursorB, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cursorT, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+}
 #pragma region FromCeramic
 
 class TransitionTitleCamera : public Sonic::CGameObject3D
@@ -30,9 +74,9 @@ inline void __cdecl ApplyCameraStuff(TransitionTitleCamera* CameraImpl, CustomCa
 		call func
 	}
 }
-hh::math::CQuaternion TitleWorldMap::QuaternionFromAngleAxis(float angle, const hh::math::CVector& axis)
+CQuaternion TitleWorldMap::QuaternionFromAngleAxis(float angle, const CVector& axis)
 {
-	Hedgehog::Math::CQuaternion q;
+	CQuaternion q;
 	float m = sqrt(axis.x() * axis.x() + axis.y() * axis.y() + axis.z() * axis.z());
 	float s = sinf(angle / 2) / m;
 	q.x() = axis.x() * s;
@@ -81,7 +125,7 @@ HOOK(void, __fastcall, _TitleCameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 		camera->m_TargetPosition = CVector(0, 0, 0);
 	}
 
-	
+
 
 	// Some stuff that'll help us in the future.
 
@@ -133,21 +177,21 @@ void CalculateAspectOffsets()
 	{
 		const float aspect = (float)*(size_t*)0x1DFDDDC / (float)*(size_t*)0x1DFDDE0;
 
-		offsetRes = new Hedgehog::Math::CVector2((float)*(size_t*)0x01804F8C, (float)*(size_t*)0x01804F90);
+		offsetRes = new CVector2((float)*(size_t*)0x01804F8C, (float)*(size_t*)0x01804F90);
 
 		if (aspect * 9.0f > 16.0f)
 		{
-			offsetAspect = new Hedgehog::Math::CVector2(720.0f * aspect - 1280.0f, 0.0f);
+			offsetAspect = new CVector2(720.0f * aspect - 1280.0f, 0.0f);
 		}
 		else
 		{
-			offsetAspect = new Hedgehog::Math::CVector2(0, 1280.0f / aspect - 720.0f);
+			offsetAspect = new CVector2(0, 1280.0f / aspect - 720.0f);
 		}
 	}
 	else
 	{
 
-		offsetAspect = new Hedgehog::Math::CVector2(0, 0);
+		offsetAspect = new CVector2(0, 0);
 	}
 }
 void __fastcall CTitleWRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
@@ -167,7 +211,7 @@ void __fastcall CTitleWRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CG
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cursorB);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cursorR);
 	rcTitleScreenW = nullptr;
-	
+
 }
 void TitleWorldMap::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
@@ -175,7 +219,7 @@ void TitleWorldMap::CreateScreen(Sonic::CGameObject* pParentGameObject)
 	{
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreenW = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreenW, 0.5f, "HUD", false), "main", pParentGameObject);
 
-		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(Hedgehog::math::CQuaternion(1, 1, 1, 1)));
+		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(CQuaternion(1, 1, 1, 1)));
 	}
 }
 
@@ -204,23 +248,39 @@ void TitleWorldMap::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
 	scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	scene->Update(0.0f);
 }
-hh::math::CVector4 WorldToUIPosition(const Hedgehog::math::CVector& input)
+bool IsInsideCursorRange(const CVector& input)
+{
+	if (!cursorL)
+		return false;
+	bool result = false;
+	auto posL = cursorL->GetNode("center_position")->GetPosition();
+	auto posT = cursorT->GetNode("center_position")->GetPosition();
+	auto posR = cursorR->GetNode("center_position")->GetPosition();
+	auto posB = cursorB->GetNode("center_position")->GetPosition();
+	if (input.x() >= posL.x() && input.x() <= posR.x() && input.y() >= posB.x() && input.y() <= posT.x())
+	{
+		MessageBoxA(NULL, "f", "f", 0);
+		result = true;
+	}
+
+	return result;
+}
+CVector4 WorldToUIPosition(const CVector& input)
 {
 	const auto camera = TitleWorldMap::Camera;
-	if (!camera) return Hedgehog::math::CVector4(0,0,0,0);
-	auto screenPosition = camera->m_MyCamera.m_View * hh::math::CVector4(input.x(), input.y(), input.z(), 1.0f);
+	if (!camera) return CVector4(0, 0, 0, 0);
+	auto screenPosition = camera->m_MyCamera.m_View * CVector4(input.x(), input.y(), input.z(), 1.0f);
 	screenPosition = camera->m_MyCamera.m_Projection * screenPosition;
 	screenPosition.head<2>() /= screenPosition.w();
 	screenPosition.x() = ((screenPosition.x() * 0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->x() + offsetAspect->x()));
 	screenPosition.y() = (screenPosition.y() * -0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->y() + offsetAspect->y());
 	return screenPosition;
-
 }
 
-//float GetFlagVisibility(const Hedgehog::math::CVector& input) {
+//float GetFlagVisibility(const CVector& input) {
 //	 input.dot()
 //}
-void SetCursorPos(const Hedgehog::math::CVector& pos)
+void SetCursorPos(const CVector& pos)
 {
 	if (!cursorL)
 		return;
@@ -231,14 +291,14 @@ void SetCursorPos(const Hedgehog::math::CVector& pos)
 	else if (((pos.x() + pos.y()) == 0) && playingPointerMove)
 	{
 		playingPointerMove = false;
-			soundHandle.reset();
+		soundHandle.reset();
 	}
 	float sizeBox = 100;
 
-	cursorL->SetPosition(pos.x() -(sizeBox / 2), pos.y());
+	cursorL->SetPosition(pos.x() - (sizeBox / 2), pos.y());
 	cursorR->SetPosition(pos.x() + sizeBox / 2, pos.y());
 	cursorT->SetPosition(pos.x(), pos.y() + sizeBox / 2);
-	cursorB->SetPosition(pos.x(), pos.y() -(sizeBox / 2));
+	cursorB->SetPosition(pos.x(), pos.y() - (sizeBox / 2));
 	cursorR->GetNode("arrow_position_9")->SetRotation(180);
 	cursorT->GetNode("arrow_position_9")->SetRotation(90);
 	cursorB->GetNode("arrow_position_9")->SetRotation(-90);
@@ -287,42 +347,61 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	CSDCommon::PlayAnimation(*cursorB, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*cursorT, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	float earthRadius = 5.575f;
-	flagPositions->push_back((Hedgehog::math::CVector(0.31f, 0.36f, 2.28f)));
-	flagPositions->push_back((Hedgehog::math::CVector(2.310000f, 2.360000f, 1.111371f)));
-	flagPositions->push_back((Hedgehog::math::CVector(2.810000f, -0.140000f, -6.649425f)));
-	flagPositions->push_back((Hedgehog::math::CVector(2.810000f, -1.890000, 1.742745)));
-	flagPositions->push_back((Hedgehog::math::CVector(-0.190000, 4.610000, -3.543527)));
-	flagPositions->push_back((Hedgehog::math::CVector(-5.190000, 0.110000, -3.363136)));
-	flagPositions->push_back((Hedgehog::math::CVector(0.060000, -2.639999, -6.829812)));
-	flagPositions->push_back((Hedgehog::math::CVector(-4.440000, -2.390000, -0.798426)));
-	flagPositions->push_back((Hedgehog::math::CVector(-3.690000, 3.360000, -1.163138))); //-4.440000 y: -2.390000 z : -0.798426
-	flagPositions->push_back((Hedgehog::math::CVector(0.31f, 0.36f, 2.28f)));
-	
+	//flagPositions->push_back((CVector(0.31f, 0.36f, 2.28f) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(2.310000f, 2.360000f, 1.111371f) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(2.810000f, -0.140000f, -6.649425f) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(2.810000f, -1.890000, 1.742745) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(-0.190000, 4.610000, -3.543527) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(-5.190000, 0.110000, -3.363136) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(0.060000, -2.639999, -6.829812) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(-4.440000, -2.390000, -0.798426) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(-3.690000, 3.360000, -1.163138) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	//flagPositions->push_back((CVector(0.31f, 0.36f, 2.28f) - TitleWorldMap::emblemPosition).normalized() * earthRadius);
+	flagPositions->push_back(CVector(0.31f, 0.36f, 2.28f));
+	flagPositions->push_back(CVector(2.310000f, 2.360000f, 1.111371f));
+	flagPositions->push_back(CVector(2.810000f, -0.140000f, -6.649425f));
+	flagPositions->push_back(CVector(2.810000f, -1.890000, 1.742745));
+	flagPositions->push_back(CVector(-0.190000, 4.610000, -3.543527));
+	flagPositions->push_back(CVector(-5.190000, 0.110000, -3.363136));
+	flagPositions->push_back(CVector(0.060000, -2.639999, -6.829812));
+	flagPositions->push_back(CVector(-4.440000, -2.390000, -0.798426));
+	flagPositions->push_back(CVector(-3.690000, 3.360000, -1.163138)); //-4.440000 y: -2.390000 z : -0.798426
+	flagPositions->push_back(CVector(0.31f, 0.36f, 2.28f));
 
 
-	TitleWorldMap::CreateScreen(This);	
+
+	TitleWorldMap::CreateScreen(This);
+	for (auto e : flag)
+	{
+		e->SetHideFlag(true);
+	}
+
+	infobg1->SetHideFlag(true);
+	infoimg1->SetHideFlag(true);
+	infoimg2->SetHideFlag(true);
+	infoimg3->SetHideFlag(true);
+	infoimg4->SetHideFlag(true);
+	headerBGW->SetHideFlag(true);
+	headerIMGW->SetHideFlag(true);
+	footerBGW->SetHideFlag(true);
+	if(footerIMGW)
+	footerIMGW->SetHideFlag(true);
+	cursorL->SetHideFlag(true);
+	cursorT->SetHideFlag(true);
+	cursorB->SetHideFlag(true);
+	cursorR->SetHideFlag(true);
 	return originalTitleW_CMain(This, Edx, a2, a3, a4);
 }
-//Hedgehog::math::CVector flag1Pos = Hedgehog::math::CVector(0.31f, 0.36f, 2.28f);
-//Hedgehog::math::CVector flag2Pos = Hedgehog::math::CVector(2.310000f, 2.360000f, 1.111371f); // 2.310000 y: 2.360000 z: 1.111371
-//Hedgehog::math::CVector flag3Pos = Hedgehog::math::CVector(2.810000f, -0.140000f, -6.649425f); //2.810000 y: -0.140000 z: -6.649425
-//Hedgehog::math::CVector flag4Pos = Hedgehog::math::CVector(2.810000f, -1.890000, 1.742745); //x: 2.810000 y: -1.890000 z: 1.742745
-//Hedgehog::math::CVector flag5Pos = Hedgehog::math::CVector(-0.190000, 4.610000, -3.543527); //x: -0.190000 y: 4.610000 z: -3.543527
-//Hedgehog::math::CVector flag6Pos = Hedgehog::math::CVector(-5.190000, 0.110000, -3.363136); //x: -5.190000 y: 0.110000 z: -3.363136
-//Hedgehog::math::CVector flag7Pos = Hedgehog::math::CVector(0.060000, -2.639999, -6.829812); //x: 0.060000 y: -2.639999 z: -6.829812
-//Hedgehog::math::CVector flag8Pos = Hedgehog::math::CVector(-3.690000, -1.890000, -0.798426); //x: -3.690000 y: -1.890000 z: -0.798426
-//Hedgehog::math::CVector flag9Pos = Hedgehog::math::CVector(-3.690000, 3.360000, -1.163138); //x: -3.690000 y: 3.360000 z: -1.163138
-//Hedgehog::math::CVector vecflag1 = Hedgehog::math::CVector(0.31f, 0.36f, 2.28f);
+
 float editorMulti = 1;
 HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 	float multiplier = 24;
-	SetCursorPos(Hedgehog::math::CVector(inputPtr->RightStickHorizontal * multiplier, -inputPtr->RightStickVertical * multiplier, 0));
-	if (flag[0]) 
+	SetCursorPos(CVector(inputPtr->RightStickHorizontal * multiplier, -inputPtr->RightStickVertical * multiplier, 0));
+	if (flag[0])
 	{
-		
-		if (static_cast<uint8_t>(GetAsyncKeyState(VK_CONTROL))) {
+		/*if (static_cast<uint8_t>(GetAsyncKeyState(VK_CONTROL))) {
 			editorMulti -= 0.25f;
 		}
 		if (static_cast<uint8_t>(GetAsyncKeyState(VK_SHIFT))) {
@@ -331,35 +410,38 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 		if (editorMulti < 0) editorMulti = 0;
 		flagPositions->at(7).x() += static_cast<uint8_t>(GetAsyncKeyState(VK_RIGHT)) * editorMulti;
 		flagPositions->at(7).x() -= static_cast<uint8_t>(GetAsyncKeyState(VK_LEFT)) * editorMulti;
-		
+
 		flagPositions->at(7).y() += static_cast<uint8_t>(GetAsyncKeyState(VK_UP)) * editorMulti;
-		flagPositions->at(7).y() -= static_cast<uint8_t>(GetAsyncKeyState(VK_DOWN)) * editorMulti;
+		flagPositions->at(7).y() -= static_cast<uint8_t>(GetAsyncKeyState(VK_DOWN)) * editorMulti;*/
 
 		/*flagPositions->at(7).z() -= inputPtr->RightTrigger;
 		flagPositions->at(7).z() += inputPtr->LeftTrigger;*/
-		if (TitleWorldMap::Camera)
-		{
-			for (size_t i = 0; i < 9; i++)
-			{
-				float g = fmax(0.0f,-(TitleWorldMap::Camera->m_MyCamera.m_Direction.dot((flagPositions->at(i) - Hedgehog::math::CVector(0, 0, -2.34f)).normalized()))) * 100;
-				auto uiPos = WorldToUIPosition(flagPositions->at(i));
-				if (flag[i]->m_MotionDisableFlag && !introPlayed)
-				{
-					introPlayed = true;
-				}
-				if(introPlayed && flag[i]->m_MotionDisableFlag)
-				CSDCommon::PlayAnimation(*flag[i], "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, g);
-				
-				flag[i]->SetPosition(uiPos.x(), uiPos.y());
-			}
-		}
 
-		if (inputPtr->IsDown(Sonic::eKeyState_LeftBumper))
+		/*if (inputPtr->IsDown(Sonic::eKeyState_LeftBumper))
 		{
 			MessageBoxA(NULL, "Check Console for Output", "", 0);
 			printf("\nx: %f", flagPositions->at(7).x());
 			printf(" y: %f", flagPositions->at(7).y());
 			printf(" z: %f", flagPositions->at(7).z());
+		}*/
+
+		if (TitleWorldMap::Camera)
+		{
+			for (size_t i = 0; i < 9; i++)
+			{
+				float g = fmax(0.0f, -(TitleWorldMap::Camera->m_MyCamera.m_Direction.dot((flagPositions->at(i) - CVector(0, 0, -2.34f)).normalized()))) * 100;
+				auto uiPos = WorldToUIPosition(flagPositions->at(i));
+				uiPos = (uiPos - CVector4(1280 / 2, 720 / 2,0,1).normalized() * 5.575f);
+				if (flag[i]->m_MotionDisableFlag && !introPlayed)
+				{
+					introPlayed = true;
+				}
+				if (introPlayed)
+					CSDCommon::PlayAnimation(*flag[i], "Fade_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 0, g, g);
+
+				flag[i]->SetPosition(uiPos.x() , uiPos.y());
+
+			}
 		}
 	}
 	return originalTitleW_UpdateApplication(This, Edx, elapsedTime, a3);

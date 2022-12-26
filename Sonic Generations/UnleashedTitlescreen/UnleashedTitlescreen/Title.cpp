@@ -68,6 +68,15 @@ void __declspec(naked) TitleUI_test()
 		jmp[pAddr]
 	}
 }
+bool inWM = false;
+void ContinueToWM()
+{
+	if (!inWM) {
+		Title::SetHideEverything(true);
+		TitleWorldMap::Start();
+		inWM = true;
+	}
+}
 void __declspec(naked) TitleUI_SetCustomExecFunction()
 {
 	//https://godbolt.org/
@@ -79,13 +88,14 @@ void __declspec(naked) TitleUI_SetCustomExecFunction()
 	__asm // this is an else if chain. i wanted to do a switch statement but it didnt work.
 	{
 		cmp     currentTitleIndex, 0
-		jne	Continue
+		jne	Options
 		jmp[adNewGame]
 		jmp	FunctionFinish
 
 		Continue :
 		cmp     currentTitleIndex, 1
 			jne	Options
+			call ContinueToWM
 			jmp[adContinue]
 			jmp	FunctionFinish
 
@@ -108,7 +118,7 @@ void __declspec(naked) TitleUI_SetCustomExecFunction()
 void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 {
 	//https://godbolt.org/
-	static uint32_t pAddr = 0x0057372C;
+	static uint32_t pAddr = 0x0057372E;
 	static uint32_t adNewGame = 0x0057339E;
 	static uint32_t adContinue = 0x0057342B;
 	static uint32_t adOptions = 0x00573557;
@@ -117,7 +127,7 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 	{
 		cmp     currentTitleIndex, 0
 		jne	Continue
-		mov isInSubmenu, 0
+		mov isInSubmenu, 1
 		call ExitingTitle
 		jmp[adNewGame]
 		jmp	FunctionFinish
@@ -126,7 +136,8 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 		cmp     currentTitleIndex, 1
 			jne	Options
 			call ExitingTitle
-			jmp[adContinue]
+			call ContinueToWM
+			//jmp[adContinue]
 			jmp	FunctionFinish
 
 			Options :
@@ -332,7 +343,6 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 		CSDCommon::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
 	playingStartAnim = true;
-	Title::SetHideEverything(true);
 	Title::CreateScreen(This);
 
 	return originalTitle_CMain(This, Edx, a2, a3, a4);
@@ -392,29 +402,6 @@ bool IsRightDown() {
 	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
 	return inputPtr->IsDown(Sonic::eKeyState_LeftStickRight) || inputPtr->IsDown(Sonic::eKeyState_DpadRight);
 }
-
-
-//HOOK(int, __cdecl, sub_6F2370, 0x6F2370, int a2, float a3, float aspectRatio, float camNear, float camFar)
-//{
-//	if (!cameraa)
-//		return originalsub_6F2370(a2, a3, aspectRatio, camNear, camFar);
-//	if (aspectRatio != cameraa->aspectRatio && camNear != cameraa->zNear && camFar != cameraa->zFar && !inTitle)
-//		return originalsub_6F2370(a2, a3, aspectRatio, camNear, camFar);
-//	else
-//	{
-//		auto v6 = a3 * 0.5;
-//		auto v7 = tan(v6);
-//		auto v8 = 1.0 / v7;
-//		auto v9 = 1.0 / (camNear - camFar);
-//		//auto e = originalsub_6F2370(a2, a3, aspectRatio, camNear, camFar);
-//		cameraa->position = Eigen::Vector3f(100, 100, 100);
-//		cameraa->aspectRatio = v8 / aspectRatio;
-//		cameraa->zFar = camFar;
-//		cameraa->zNear = camNear;
-//
-//		return a2;
-//	}
-//}
 
 HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
@@ -511,7 +498,7 @@ HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 	else if (currentTitleIndex < 2)
 		isInSubmenu = false;
 
-	if (!isInSubmenu)
+	if (!isInSubmenu && currentTitleIndex != 1)
 		return originalTitle_CMain_ExecSubMenu(This);
 	else
 		return returned; //will 9/10 times return 0
@@ -584,26 +571,7 @@ void Title::Install()
 	WRITE_JUMP(0x0058D543, setlightposX);
 	WRITE_JUMP(0x0058D551, setlightposY);
 	WRITE_JUMP(0x0058D55F, setlightposZ);
-	//WRITE_MEMORY(0x01A42318, DWORD, 0);
-	//WRITE_MEMORY(0x01A422FC, float, 100);
-	//WRITE_MEMORY(0x01559A98, float, 1);
-	//WRITE_MEMORY(0x01559A9C, float, 1);
-	//float* floatt = (float*)0x01704490;
-	//float* ggggggg = (float*)0x01704478;
-	//WRITE_MEMORY(0x01A42258, float, -120.5f);
-	//WRITE_MEMORY(0x01559A98, float, 0.5f);
-
-	///*WRITE_MEMORY(0x158B520, float, 5);
-	//WRITE_MEMORY(0x01704478, float, 0);
-	//WRITE_MEMORY(0x01704490, float, 0);
-
-	//WRITE_MEMORY(0x01704488, float, 0);
-	//WRITE_MEMORY(0x01704490, float, 0);*/
 	WRITE_MEMORY(0x1704474, float, 0.4f); //FOV
-	//Eigen::Vector3f* ggggg = (Eigen::Vector3f*)0x1A42260;
-	//ggggg->x() = -100;
-	//ggggg->y() = -100;
-	//ggggg->z() = -100;
 	Eigen::Vector2f* qa = (Eigen::Vector2f*)0x1A42300;
 	qa->x() = -0.8544828f;
 	qa->y() = -0.0472794f;

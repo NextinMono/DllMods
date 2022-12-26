@@ -30,6 +30,7 @@ public:
 	static const Hedgehog::Math::CVector emblemPosition;
 	static const CustomCamera* Camera;
 	static void Install();
+	static void Start();
 	static void CreateScreen(Sonic::CGameObject* pParentGameObject);
 	static void ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject);
 	static void KillScreen();
