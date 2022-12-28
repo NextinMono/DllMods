@@ -18,7 +18,7 @@ HOOK(void*, __fastcall, CheckScenesBack, 0xE7BED0, void* This, void* Edx, float 
 				if (!CSDCommon::scenesPlayingBack[i])
 					continue;
 				else {
-					if (CSDCommon::scenesPlayingBack[i]->m_MotionFrame <= 0)
+					if (CSDCommon::scenesPlayingBack[i]->m_MotionFrame <= 0 || CSDCommon::scenesPlayingBack[i]->m_MotionFrame >= CSDCommon::scenesPlayingBack[i]->m_MotionEndFrame)
 					{
 						CSDCommon::FreezeMotion(CSDCommon::scenesPlayingBack[i], 0);
 						std::vector<Chao::CSD::CScene*>::iterator scene = CSDCommon::scenesPlayingBack.begin() + i;

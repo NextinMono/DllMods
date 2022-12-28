@@ -9,6 +9,10 @@ int holdTimer = 0;
 boost::shared_ptr<Sonic::CCamera> spCamera;
 Sonic::CCamera* cameraa2;
 static uint32_t cameraInitRan = 0;
+uint32_t* Title::OutState;
+FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
+
+
 void Title::SetSubmenu(bool enabled)
 {
 	isInSubmenu = enabled;
@@ -507,7 +511,12 @@ HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 }
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+	uint32_t owner = (uint32_t)(This->GetContextBase());
+	Title::OutState = (uint32_t*)(owner + 0x1BC);
+	*Title::OutState = 4;
 
+	static SharedPtrTypeless spOutState;
+	/*TitleUI_TinyChangeState(This, spOutState, "Finish");*/
 	if (!isInSubmenu)
 		return originalTitleUI_TitleCMainCState_SelectMenuAdvance(This);
 	else

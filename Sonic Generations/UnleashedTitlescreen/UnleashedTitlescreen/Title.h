@@ -25,6 +25,7 @@ public:
 	static void SetSubmenu(bool enabled);
 	static void SetScrollDirection(bool horizontal);
 	static void IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene);
+	static uint32_t* OutState;
 	/*struct RGBColor
 	{
 		float r;

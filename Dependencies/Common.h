@@ -889,6 +889,64 @@ enum StageMissionType : uint32_t
 
 namespace Common
 {
+
+	static void* fCGlitterCreate
+	(
+		void* pContext,
+		SharedPtrTypeless& handle,
+		void* pMatrixTransformNode,
+		Hedgehog::Base::CSharedString const& name,
+		uint32_t flag
+	)
+	{
+		static void* const pCGlitterCreate = (void*)0xE73890;
+		__asm
+		{
+			push    flag
+			push    name
+			push    pMatrixTransformNode
+			mov     eax, pContext
+			mov     esi, handle
+			call[pCGlitterCreate]
+		}
+	}
+
+	static void fCGlitterEnd
+	(
+		void* pContext,
+		SharedPtrTypeless& handle,
+		bool instantStop
+	)
+	{
+		static void* const pCGlitterEnd = (void*)0xE72650;
+		static void* const pCGlitterKill = (void*)0xE72570;
+		__asm
+		{
+			mov     eax, [handle]
+			mov     ebx, [eax + 4]
+			push    ebx
+			test	ebx, ebx
+			jz		noIncrement
+			mov		edx, 1
+			add		ebx, 4
+			lock xadd[ebx], edx
+
+			noIncrement :
+			mov     ebx, [eax]
+				push    ebx
+				mov     eax, pContext
+				cmp     instantStop, 0
+				jnz     jump
+				call[pCGlitterEnd]
+				jmp     end
+
+				jump :
+			call[pCGlitterKill]
+
+				end :
+		}
+	}
+
 	inline void ClampFloat(float& number, float min, float max)
 	{
 		if (number < min) number = min;
@@ -1109,6 +1167,12 @@ namespace Common
 		sprintf(returnable, format, num);
 		return returnable;
 	}
+
+	inline uint32_t GetLivesCount()
+	{
+		const size_t liveCountAddr = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
+		return *(size_t*)liveCountAddr;
+	}
 	inline bool IsStageCompleted(uint32_t stageID)
 	{
 		FUNCTION_PTR(bool, __stdcall, fpIsStageCompleted, 0x107ADC0, uint32_t stageID);
@@ -1166,6 +1230,15 @@ namespace Common
 		{
 			return false;
 		}
+	}
+
+
+
+	static const float GetVector2Distance(Hedgehog::Math::CVector2 vec1, Hedgehog::Math::CVector2 vec2)
+	{
+		auto vec = vec1 - vec2;
+		float mag1 = sqrt(vec.x() * vec.x() + vec.y() * vec.y());
+		return mag1;
 	}
 }
 #pragma region HyperBE32 Original
