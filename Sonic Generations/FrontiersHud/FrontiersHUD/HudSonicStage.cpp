@@ -20,6 +20,7 @@ void HudSonicStage::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
 	if (pGameplay && !goGameplay)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(goGameplay = boost::make_shared<Sonic::CGameObjectCSD>(pGameplay, 0.5f, "HUD", false), "main", pParentGameObject);
+
 	if (pFrontiers_2 && !goFrontiers_2)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(goFrontiers_2 = boost::make_shared<Sonic::CGameObjectCSD>(pFrontiers_2, 0.5f, "HUD", false), "main", pParentGameObject);
 

@@ -952,6 +952,11 @@ namespace Common
 		if (number < min) number = min;
 		if (number > max) number = max;
 	}
+	inline void ClampInt(int& number, int min, int max)
+	{
+		if (number < min) number = min;
+		if (number > max) number = max;
+	}
 	inline uint32_t RepeatUInt32(uint32_t value, uint32_t min, uint32_t max)
 	{
 		if (value > max)

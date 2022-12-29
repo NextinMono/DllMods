@@ -14,7 +14,9 @@ constexpr double DEG2RAD = 0.01745329238474369;
 #include "Common.h"
 #include "ScoreGenerationsAPI.h"
 #include "ArchivePatcher.h"
-
+#include <json/json.h>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include <cstdint>
 #include <cstdio>
 #include <string>

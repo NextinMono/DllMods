@@ -15,9 +15,8 @@ HOOK(void*, __fastcall, CheckScenesBack, 0xE7BED0, void* This, void* Edx, float 
 			}
 			else
 			{
-				if (!CSDCommon::scenesPlayingBack[i])
-					continue;
-				else {
+				Common::ClampFloat(CSDCommon::scenesPlayingBack[i]->m_MotionFrame, 0, CSDCommon::scenesPlayingBack[i]->m_MotionEndFrame);
+				
 					if (CSDCommon::scenesPlayingBack[i]->m_MotionFrame <= 0 || CSDCommon::scenesPlayingBack[i]->m_MotionFrame >= CSDCommon::scenesPlayingBack[i]->m_MotionEndFrame)
 					{
 						CSDCommon::FreezeMotion(CSDCommon::scenesPlayingBack[i], 0);
@@ -25,7 +24,7 @@ HOOK(void*, __fastcall, CheckScenesBack, 0xE7BED0, void* This, void* Edx, float 
 						CSDCommon::scenesPlayingBack.erase(scene);
 						continue;
 					}
-				}
+				
 				
 			}
 

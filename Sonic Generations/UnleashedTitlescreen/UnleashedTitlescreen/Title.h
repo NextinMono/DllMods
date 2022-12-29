@@ -26,6 +26,7 @@ public:
 	static void SetScrollDirection(bool horizontal);
 	static void IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene);
 	static uint32_t* OutState;
+	static bool canLoad;
 	/*struct RGBColor
 	{
 		float r;

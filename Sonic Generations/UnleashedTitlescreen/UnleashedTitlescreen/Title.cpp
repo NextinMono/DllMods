@@ -12,7 +12,7 @@ static uint32_t cameraInitRan = 0;
 uint32_t* Title::OutState;
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 
-
+bool Title::canLoad = 0;
 void Title::SetSubmenu(bool enabled)
 {
 	isInSubmenu = enabled;
@@ -142,7 +142,8 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 			jne	Options
 			call ExitingTitle
 			call ContinueToWM
-			//jmp[adContinue]
+			cmp Title:: canLoad, 1
+			je LoadingForContinue
 			jmp	FunctionFinish
 
 			Options :
@@ -159,6 +160,9 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 
 			FunctionFinish :
 			jmp[pAddr]
+
+			LoadingForContinue:
+			jmp[adContinue]
 	}
 }
 //old but dont remove
@@ -205,12 +209,20 @@ void __fastcall CTitleRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGa
 	inTitle, parsedSave = false;
 	currentTitleIndex = Title::TitleIndexState::New_Game;
 	holdTimer = 0;
+	Title::canLoad = 0;
+	inWM = 0;
 }
-void Title::SetHideEverything(bool visible) {
+void Title::SetHideEverything(bool visible) 
+{
+	if(rcTitleLogo_1)
 	rcTitleLogo_1->SetHideFlag(visible);
+	if (rcTitlebg)
 	rcTitlebg->SetHideFlag(visible);
+	if (rcTitleMenu)
 	rcTitleMenu->SetHideFlag(visible);
+	if (rcTitleMenuScroll)
 	rcTitleMenuScroll->SetHideFlag(visible);
+	if (rcTitleMenuTXT)
 	rcTitleMenuTXT->SetHideFlag(visible);
 }
 void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
@@ -218,8 +230,6 @@ void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
 	if (rcTitleScreen && !spTitleScreen)
 	{
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreen, 0.5f, "HUD", false), "main", pParentGameObject);
-
-		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(Hedgehog::math::CQuaternion(1, 1, 1, 1)));
 	}
 }
 
@@ -355,6 +365,7 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 
 HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+	
 	if (enteredStart)
 		return originalTitle_CMain_CState_SelectMenu(This);
 	TitleWorldMap::PlayPanningAnim();
@@ -390,6 +401,8 @@ HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 		rcTitleMenuTXT->SetPosition(0, 65000);
 	if (rcTitleMenuScroll)
 		rcTitleMenuScroll->SetPosition(0, 65000);
+
+
 	reversedAnim = true;
 	playingStartAnim = true;
 	isStartAnimComplete = false;
@@ -578,7 +591,7 @@ void Title::Install()
 
 
 	WRITE_JUMP(0x0058CE33, 0x0058CEAB);
-
+	
 	WRITE_JUMP(0x0058D543, setlightposX);
 	WRITE_JUMP(0x0058D551, setlightposY);
 	WRITE_JUMP(0x0058D55F, setlightposZ);

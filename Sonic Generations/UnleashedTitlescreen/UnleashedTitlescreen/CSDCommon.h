@@ -20,6 +20,12 @@ public:
 		if (reEnable)
 			pScene->SetHideFlag(false);
 
+		//Remove scene from reverse playback if its found there
+		if (std::find(scenesPlayingBack.begin(), scenesPlayingBack.end(), pScene) != scenesPlayingBack.end()) 
+		{
+			auto new_end = std::remove(scenesPlayingBack.begin(), scenesPlayingBack.end(), pScene);
+			scenesPlayingBack.erase(new_end, scenesPlayingBack.end());
+		}
 		pScene->SetMotion(name);
 		pScene->SetMotionFrame(startFrame);
 		float speed = 1;

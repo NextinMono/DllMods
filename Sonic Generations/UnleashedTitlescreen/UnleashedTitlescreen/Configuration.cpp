@@ -1,6 +1,6 @@
 int Configuration::LogoType = 0;
 bool Configuration::IgnoreWarnings = false;
-
+const char* Configuration::modPath;
 void Configuration::Read()
 {
 	INIReader reader(INI_FILE);
