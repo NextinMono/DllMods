@@ -12,17 +12,18 @@ void Configuration::Read()
 	Json::Value root;
 	jsonFile >> root;
 	auto wd = root["WorldData"];
-	Json::Value& arrayFlag = wd["FlagData"];
-	Configuration::worldData = WorldData();
+	Json::Value arrayFlag = wd["FlagData"];
+	worldData = WorldData();
 	for (int i = 0; i < arrayFlag.size(); i++)
 	{
 		worldData.data.push_back(FlagData());
-		Json::Value& element = arrayFlag[i]["LevelData"];
+		Json::Value element = arrayFlag[i]["LevelData"];
 		for (int x = 0; x < element.size(); x++)
 		{
 			worldData.data[i].data.push_back(LevelData());
-			worldData.data[i].data[x].levelID = element[x]["levelID"].asString();
-			worldData.data[i].data[x].optionName = element[x]["optionName"].asString();
+			worldData.data[i].data[x].levelID = std::string(element[x]["levelID"].asCString());
+			worldData.data[i].data[x].optionName = std::string(element[x]["optionName"].asCString());
 		}
 	}
+	Configuration::worldData = worldData;
 }

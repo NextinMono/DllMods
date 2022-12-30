@@ -545,7 +545,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 
 
-void __declspec(naked) setlightposX()
+void __declspec(naked) SetLightPos_X()
 {
 	//https://godbolt.org/
 	static uint32_t pAddr = 0x0058D54B;
@@ -557,7 +557,7 @@ void __declspec(naked) setlightposX()
 		jmp[pAddr]
 	}
 }
-void __declspec(naked) setlightposY()
+void __declspec(naked) SetLightPos_Y()
 {
 	//https://godbolt.org/
 	static uint32_t pAddr = 0x0058D559;
@@ -568,7 +568,7 @@ void __declspec(naked) setlightposY()
 		movss xmm0, y;
 		jmp[pAddr]
 	}
-}void __declspec(naked) setlightposZ()
+}void __declspec(naked) SetLightPos_Z()
 {
 	//https://godbolt.org/
 	static uint32_t pAddr = 0x0058D567;
@@ -591,9 +591,9 @@ void Title::Install()
 
 	WRITE_JUMP(0x0058CE33, 0x0058CEAB);
 	
-	WRITE_JUMP(0x0058D543, setlightposX);
-	WRITE_JUMP(0x0058D551, setlightposY);
-	WRITE_JUMP(0x0058D55F, setlightposZ);
+	WRITE_JUMP(0x0058D543, SetLightPos_X);
+	WRITE_JUMP(0x0058D551, SetLightPos_Y);
+	WRITE_JUMP(0x0058D55F, SetLightPos_Z);
 	WRITE_MEMORY(0x1704474, float, 0.4f); //FOV
 	Eigen::Vector2f* qa = (Eigen::Vector2f*)0x1A42300;
 	qa->x() = -0.8544828f;

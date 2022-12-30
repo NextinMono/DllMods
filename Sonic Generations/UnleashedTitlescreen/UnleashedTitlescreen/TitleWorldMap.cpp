@@ -1,10 +1,8 @@
-#include <algorithm>
-
-// I recommend committing these to Pch.h whenever you have this header,
-// it's much more useful for debugging than print spam.
-
-//#define DEBUG_DRAW_TEXT_DLL_IMPORT
-//#include "DebugDrawText.h"
+#include <algorithm>	
+// I recommend committing these to Pch.h whenever you have this header,	
+// it's much more useful for debugging than print spam.	
+//#define DEBUG_DRAW_TEXT_DLL_IMPORT	
+//#include "DebugDrawText.h"	
 
 using namespace hh::math;
 
@@ -20,7 +18,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> deco_text[6];
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreenW;
 std::vector<CVector> flagPositions;
-static SharedPtrTypeless cursorMoveHandle, cursorSelectHandle;
+static SharedPtrTypeless cursorMoveHandle, cursorSelectHandle, stageSelectHandle;
 const CVector TitleWorldMap::TitleWorldMap::emblemPosition = CVector(0, 0, -2.34f);
 const CustomCamera* TitleWorldMap::Camera;
 CVector2 posCursorCenter;
@@ -31,6 +29,7 @@ CVector2* offsetRes;
 static float rotationPitch = 0.0f;
 static float rotationYaw = 0.0f;
 int stageSelectedWindow = 0;
+int stageSelectedWindowMax = 6;
 
 bool stageWindowOpen;
 bool playingPointerMove;
@@ -188,11 +187,25 @@ bool IsInsideCursorRange(const CVector2& input, float visibility, int flagID)
 
 void PopulateStageSelect(int id)
 {
+	if (Configuration::worldData.data.size() < id)
+	{
+		printf("\n[WorldMap] Missing config for FlagID %d", id);
+		return;
+	}
+	stageSelectedWindowMax = Configuration::worldData.data[id].data.size() - 1;
+	for (size_t i = 0; i < 6; i++)
+	{
+		deco_text[i]->SetHideFlag(true);
+	}
+
 	for (size_t i = 0; i < Configuration::worldData.data[id].data.size(); i++)
-	{		
+	{
 		const char* e = Configuration::worldData.data[id].data[i].optionName.c_str();
+		deco_text[i]->SetHideFlag(false);
 		deco_text[i]->GetNode("Text_blue")->SetText(e);
 	}
+
+
 }
 CVector2 WorldToUIPosition(const CVector& input)
 {
@@ -332,7 +345,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 {
 	CTitleWRemoveCallback(This, nullptr, nullptr);
 	CalculateAspectOffsets();
-	
+
 
 
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
@@ -401,7 +414,6 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 
 	//constexpr float earthRadius = 5.575f;
 	constexpr float earthRadius = 5.25f; // This looks nicer
-
 	flagPositions.push_back(CVector(0.31f, 0.36f, 2.28f));
 	flagPositions.push_back(CVector(2.310000f, 2.360000f, 1.111371f));
 	flagPositions.push_back(CVector(2.810000f, -0.140000f, -6.649425f));
@@ -411,7 +423,6 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	flagPositions.push_back(CVector(0.060000, -2.639999, -6.829812));
 	flagPositions.push_back(CVector(-4.440000, -2.390000, -0.798426));
 	flagPositions.push_back(CVector(-3.690000, 3.360000, -1.163138)); //-4.440000 y: -2.390000 z : -0.798426
-
 	// Now normalize all these positions, tbh
 	for (int i = 0; i < flagPositions.size(); ++i)
 	{
@@ -489,6 +500,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 
 	if (flag[0] && cts_guide_4_misson && cts_guide_5_medal)
 	{
+
+		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
 		uint32_t totalRing = 0;
 		for (size_t i = 0; i < 18; i++)
 		{
@@ -561,7 +574,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 				if (inputPtr->IsTapped(Sonic::eKeyState_A) && !stageWindowOpen)
 				{
 
-					PopulateStageSelect(0);
+					PopulateStageSelect(lastValidFlagSelected);
 					cts_stage_window->SetHideFlag(false);
 					cts_stage_select->SetHideFlag(false);
 					cts_name_2->SetHideFlag(false);
@@ -575,7 +588,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					stageSelectFlag->GetNode("img")->SetPatternIndex(lastValidFlagSelected);
 					stageSelectedWindow = 0;
 					CSDCommon::FreezeMotion(*cts_stage_select, 0);
-					ShowTextAct(true);
+					/*ShowTextAct(true);*/
 				}
 				if (inputPtr->IsTapped(Sonic::eKeyState_B) && stageWindowOpen)
 				{
@@ -584,35 +597,38 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					CSDCommon::PlayAnimation(*cts_name_2, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, false, true);
 					cts_stage_select->SetHideFlag(true);
 					stageSelectFlag->SetHideFlag(true);
+					timeStageSelectDelay = 0;
 					ShowTextAct(false);
 				}
 				if (stageWindowOpen)
 				{
-
 					if (timeStageSelectDelay < 5)
 						timeStageSelectDelay += 1;
-					if (inputPtr->IsTapped(Sonic::eKeyState_A)&&  timeStageSelectDelay >= 5)
+					if (inputPtr->IsTapped(Sonic::eKeyState_A) && timeStageSelectDelay >= 5)
 					{
 						Title::canLoad = 1;
 					}
-					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickDown))
+					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickDown) && stageSelectedWindow != stageSelectedWindowMax)
 					{
-						stageSelectedWindow += 1;
+						Common::PlaySoundStatic(stageSelectHandle,800005);
+							stageSelectedWindow += 1;
 						CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (stageSelectedWindow - 1) * 10, stageSelectedWindow * 10);
 					}
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickUp))
 					{
+						Common::PlaySoundStatic(stageSelectHandle, 800005);
 						stageSelectedWindow -= 1;
 						if (stageSelectedWindow < 5)
 							CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 130 - ((stageSelectedWindow + 1) * 10), 130 - (stageSelectedWindow) * 10);
 					}
-					Common::ClampInt(stageSelectedWindow, 0, 5);
+					Common::ClampInt(stageSelectedWindow, 0, stageSelectedWindowMax);
 				}
 			}
 			cts_name->SetHideFlag(!cursorSelected);
 			lastAmountSel = amountSel;
 
 		}
+
 
 		CheckCursorAnimStatus();
 	}
@@ -681,69 +697,57 @@ void PlayPan(CustomCamera* camera, const Hedgehog::Universe::SUpdateInfo& update
 	}
 	timePan += updateInfo.DeltaTime;
 	camHeight = lerpWithEaseInOut(-20, 0, timePan / 2.5f);
-}
 
+}
 float VectorAngle(const CVector& a, const CVector& b)
 {
 	const float dot = a.dot(b);
 	//return acos(dot / sqrt(a.squaredNorm() * b.squaredNorm()));
 	return acos(dot / sqrt(a.squaredNorm()));
 }
-
 inline float lerpUnclampedf(const float a, const float b, const float t)
 {
 	return a + (b - a) * t;
 }
-
 inline float lerpf(float a, float b, float t)
 {
 	const float min = fmin(a, b);
 	const float max = fmax(a, b);
 	return fmin(min, fmax(max, lerpUnclampedf(a, b, t)));
 }
-
 void MagnetizeToFlag(const CVector& flagPosition, float deltaTime)
 {
 	// Helpful thing here
 	constexpr float halfway = (180.0f * DEG2RAD);
-
 	// First, we need to convert our flag position to target radians.
 	// Reminder: Yaw increases when rotating to the right, Pitch is negative facing down & positive facing up.
-
 	// Pitch is easy. Get the angle in radians, then subtract by half max.
-	const float rPitch = VectorAngle(flagPosition, CVector(0,1,0)) - (90.0f * DEG2RAD);
-
+	const float rPitch = VectorAngle(flagPosition, CVector(0, 1, 0)) - (90.0f * DEG2RAD);
 	// Yaw is tricky due to the wraparound, and because it's a planar rotation.
 	// This means we actually need 0 -> 360, which involves a few steps.
-
 	// We can't just do an angle check with forward. We need a PLANAR vector to compare with.
 	// TODO: These math operations are getting expensive, so we need to really pre-compute the radians we want to use.
 	const CVector planarPosition = CVector(flagPosition.x(), 0, flagPosition.z()).normalized();
 	const float rInitialYaw = VectorAngle(planarPosition, CVector(0, 0, 1));
-
 	// Our angle is an unsigned angle from 0 -> 180. We need to convert that to 0 -> 360, and... well this is how you do that lol
 	const float rCorrectedYaw = flagPosition.dot(CVector(-1, 0, 0)) > 0.0f
-	                          ? (halfway - rInitialYaw) + halfway
-	                          : rInitialYaw;
-
+		? (halfway - rInitialYaw) + halfway
+		: rInitialYaw;
 	// Now, we want to do some bullshit to make the radian lerp-towards work.
-
 	const bool isOverfill = fabs(rotationYaw - rCorrectedYaw) > halfway;
 	const bool isFlagLeft = rotationYaw > halfway;
-
 	float rYaw = rCorrectedYaw;
 	if (isOverfill)
 	{
 		const float compensation = (isFlagLeft ? 360.0f : -360.0f) * DEG2RAD;
 		rYaw += compensation;
 	}
-
 	// Time to lerp!
 	constexpr float lerpRate = 2.5f; // I like 3.0f, but if we want this to be more like Unleashed's, 2.5f feels about right.
-
 	rotationPitch = lerpUnclampedf(rotationPitch, rPitch, deltaTime * lerpRate);
-	rotationYaw   = lerpUnclampedf(rotationYaw,   rYaw,   deltaTime * lerpRate);
+	rotationYaw = lerpUnclampedf(rotationYaw, rYaw, deltaTime * lerpRate);
 }
+
 
 HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* This, void* Edx, const Hedgehog::Universe::SUpdateInfo& updateInfo)
 {
@@ -783,8 +787,8 @@ HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 
 	if (!disabledStick && hasInput)
 	{
-		rotationPitch -= input.RightStickVertical    *  rotationPitchRate  *  updateInfo.DeltaTime;
-		rotationYaw   += input.RightStickHorizontal  *   rotationYawRate   *  updateInfo.DeltaTime;
+		rotationPitch -= input.RightStickVertical * rotationPitchRate * updateInfo.DeltaTime;
+		rotationYaw += input.RightStickHorizontal * rotationYawRate * updateInfo.DeltaTime;
 	}
 	// Do the thing where we magnetize our input.
 	// TODO: Handle the HUD update here too I guess, because this is where a flag will be "selected"
@@ -849,65 +853,16 @@ void SetCorrectStageFromFlag()
 	uint32_t stageTerrainAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x20 });
 	char** h = (char**)stageTerrainAddress;
 	const char* stageToLoad = "ghz200";
-	switch (lastValidFlagSelected)
+	if (Configuration::worldData.data.size() < lastValidFlagSelected)
 	{
-	case 0:
-	{
-		switch (stageSelectedWindow)
-		{
-		case 0:
-		{
-			stageToLoad = "ghz100";
-			break;
-		}
-		case 1:
-		{
-			stageToLoad = "tes200";
-			break;
-		}
-		}
-		break;
+		//if only cpp had the same ${} system as c#
+		std::string message = "This country has an invalid configuration. Loading " + std::string(stageToLoad) + " instead.";
+		MessageBoxA(NULL, message.c_str(), "Unleashed Title Screen", 0);
+		printf("\n[WorldMap] Missing config for FlagID %d", lastValidFlagSelected);
 	}
-	case 1:
-	{
-		stageToLoad = "ssz200";
-		break;
-	}
-	case 2:
-	{
-		stageToLoad = "sph200";
-		break;
-	}
-	case 3:
-	{
-		stageToLoad = "cpz200";
-		break;
-	}
-	case 4:
-	{
-		stageToLoad = "cte200";
-		break;
-	case 5:
-	{
-		stageToLoad = "ssh200";
-		break;
+	else
+		stageToLoad = Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].levelID.c_str();
 
-	}case 6:
-	{
-		stageToLoad = "euc200";
-		break;
-	}case 7:
-	{
-		stageToLoad = "csc200";
-		break;
-	}
-	case 8:
-	{
-		stageToLoad = "ghz200";
-		break;
-	}
-	}
-	}
 
 	strcpy(*(char**)stageTerrainAddress, stageToLoad);
 }
