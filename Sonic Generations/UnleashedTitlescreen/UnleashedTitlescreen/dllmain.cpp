@@ -1,8 +1,8 @@
 extern "C" __declspec(dllexport) void Init(ModInfo* modInfo)
 {
-	Configuration::Read();
 	MessageBoxA(NULL, "", "", 0);
-	
+
+	Configuration::Read();
 
 	if (Common::IsModIdEnabled("bsthlc.generationsd3d11") && !Configuration::IgnoreWarnings)
 	{
@@ -10,6 +10,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo* modInfo)
 	}
 
 	std::string modDir = modInfo->CurrentMod->Path;
+	size_t pos = modDir.find_last_of("\\/");
+	if (pos != std::string::npos)
+	{
+		modDir.erase(pos + 1);
+	}
+	Configuration::modPath = modDir + STAGE_LIST_FILE;
 	ArchivePatcher::Install();
 	LetterboxHelper::Initialize(1280, 720);
 	Title::Install();
@@ -17,4 +23,4 @@ extern "C" __declspec(dllexport) void Init(ModInfo* modInfo)
 	TitleOption::Install();
 	CSDCommon::Initialize();
 }
-__declspec(dllexport) ModInfo GensModInfo = { ModLoaderVer, GameVer };
+//__declspec(dllexport) ModInfo GensModInfo = { { ModLoaderVer, GameVer }; }

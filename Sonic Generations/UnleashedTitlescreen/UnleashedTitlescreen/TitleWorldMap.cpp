@@ -1,19 +1,7 @@
 #include <algorithm>
 using namespace hh::math;
 
-struct LevelData
-{
-	const char* levelID;
-	const char* optionName;
-};
-struct FlagData
-{
-	LevelData data[2];
-};
-struct WorldData
-{
-	FlagData data[9];
-};
+
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreenW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> infobg1, infoimg1, infoimg2, infoimg3, infoimg4, headerBGW, headerIMGW, footerBGW, footerIMGW;
@@ -22,7 +10,6 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> cts_name, cts_guide_window, cts_guide_ss, ct
 Chao::CSD::RCPtr<Chao::CSD::CScene> cts_stage_window, cts_stage_select, cts_name_2, stageSelectFlag;
 Chao::CSD::RCPtr<Chao::CSD::CScene> flag[9];
 Chao::CSD::RCPtr<Chao::CSD::CScene> deco_text[6];
-WorldData worldData;
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreenW;
 std::vector < CVector> flagPositions[9];
@@ -191,6 +178,15 @@ bool IsInsideCursorRange(const CVector2& input, float visibility, int flagID)
 	}
 	return result;
 }
+
+void PopulateStageSelect(int id)
+{
+	for (size_t i = 0; i < Configuration::worldData.data[id].data.size(); i++)
+	{		
+		const char* e = Configuration::worldData.data[id].data[i].optionName.c_str();
+		deco_text[i]->GetNode("Text_blue")->SetText(e);
+	}
+}
 CVector2 WorldToUIPosition(const CVector& input)
 {
 	const auto camera = TitleWorldMap::Camera;
@@ -329,21 +325,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 {
 	CTitleWRemoveCallback(This, nullptr, nullptr);
 	CalculateAspectOffsets();
-	std::ifstream jsonFile("stage_list.json", std::ifstream::binary);
-	Json::Value root;
-	jsonFile >> root;
-	auto wd = root["WorldData"];
-	Json::Value arrayFlag = wd["FlagData"];
-	for (int i = 0; i < arrayFlag.size(); i++) 
-	{
-		Json::Value element = arrayFlag[i]["LevelData"];
-		for (int x = 0; x < element.size(); x++) 
-		{
-			auto egh = element["levelID"];
-			//worldData.data[i].data[x].levelID = egh;
-			worldData.data[i].data[x].optionName = element["optionName"].asString().c_str();
-		}
-	}
+	
 
 
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
@@ -429,7 +411,6 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	{
 		e->SetHideFlag(true);
 	}
-
 	SetHideEverythingWM(true);
 	cts_guide_4_misson->SetHideFlag(true);
 	cts_guide_5_medal->SetHideFlag(true);
@@ -566,6 +547,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 			{
 				if (inputPtr->IsTapped(Sonic::eKeyState_A) && !stageWindowOpen)
 				{
+
+					PopulateStageSelect(0);
 					cts_stage_window->SetHideFlag(false);
 					cts_stage_select->SetHideFlag(false);
 					cts_name_2->SetHideFlag(false);

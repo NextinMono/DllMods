@@ -308,7 +308,6 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 	auto spCsdProject = wrapper.GetCsdProject("ui_title_unleashed");
 	rcTitleScreen = spCsdProject->m_rcProject;
-	Configuration::Read();
 	switch (Configuration::LogoType)
 	{
 	case 0:
