@@ -781,25 +781,28 @@ HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 
 	const bool hasInput = pan.squaredNorm() > deadzone * deadzone;
 
-	if (!disabledStick && hasInput)
+	if (!disabledStick)
 	{
-		rotationPitch -= input.RightStickVertical    *  rotationPitchRate  *  updateInfo.DeltaTime;
-		rotationYaw   += input.RightStickHorizontal  *   rotationYawRate   *  updateInfo.DeltaTime;
-	}
-	// Do the thing where we magnetize our input.
-	// TODO: Handle the HUD update here too I guess, because this is where a flag will be "selected"
-	// Otherwise, make that handled somewhere else. I know you do an overlap check already, but best to do this once.
-	else
-	{
-		constexpr float dotThreshold = 0.95f; // Value I determined to work pretty well.
-		for (CVector position : flagPositions)
+		if (hasInput)
 		{
-			const CVector direction = (position - TitleWorldMap::emblemPosition).normalized();
-			if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold)
-				continue;
+			rotationPitch -= input.RightStickVertical    *  rotationPitchRate  *  updateInfo.DeltaTime;
+			rotationYaw   += input.RightStickHorizontal  *   rotationYawRate   *  updateInfo.DeltaTime;
+		}
+		// Do the thing where we magnetize our input.
+		// TODO: Handle the HUD update here too I guess, because this is where a flag will be "selected"
+		// Otherwise, make that handled somewhere else. I know you do an overlap check already, but best to do this once.
+		else
+		{
+			constexpr float dotThreshold = 0.95f; // Value I determined to work pretty well.
+			for (CVector position : flagPositions)
+			{
+				const CVector direction = (position - TitleWorldMap::emblemPosition).normalized();
+				if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold)
+					continue;
 
-			MagnetizeToFlag(direction, updateInfo.DeltaTime);
-			break;
+				MagnetizeToFlag(direction, updateInfo.DeltaTime);
+				break;
+			}
 		}
 	}
 
