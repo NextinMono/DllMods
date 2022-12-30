@@ -1,4 +1,11 @@
 #include <algorithm>
+
+// I recommend committing these to Pch.h whenever you have this header,
+// it's much more useful for debugging than print spam.
+
+//#define DEBUG_DRAW_TEXT_DLL_IMPORT
+//#include "DebugDrawText.h"
+
 using namespace hh::math;
 
 
@@ -12,7 +19,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> flag[9];
 Chao::CSD::RCPtr<Chao::CSD::CScene> deco_text[6];
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreenW;
-std::vector < CVector> flagPositions[9];
+std::vector<CVector> flagPositions;
 static SharedPtrTypeless cursorMoveHandle, cursorSelectHandle;
 const CVector TitleWorldMap::TitleWorldMap::emblemPosition = CVector(0, 0, -2.34f);
 const CustomCamera* TitleWorldMap::Camera;
@@ -392,17 +399,24 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	cursorR = rcTitleScreenW->CreateScene("cts_cursor");
 	PlayCursorAnim("Intro_Anim");
 
-	float earthRadius = 5.575f;
-	flagPositions->push_back(CVector(0.31f, 0.36f, 2.28f));
-	flagPositions->push_back(CVector(2.310000f, 2.360000f, 1.111371f));
-	flagPositions->push_back(CVector(2.810000f, -0.140000f, -6.649425f));
-	flagPositions->push_back(CVector(2.810000f, -1.890000, 1.742745));
-	flagPositions->push_back(CVector(-0.190000, 4.610000, -3.543527));
-	flagPositions->push_back(CVector(-5.190000, 0.110000, -3.363136));
-	flagPositions->push_back(CVector(0.060000, -2.639999, -6.829812));
-	flagPositions->push_back(CVector(-4.440000, -2.390000, -0.798426));
-	flagPositions->push_back(CVector(-3.690000, 3.360000, -1.163138)); //-4.440000 y: -2.390000 z : -0.798426
-	flagPositions->push_back(CVector(0.31f, 0.36f, 2.28f));
+	//constexpr float earthRadius = 5.575f;
+	constexpr float earthRadius = 5.25f; // This looks nicer
+
+	flagPositions.push_back(CVector(0.31f, 0.36f, 2.28f));
+	flagPositions.push_back(CVector(2.310000f, 2.360000f, 1.111371f));
+	flagPositions.push_back(CVector(2.810000f, -0.140000f, -6.649425f));
+	flagPositions.push_back(CVector(2.810000f, -1.890000, 1.742745));
+	flagPositions.push_back(CVector(-0.190000, 4.610000, -3.543527));
+	flagPositions.push_back(CVector(-5.190000, 0.110000, -3.363136));
+	flagPositions.push_back(CVector(0.060000, -2.639999, -6.829812));
+	flagPositions.push_back(CVector(-4.440000, -2.390000, -0.798426));
+	flagPositions.push_back(CVector(-3.690000, 3.360000, -1.163138)); //-4.440000 y: -2.390000 z : -0.798426
+
+	// Now normalize all these positions, tbh
+	for (int i = 0; i < flagPositions.size(); ++i)
+	{
+		flagPositions.at(i) = ((flagPositions.at(i) - TitleWorldMap::emblemPosition).normalized() * earthRadius) + TitleWorldMap::emblemPosition;
+	}
 
 	infoimg1->GetNode("num")->SetText(Common::IntToString(Common::GetLivesCount(), "%02d"));
 
@@ -496,9 +510,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 			}
 			for (size_t i = 0; i < 9; i++)
 			{
-				float visibility = fmax(0.0f, -(TitleWorldMap::Camera->m_MyCamera.m_Direction.dot((flagPositions->at(i) - CVector(0, 0, -2.34f)).normalized()))) * 100;
-				auto uiPos = WorldToUIPosition(flagPositions->at(i));
-				uiPos = (uiPos - CVector2(1280 / 2, 720 / 2).normalized() * 5.575f);
+				float visibility = fmax(0.0f, -(TitleWorldMap::Camera->m_MyCamera.m_Direction.dot((flagPositions.at(i) - CVector(0, 0, -2.34f)).normalized()))) * 100;
+				auto uiPos = WorldToUIPosition(flagPositions.at(i));
 
 				if (introPlayed)
 					CSDCommon::PlayAnimation(*flag[i], "Fade_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 0, visibility, visibility);
@@ -601,7 +614,6 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 
 		}
 
-
 		CheckCursorAnimStatus();
 	}
 	return originalTitleW_UpdateApplication(This, Edx, elapsedTime, a3);
@@ -669,8 +681,70 @@ void PlayPan(CustomCamera* camera, const Hedgehog::Universe::SUpdateInfo& update
 	}
 	timePan += updateInfo.DeltaTime;
 	camHeight = lerpWithEaseInOut(-20, 0, timePan / 2.5f);
-
 }
+
+float VectorAngle(const CVector& a, const CVector& b)
+{
+	const float dot = a.dot(b);
+	//return acos(dot / sqrt(a.squaredNorm() * b.squaredNorm()));
+	return acos(dot / sqrt(a.squaredNorm()));
+}
+
+inline float lerpUnclampedf(const float a, const float b, const float t)
+{
+	return a + (b - a) * t;
+}
+
+inline float lerpf(float a, float b, float t)
+{
+	const float min = fmin(a, b);
+	const float max = fmax(a, b);
+	return fmin(min, fmax(max, lerpUnclampedf(a, b, t)));
+}
+
+void MagnetizeToFlag(const CVector& flagPosition, float deltaTime)
+{
+	// Helpful thing here
+	constexpr float halfway = (180.0f * DEG2RAD);
+
+	// First, we need to convert our flag position to target radians.
+	// Reminder: Yaw increases when rotating to the right, Pitch is negative facing down & positive facing up.
+
+	// Pitch is easy. Get the angle in radians, then subtract by half max.
+	const float rPitch = VectorAngle(flagPosition, CVector(0,1,0)) - (90.0f * DEG2RAD);
+
+	// Yaw is tricky due to the wraparound, and because it's a planar rotation.
+	// This means we actually need 0 -> 360, which involves a few steps.
+
+	// We can't just do an angle check with forward. We need a PLANAR vector to compare with.
+	// TODO: These math operations are getting expensive, so we need to really pre-compute the radians we want to use.
+	const CVector planarPosition = CVector(flagPosition.x(), 0, flagPosition.z()).normalized();
+	const float rInitialYaw = VectorAngle(planarPosition, CVector(0, 0, 1));
+
+	// Our angle is an unsigned angle from 0 -> 180. We need to convert that to 0 -> 360, and... well this is how you do that lol
+	const float rCorrectedYaw = flagPosition.dot(CVector(-1, 0, 0)) > 0.0f
+	                          ? (halfway - rInitialYaw) + halfway
+	                          : rInitialYaw;
+
+	// Now, we want to do some bullshit to make the radian lerp-towards work.
+
+	const bool isOverfill = fabs(rotationYaw - rCorrectedYaw) > halfway;
+	const bool isFlagLeft = rotationYaw > halfway;
+
+	float rYaw = rCorrectedYaw;
+	if (isOverfill)
+	{
+		const float compensation = (isFlagLeft ? 360.0f : -360.0f) * DEG2RAD;
+		rYaw += compensation;
+	}
+
+	// Time to lerp!
+	constexpr float lerpRate = 2.5f; // I like 3.0f, but if we want this to be more like Unleashed's, 2.5f feels about right.
+
+	rotationPitch = lerpUnclampedf(rotationPitch, rPitch, deltaTime * lerpRate);
+	rotationYaw   = lerpUnclampedf(rotationYaw,   rYaw,   deltaTime * lerpRate);
+}
+
 HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* This, void* Edx, const Hedgehog::Universe::SUpdateInfo& updateInfo)
 {
 	using namespace hh::math;
@@ -701,17 +775,47 @@ HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 	constexpr float rotationPitchRate = 2.0f;
 	constexpr float rotationYawRate = 2.0f;
 
-	if (!disabledStick)
+	const CVector2 pan(input.RightStickHorizontal, input.RightStickVertical);
+	const float deadzone = 0.1f; // TODO: MAKE PARAMETER? USE SOMETHING IN GENS?
+
+
+	const bool hasInput = pan.squaredNorm() > deadzone * deadzone;
+
+	if (!disabledStick && hasInput)
 	{
-		rotationPitch += -input.RightStickVertical * rotationPitchRate * updateInfo.DeltaTime;
-		rotationYaw += input.RightStickHorizontal * rotationYawRate * updateInfo.DeltaTime;
+		rotationPitch -= input.RightStickVertical    *  rotationPitchRate  *  updateInfo.DeltaTime;
+		rotationYaw   += input.RightStickHorizontal  *   rotationYawRate   *  updateInfo.DeltaTime;
+	}
+	// Do the thing where we magnetize our input.
+	// TODO: Handle the HUD update here too I guess, because this is where a flag will be "selected"
+	// Otherwise, make that handled somewhere else. I know you do an overlap check already, but best to do this once.
+	else
+	{
+		constexpr float dotThreshold = 0.95f; // Value I determined to work pretty well.
+		for (CVector position : flagPositions)
+		{
+			const CVector direction = (position - TitleWorldMap::emblemPosition).normalized();
+			if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold)
+				continue;
+
+			MagnetizeToFlag(direction, updateInfo.DeltaTime);
+			break;
+		}
 	}
 
 	// Gotta do this nonsense.
-	constexpr float pitchMaxExtents = 70.0f * DEG2RAD; // Max rotation is 70 degrees in either direction,
-													   // rather than 90, which would get us to the poles of the earth.
+	// UNDONE: This method wouldn't let us select Holoska, & the bottom of earth has nothing right now.
+	//constexpr float pitchMaxExtents = 70.0f * DEG2RAD; // Max rotation is 70 degrees in either direction,
+	//                                                   // rather than 90, which would get us to the poles of the earth.
+
+
+	// Min and max extents configured differently so we aren't aimlessly rotating around the south pole (TBD)
+	// and so we can actually select Holoska correctly.
+	constexpr float pitchBtm = 50.0f * DEG2RAD;
+	constexpr float pitchTop = 75.0f * DEG2RAD;
+
 	// Now limit
-	rotationPitch = fmax(-pitchMaxExtents, fmin(rotationPitch, pitchMaxExtents));
+	rotationPitch = fmax(-pitchTop, fmin(rotationPitch, pitchBtm));
 	// Cycle yaw so it doesn't go over 360, so we don't approach Very Large Numbers.
 	rotationYaw = WrapAroundFloat(rotationYaw, 360.0 * DEG2RAD);
 
