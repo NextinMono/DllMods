@@ -862,7 +862,7 @@ void SetCorrectStageFromFlag()
 		}
 		case 1:
 		{
-			stageToLoad = "ghz200";
+			stageToLoad = "tes200";
 			break;
 		}
 		}

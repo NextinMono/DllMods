@@ -1,5 +1,12 @@
 //Taken directly from UnleashedHUD, with some changes
 std::vector<ArchiveDependency> ArchivePatcher::archiveDependencies = {};
+bool replace(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = str.find(from);
+    if (start_pos == std::string::npos)
+        return false;
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
 
 HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const size_t size, void* pDatabase)
 {
@@ -30,6 +37,7 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 		str = stream.str();
 	}
 
+
 	const size_t newSize = size + str.size();
 	const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
 	memcpy(pBuffer.get(), pData, size);
@@ -49,5 +57,6 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 void ArchivePatcher::Install()
 {
+	archiveDependencies.push_back(ArchiveDependency("tes200", {"pla_cmn"}));
 	INSTALL_HOOK(ParseArchiveTree);
 }

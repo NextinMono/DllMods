@@ -7,6 +7,7 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 	{
 		std::stringstream stream;
 
+
 		for (auto& node : ArchivePatcher::archiveDependencies)
 		{
 			stream << "  <Node>\n";
