@@ -24,7 +24,7 @@ public:
 	/// Reads the INI configuration file for the mod.
 	/// </summary>
 	static void Read();
-	
+	static std::vector<std::string> GetAllLevelIDs(bool onlyCustom);
 	static int LogoType;
 	static bool IgnoreWarnings;
 	static std::string modPath;

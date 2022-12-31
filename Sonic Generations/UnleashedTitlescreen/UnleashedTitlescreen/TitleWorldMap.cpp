@@ -588,6 +588,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					stageSelectFlag->GetNode("img")->SetPatternIndex(lastValidFlagSelected);
 					stageSelectedWindow = 0;
 					CSDCommon::FreezeMotion(*cts_stage_select, 0);
+					Common::PlaySoundStatic(stageSelectHandle, 823001);
 					/*ShowTextAct(true);*/
 				}
 				if (inputPtr->IsTapped(Sonic::eKeyState_B) && stageWindowOpen)
@@ -610,13 +611,13 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					}
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickDown) && stageSelectedWindow != stageSelectedWindowMax)
 					{
-						Common::PlaySoundStatic(stageSelectHandle,800005);
+						Common::PlaySoundStatic(stageSelectHandle, 823000);
 							stageSelectedWindow += 1;
 						CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (stageSelectedWindow - 1) * 10, stageSelectedWindow * 10);
 					}
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickUp))
 					{
-						Common::PlaySoundStatic(stageSelectHandle, 800005);
+						Common::PlaySoundStatic(stageSelectHandle, 823000);
 						stageSelectedWindow -= 1;
 						if (stageSelectedWindow < 5)
 							CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 130 - ((stageSelectedWindow + 1) * 10), 130 - (stageSelectedWindow) * 10);
@@ -796,12 +797,12 @@ HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 	else
 	{
 		constexpr float dotThreshold = 0.95f; // Value I determined to work pretty well.
-		for (CVector position : flagPositions)
+		for (CVector position : flagPositions )
 		{
 			const CVector direction = (position - TitleWorldMap::emblemPosition).normalized();
-			if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold)
+			if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold && currentFlagSelected == -1 )
 				continue;
-
+			if(introPlayed)
 			MagnetizeToFlag(direction, updateInfo.DeltaTime);
 			break;
 		}
@@ -898,6 +899,10 @@ void TitleWorldMap::Install()
 	WRITE_JUMP(0xD56CCA, SetCorrectTerrainForMission_ASM);
 	WRITE_JUMP(0x00D9078D, 0x00D907B3);
 	WRITE_JUMP(0x00582390, 0x005823B8);
+
+	WRITE_JUMP(0x00D0DFA0, 0x00D0DDC0);
+
+
 	WRITE_JUMP(0x00D0A743, QGQGQGQ);
 	/*WRITE_JUMP(0x010B978C, 0x010B984D);*/
 	INSTALL_HOOK(TitleWM_CMain_CState_SelectMenu);
