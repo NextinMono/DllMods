@@ -45,10 +45,29 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 		}
 		cmn200 = stream.str();
 	}
-	const size_t newSize = size + str.size() + cmn200.size();
-	const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
-	//memcpy(pBuffer.get(), pData, size);
 
+	std::string enemydependencies;
+	{
+		std::stringstream stream;
+		for (auto& node : Configuration::GetAllLevelIDs(true))
+		{
+			stream << "   <DefAppend>\n";
+			stream << "     <Name>" << node << "_cmn</Name>\n";
+			stream << "     <Archive>EnemyCommon</Archive>\n";
+			stream << "     <Archive>EnemyELauncher</Archive>\n";
+			stream << "     <Archive>EnemyAeroCannon</Archive>\n";
+			stream << "     <Archive>EnemyEFighter</Archive>\n";
+			stream << "     <Archive>EnemyBeeton</Archive>\n";
+			stream << "     <Archive>EnemySpinner</Archive>\n";
+			stream << "     <Archive>EnemyEPawnCommon</Archive>\n";
+			stream << "     <Archive>EnemyEPawnSSH</Archive>\n";
+			stream << "     <Archive>EnemyMotora</Archive>\n";
+			stream << "   </DefAppend>\n";
+		}
+		enemydependencies = stream.str();
+	}
+	const size_t newSize = size + str.size() + cmn200.size() /*+ enemydependencies.size()*/;
+	const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
 
 	char* pInsertionPos = strstr(pData, "<Include>");
 	char* pInsertionPos_CMN200 = strstr(pData, "<DefAppend>cmn200</DefAppend>") + strlen("<DefAppend>cmn200</DefAppend>")+2;
@@ -60,6 +79,10 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 	buffer.insert(pInsertionPos - pData, str);
 	buffer.insert(pInsertionPos_CMN200 - pData, cmn200);
 
+	/*int e = std::string(pData).find("<Name>EnemyCommon</Name>");
+	int f = std::string(pData).find("<Name>ghz_cmn</Name>", e);
+
+	buffer.insert(f, enemydependencies);*/
 	memcpy(pBuffer.get(), buffer.c_str(), buffer.size());
 
 	bool result;
@@ -72,9 +95,10 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 void ArchivePatcher::Install()
 {
-	archiveDependencies.push_back(ArchiveDependency("egb200", { }));
-	archiveDependencies.push_back(ArchiveDependency("afr200", {  }));
+	archiveDependencies.push_back(ArchiveDependency("egb200", {"pla_cmn", "ghz_cmn", "egb200_cmn"}));
+	archiveDependencies.push_back(ArchiveDependency("afr200", { "pla_cmn", "ghz_cmn", "egb200_cmn" }));
 	archiveDependencies.push_back(ArchiveDependency("cmn200", { "egb200","afr200" }));
+	archiveDependencies.push_back(ArchiveDependency("ExtraUISounds", { "pam000"}));
 
 	INSTALL_HOOK(ParseArchiveTree);
 	//INSTALL_HOOK(sub_D4C480);

@@ -1,9 +1,5 @@
 ﻿#pragma once
 
-#ifndef offsetof
-#define offsetof(s, m) ((size_t)&(((s*)0)->m))
-#endif
-
 #define _CONCAT2(x, y) x##y
 #define CONCAT2(x, y) _CONCAT(x, y)
 #define INSERT_PADDING(length) \
@@ -28,22 +24,18 @@ const HMODULE MODULE_HANDLE = GetModuleHandle(nullptr);
 #define PROC_ADDRESS(libraryName, procName) \
     GetProcAddress(LoadLibrary(TEXT(libraryName)), procName)
 
-#define LIB_FUNCTION(returnType, libraryName, procName, ...) \
-    typedef returnType _##procName(__VA_ARGS__); \
-    _##procName* procName = (_##procName*)GetProcAddress(GetModuleHandle(TEXT(libraryName)), #procName);
-
 #define HOOK(returnType, callingConvention, functionName, location, ...) \
     typedef returnType callingConvention functionName(__VA_ARGS__); \
     functionName* original##functionName = (functionName*)(location); \
     returnType callingConvention implOf##functionName(__VA_ARGS__)
 
 #define INSTALL_HOOK(functionName) \
-{ \
-    DetourTransactionBegin(); \
-    DetourUpdateThread(GetCurrentThread()); \
-    DetourAttach((void**)&original##functionName, implOf##functionName); \
-    DetourTransactionCommit(); \
-}
+    do { \
+        DetourTransactionBegin(); \
+        DetourUpdateThread(GetCurrentThread()); \
+        DetourAttach((void**)&original##functionName, implOf##functionName); \
+        DetourTransactionCommit(); \
+    } while(0)
 
 #define VTABLE_HOOK(returnType, callingConvention, className, functionName, ...) \
     typedef returnType callingConvention className##functionName(className* This, __VA_ARGS__); \
@@ -51,60 +43,44 @@ const HMODULE MODULE_HANDLE = GetModuleHandle(nullptr);
     returnType callingConvention implOf##className##functionName(className* This, __VA_ARGS__)
 
 #define INSTALL_VTABLE_HOOK(className, object, functionName, functionIndex) \
-{ \
-    void** addr = &(*(void***)object)[functionIndex]; \
-    if (*addr != implOf##className##functionName) \
-    { \
-        original##className##functionName = (className##functionName*)*addr; \
-        DWORD oldProtect; \
-        VirtualProtect(addr, sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect); \
-        *addr = implOf##className##functionName; \
-        VirtualProtect(addr, sizeof(void*), oldProtect, &oldProtect); \
-    } \
-}
+    do { \
+        void** addr = &(*(void***)object)[functionIndex]; \
+        if (*addr != implOf##className##functionName) \
+        { \
+            original##className##functionName = (className##functionName*)*addr; \
+            DWORD oldProtect; \
+            VirtualProtect(addr, sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect); \
+            *addr = implOf##className##functionName; \
+            VirtualProtect(addr, sizeof(void*), oldProtect, &oldProtect); \
+        } \
+    } while(0)
 
 #define WRITE_MEMORY(location, type, ...) \
-{ \
-    const type data[] = { __VA_ARGS__ }; \
-    DWORD oldProtect; \
-    VirtualProtect((void*)(location), sizeof(data), PAGE_EXECUTE_READWRITE, &oldProtect); \
-    memcpy((void*)(location), data, sizeof(data)); \
-    VirtualProtect((void*)(location), sizeof(data), oldProtect, &oldProtect); \
-}
-
-#define WRITE_STATIC_MEMORY(location, data, size) \
-{ \
-    DWORD oldProtect; \
-    VirtualProtect((void*)(location), size, PAGE_EXECUTE_READWRITE, &oldProtect); \
-    memcpy((void*)(location), data, size); \
-    VirtualProtect((void*)(location), size, oldProtect, &oldProtect); \
-}
+    do { \
+        const type data[] = { __VA_ARGS__ }; \
+        DWORD oldProtect; \
+        VirtualProtect((void*)(location), sizeof(data), PAGE_EXECUTE_READWRITE, &oldProtect); \
+        memcpy((void*)(location), data, sizeof(data)); \
+        VirtualProtect((void*)(location), sizeof(data), oldProtect, &oldProtect); \
+    } while(0)
 
 #define WRITE_JUMP(location, function) \
-{ \
-    WRITE_MEMORY(location, uint8_t, 0xE9); \
-    WRITE_MEMORY(location + 1, uint32_t, (uint32_t)(function) - (size_t)(location) - 5); \
-}
-
+    do { \
+        WRITE_MEMORY(location, uint8_t, 0xE9); \
+        WRITE_MEMORY(location + 1, uint32_t, (uint32_t)((size_t)(function) - (size_t)(location) - 5)); \
+    } while(0)
+	
 #define WRITE_CALL(location, function) \
-{ \
-    WRITE_MEMORY(location, uint8_t, 0xE8); \
-    WRITE_MEMORY(location + 1, uint32_t, (uint32_t)(function) - (size_t)(location) - 5); \
-}
+    do { \
+        WRITE_MEMORY(location, uint8_t, 0xE8); \
+        WRITE_MEMORY(location + 1, uint32_t, (uint32_t)((size_t)(function) - (size_t)(location) - 5)); \
+    } while(0)
 
 #define WRITE_NOP(location, count) \
-{ \
-    DWORD oldProtect; \
-    VirtualProtect((void*)(location), (size_t)(count), PAGE_EXECUTE_READWRITE, &oldProtect); \
-    for (size_t i = 0; i < (size_t)(count); i++) \
-        *((uint8_t*)(location) + i) = 0x90; \
-    VirtualProtect((void*)(location), (size_t)(count), oldProtect, &oldProtect); \
-}
-
-#define WRITE_STRING(location, STR) \
-{ \
-    DWORD oldProtect; \
-    VirtualProtect((void*)location, sizeof(STR), PAGE_EXECUTE_READWRITE, &oldProtect); \
-    memcpy((void*)location, STR, sizeof(STR)); \
-    VirtualProtect((void*)location, sizeof(STR), oldProtect, NULL); \
-}
+    do { \
+        DWORD oldProtect; \
+        VirtualProtect((void*)(location), (size_t)(count), PAGE_EXECUTE_READWRITE, &oldProtect); \
+        for (size_t i = 0; i < (size_t)(count); i++) \
+            *((uint8_t*)(location) + i) = 0x90; \
+        VirtualProtect((void*)(location), (size_t)(count), oldProtect, &oldProtect); \
+    } while(0)

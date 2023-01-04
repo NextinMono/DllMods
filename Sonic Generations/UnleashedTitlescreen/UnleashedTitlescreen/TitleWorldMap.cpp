@@ -7,14 +7,17 @@
 using namespace hh::math;
 
 
+constexpr double RAD2DEG = 57.29578018188477;
+constexpr double DEG2RAD = 0.01745329238474369;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreenW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> infobg1, infoimg1, infoimg2, infoimg3, infoimg4, headerBGW, headerIMGW, footerBGW, footerIMGW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> cursorL, cursorT, cursorB, cursorR;
 Chao::CSD::RCPtr<Chao::CSD::CScene> cts_name, cts_guide_window, cts_guide_ss, cts_guide_txt, cts_guide_4_misson, cts_guide_5_medal;
-Chao::CSD::RCPtr<Chao::CSD::CScene> cts_stage_window, cts_stage_select, cts_name_2, stageSelectFlag;
+Chao::CSD::RCPtr<Chao::CSD::CScene> cts_stage_window, cts_stage_select, cts_name_2, stageSelectFlag, cts_stage_info_window, cts_guide_1_hiscore, cts_guide_2_besttime, cts_guide_3_rank, cts_stage_4_misson, cts_stage_5_medal;
 Chao::CSD::RCPtr<Chao::CSD::CScene> flag[9];
 Chao::CSD::RCPtr<Chao::CSD::CScene> deco_text[6];
+Chao::CSD::RCPtr<Chao::CSD::CScene> textWorldDesc, textStageDesc;
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreenW;
 std::vector<CVector> flagPositions;
@@ -46,9 +49,9 @@ int currentFlagSelected, lastValidFlagSelected, lastFlagIn = 0;
 hh::fnd::CStateMachineBase::CStateBase* testState;
 
 //Sonic::CGameObject *__thiscall sub_A51F90(Sonic::CGameObject *this, int a2, float a3)
-FUNCTION_PTR(byte, __fastcall, sub_A51F90, 0xA51F40, int* This, int a2, float* a3, void* Edx);
-FUNCTION_PTR(int*, __fastcall, sub_A515F0, 0xA515F0);
-FUNCTION_PTR(int, __stdcall, sub_D699A0, 0xD699A0, Sonic::CGameObject* a1);
+//FUNCTION_PTR(byte, __fastcall, sub_A51F90, 0xA51F40, int* This, int a2, float* a3, void* Edx);
+//FUNCTION_PTR(int*, __fastcall, sub_A515F0, 0xA515F0);
+//FUNCTION_PTR(int, __stdcall, sub_D699A0, 0xD699A0, Sonic::CGameObject* a1);
 void SetHideEverythingWM(bool hide)
 {
 	infobg1->SetHideFlag(hide);
@@ -169,12 +172,12 @@ bool IsInsideCursorRange(const CVector2& input, float visibility, int flagID)
 	{
 		if (visibility >= 80 && flagID != lastFlagIn)
 		{
-			printf("\nIN %d", flagID);
 			lastFlagIn = flagID;
 			//for eventual night versions, add 9
 			cts_guide_ss->GetNode("town_ss_img")->SetPatternIndex(flagID);
-			cts_guide_txt->GetNode("text_size")->SetPatternIndex(flagID);
+			//cts_guide_txt->GetNode("text_size")->SetPatternIndex(flagID);
 			cts_name->GetNode("img")->SetPatternIndex(flagID);
+
 			result = true;
 		}
 	}
@@ -183,6 +186,31 @@ bool IsInsideCursorRange(const CVector2& input, float visibility, int flagID)
 		lastFlagIn = -1;
 	}
 	return result;
+}
+void SetLevelTextCast(const char* text)
+{
+	string input = string(text);
+	std::stringstream ss(input);
+	string line;
+	vector<string> lines;
+	while (getline(ss, line, '\n')) {
+		lines.push_back(line);
+	}
+	char buff[32];
+	for (size_t i = 0; i < 6; i++)
+	{
+		sprintf(buff, "text_line_%d", i);
+		if (i <= lines.size() - 1)
+		{
+			cts_guide_txt->GetNode(buff)->SetText(lines.at(i).c_str());
+			//cts_guide_txt->SetHideFlag(false);
+		}
+		else
+		{
+			cts_guide_txt->GetNode(buff)->SetText(" ");
+			//cts_guide_txt->SetHideFlag(true);
+		}
+	}
 }
 
 void PopulateStageSelect(int id)
@@ -217,11 +245,6 @@ CVector2 WorldToUIPosition(const CVector& input)
 	screenPosition.x() = ((screenPosition.x() * 0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->x() + offsetAspect->x()));
 	screenPosition.y() = (screenPosition.y() * -0.5f + 0.5f) * (LetterboxHelper::OriginalResolution->y() + offsetAspect->y());
 	return CVector2(screenPosition.x(), screenPosition.y());
-}
-
-HOOK(DWORD, *__cdecl, TitleWM_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateMachineBase::CStateBase* This) {
-	testState = This;
-	return originalTitleWM_CMain_CState_SelectMenu(This);
 }
 void TitleWorldMap::Start()
 {
@@ -279,11 +302,18 @@ void __fastcall CTitleWRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CG
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_ss);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_window);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_txt);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), textWorldDesc);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_4_misson);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_5_medal);
 
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_stage_window);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_stage_select);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_stage_info_window);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_1_hiscore);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_2_besttime);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_3_rank);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_stage_4_misson);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_stage_5_medal);
 	for (size_t i = 0; i < 9; i++)
 	{
 		Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), flag[i]);
@@ -305,6 +335,7 @@ void __fastcall CTitleWRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CG
 	rotationPitch = 0.0f;
 	rotationYaw = 0.0f;
 	stageSelectedWindow = 0;
+	timeStageSelectDelay = 0;
 	stageWindowOpen = false;
 
 }
@@ -315,13 +346,30 @@ void ShowTextAct(bool visible)
 		deco_text[i]->SetHideFlag(!visible);
 	}
 }
+void SetVisibilityPlayerInfo(bool visible)
+{
+	infobg1->SetHideFlag(!visible);
+	infoimg1->SetHideFlag(!visible);
+	infoimg2->SetHideFlag(!visible);
+	infoimg3->SetHideFlag(!visible);
+	infoimg4->SetHideFlag(!visible);
+	cts_guide_4_misson->SetHideFlag(!visible);
+	cts_guide_5_medal->SetHideFlag(!visible);
+	CSDCommon::FreezeMotion(*cts_guide_ss, 0);
+	CSDCommon::FreezeMotion(*cts_guide_txt, 0);
+	CSDCommon::FreezeMotion(*cts_guide_window, 0);
+	CSDCommon::PlayAnimation(*cts_guide_ss, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, true, !visible);
+	CSDCommon::PlayAnimation(*cts_guide_txt, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, true, !visible);
+	CSDCommon::PlayAnimation(*cts_guide_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, true, !visible);
+}
 void TitleWorldMap::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
 	if (rcTitleScreenW && !spTitleScreenW)
 	{
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreenW = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreenW, 0.5f, "HUD", false), "main", pParentGameObject);
 
-		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(CQuaternion(1, 1, 1, 1)));
+		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgRequestChangeModule>(6));
+		//pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(CQuaternion(1, 1, 1, 1)));
 	}
 }
 void TitleWorldMap::KillScreen()
@@ -369,7 +417,15 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	cts_guide_4_misson = rcTitleScreenW->CreateScene("cts_guide_4_misson");
 	cts_guide_5_medal = rcTitleScreenW->CreateScene("cts_guide_5_medal");
 
+	cts_guide_1_hiscore = rcTitleScreenW->CreateScene("cts_guide_1_hiscore");
+	cts_guide_2_besttime = rcTitleScreenW->CreateScene("cts_guide_2_besttime");
+	cts_guide_3_rank = rcTitleScreenW->CreateScene("cts_guide_3_rank");
+	cts_stage_4_misson = rcTitleScreenW->CreateScene("cts_guide_4_misson");
+	cts_stage_5_medal = rcTitleScreenW->CreateScene("cts_guide_5_medal");
+
+
 	cts_stage_window = rcTitleScreenW->CreateScene("cts_stage_window");
+	cts_stage_info_window = rcTitleScreenW->CreateScene("cts_guide_window");
 	cts_stage_select = rcTitleScreenW->CreateScene("cts_stage_select");
 	cts_name_2 = rcTitleScreenW->CreateScene("cts_name_2");
 	stageSelectFlag = rcTitleScreenW->CreateScene("cts_stage_flag");
@@ -405,6 +461,8 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 		deco_text[i]->SetPosition(cts_stage_select->GetNode("select_img")->GetPosition().x(), cts_stage_select->GetNode("select_img")->GetPosition().y());
 	}
 	ShowTextAct(false);
+
+	
 	//By default the cursor in the worldmap is set to the left anchor 
 	cursorL = rcTitleScreenW->CreateScene("cts_cursor");
 	cursorT = rcTitleScreenW->CreateScene("cts_cursor");
@@ -443,22 +501,45 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	cts_stage_select->SetHideFlag(true);
 	cts_name_2->SetHideFlag(true);
 	stageSelectFlag->SetHideFlag(true);
+	cts_stage_info_window->SetHideFlag(true);
+	cts_stage_4_misson->SetHideFlag(true);
+	cts_stage_5_medal->SetHideFlag(true);
+	cts_guide_1_hiscore->SetHideFlag(true);
+	cts_guide_2_besttime->SetHideFlag(true);
+	cts_guide_3_rank->SetHideFlag(true);
+
+
+	float sceneFixPosX = 140;
+	//Set up scenes to make it work in 16:9, because for some reason unleashed does it in code
+	headerIMGW->SetPosition(-sceneFixPosX, 0);
+	infobg1->SetPosition(-sceneFixPosX, 0);
+	infoimg1->SetPosition(-sceneFixPosX, 0);
+	infoimg2->SetPosition(-sceneFixPosX, 0);
+	infoimg3->SetPosition(-sceneFixPosX, 0);
+	infoimg4->SetPosition(-sceneFixPosX, 0);
+
+	cts_guide_window->SetPosition(sceneFixPosX, 0);
+	cts_guide_ss->SetPosition(sceneFixPosX, 0);
+	cts_guide_txt->SetPosition(sceneFixPosX, 40);
+	cts_guide_4_misson->SetPosition(sceneFixPosX, 0);
+	cts_guide_5_medal->SetPosition(sceneFixPosX, 0);
+
 	return originalTitleW_CMain(This, Edx, a2, a3, a4);
 }
-void LoadScene(Sonic::CGameObject* a1, const char* stageID)
-{
-	FUNCTION_PTR(Sonic::CGameObject*, __stdcall, sub_D70420, 0xD70420, Sonic::CGameObject * a1);
-	WRITE_MEMORY(0x01A57434, uint32_t, 1);
-	WRITE_MEMORY(0x1A57438, uint32_t, 7);
-	sub_D70420(a1);
-
-}
-void GetRings(Sonic::CGameObject* This, void* Edx)
-{
-	float* gg = 0;
-	auto e = sub_A51F90(sub_A515F0(), 9, gg, Edx);
-	printf("%x", e);
-}
+//void LoadScene(Sonic::CGameObject* a1, const char* stageID)
+//{
+//	FUNCTION_PTR(Sonic::CGameObject*, __stdcall, sub_D70420, 0xD70420, Sonic::CGameObject * a1);
+//	WRITE_MEMORY(0x01A57434, uint32_t, 1);
+//	WRITE_MEMORY(0x1A57438, uint32_t, 7);
+//	sub_D70420(a1);
+//
+//}
+//void GetRings(Sonic::CGameObject* This, void* Edx)
+//{
+//	float* gg = 0;
+//	auto e = sub_A51F90(sub_A515F0(), 9, gg, Edx);
+//	printf("%x", e);
+//}
 CQuaternion LookRotationFromUnity(CVector direction, CVector up) {
 	// Normalize the direction vector
 	direction.normalize();
@@ -485,23 +566,27 @@ CQuaternion LookRotationFromUnity(CVector direction, CVector up) {
 	return q;
 }
 FUNCTION_PTR(void, __fastcall, DemoAdvance, 0x576470, Sonic::CGameObject* This, void* Edx, int a2);
+
+const char* lastStageID = "";
 HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* This, void* Edx, float elapsedTime, uint8_t a3)
 {
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 	float multiplier = 24;
-	SetCursorPos(CVector2(inputPtr->RightStickHorizontal * multiplier, -inputPtr->RightStickVertical * multiplier));
-	int* egg = (int*)0x1E66C64;
 	uint32_t stageTerrainAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x20 });
 	char** h = (char**)stageTerrainAddress;
 	const char* terr = *h;
 
-	printf("\n");
-	printf("%s", *h);
+	if(terr != lastStageID)
+	DebugDrawText::log((std::string("Loading Stage ID:") + std::string(terr)).c_str());
 
+	lastStageID = terr;
+
+	//Pretty much just "if titleworldmap exists"
 	if (flag[0] && cts_guide_4_misson && cts_guide_5_medal)
 	{
-
-		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
+		if(!stageWindowOpen)
+		SetCursorPos(CVector2(inputPtr->LeftStickHorizontal * multiplier, -inputPtr->LeftStickVertical * multiplier));		
+		//Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
 		uint32_t totalRing = 0;
 		for (size_t i = 0; i < 18; i++)
 		{
@@ -512,7 +597,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 			totalRing += ringCurrent;
 		}
 
-		GetRings(This, Edx);
+		//GetRings(This, Edx);
 
 		int amountSel = 0;
 		if (TitleWorldMap::Camera)
@@ -536,9 +621,9 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					lastValidFlagSelected = currentFlagSelected;
 				amountSel += inrange;
 			}
-			printf("\n%d SEL", amountSel);
 			if (amountSel != lastAmountSel && currentFlagSelected == lastFlagIn)
 			{
+
 				if (amountSel > 0)
 				{
 					cursorSelected = true;
@@ -553,6 +638,9 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					CSDCommon::PlayAnimation(*cts_guide_txt, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 					CSDCommon::PlayAnimation(*cts_guide_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 					Common::PlaySoundStatic(cursorSelectHandle, 800004);
+
+					SetLevelTextCast(Configuration::worldData.data[lastValidFlagSelected].description.c_str());
+					//cts_guide_txt->GetNode("text_size")->SetText(Configuration::worldData.data[lastValidFlagSelected].description.c_str());
 
 				}
 				else
@@ -575,6 +663,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 				{
 
 					PopulateStageSelect(lastValidFlagSelected);
+
 					cts_stage_window->SetHideFlag(false);
 					cts_stage_select->SetHideFlag(false);
 					cts_name_2->SetHideFlag(false);
@@ -588,8 +677,17 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					stageSelectFlag->GetNode("img")->SetPatternIndex(lastValidFlagSelected);
 					stageSelectedWindow = 0;
 					CSDCommon::FreezeMotion(*cts_stage_select, 0);
-					Common::PlaySoundStatic(stageSelectHandle, 823001);
-					/*ShowTextAct(true);*/
+					Common::PlaySoundStatic(stageSelectHandle, 2);
+
+					SetVisibilityPlayerInfo(false);
+					cts_stage_info_window->SetHideFlag(false);
+
+					cts_guide_1_hiscore->SetHideFlag(false);
+					cts_guide_2_besttime->SetHideFlag(false);
+					cts_guide_3_rank->SetHideFlag(false);
+					//cts_stage_4_misson->SetHideFlag(false);
+					cts_stage_5_medal->SetHideFlag(false);
+					CSDCommon::PlayAnimation(*cts_stage_info_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, true, false);
 				}
 				if (inputPtr->IsTapped(Sonic::eKeyState_B) && stageWindowOpen)
 				{
@@ -600,6 +698,14 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					stageSelectFlag->SetHideFlag(true);
 					timeStageSelectDelay = 0;
 					ShowTextAct(false);
+					Common::PlaySoundStatic(stageSelectHandle, 4);
+					SetVisibilityPlayerInfo(true);
+					cts_guide_1_hiscore->SetHideFlag(true);
+					cts_guide_2_besttime->SetHideFlag(true);
+					cts_guide_3_rank->SetHideFlag(true);
+					cts_stage_4_misson->SetHideFlag(true);
+					cts_stage_5_medal->SetHideFlag(true);
+					CSDCommon::PlayAnimation(*cts_stage_info_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, true, true);
 				}
 				if (stageWindowOpen)
 				{
@@ -611,13 +717,14 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					}
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickDown) && stageSelectedWindow != stageSelectedWindowMax)
 					{
-						Common::PlaySoundStatic(stageSelectHandle, 823000);
+						stageSelectHandle.reset();
+						Common::PlaySoundStatic(stageSelectHandle, 0);
 							stageSelectedWindow += 1;
 						CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (stageSelectedWindow - 1) * 10, stageSelectedWindow * 10);
 					}
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickUp))
 					{
-						Common::PlaySoundStatic(stageSelectHandle, 823000);
+						Common::PlaySoundStatic(stageSelectHandle, 0);
 						stageSelectedWindow -= 1;
 						if (stageSelectedWindow < 5)
 							CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 130 - ((stageSelectedWindow + 1) * 10), 130 - (stageSelectedWindow) * 10);
@@ -780,16 +887,16 @@ HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 	constexpr float rotationPitchRate = 2.0f;
 	constexpr float rotationYawRate = 2.0f;
 
-	const CVector2 pan(input.RightStickHorizontal, input.RightStickVertical);
+	const CVector2 pan(input.LeftStickHorizontal, input.LeftStickVertical);
 	const float deadzone = 0.1f; // TODO: MAKE PARAMETER? USE SOMETHING IN GENS?
 
 
 	const bool hasInput = pan.squaredNorm() > deadzone * deadzone;
 
-	if (!disabledStick && hasInput)
+	if (!disabledStick && hasInput && !stageWindowOpen)
 	{
-		rotationPitch -= input.RightStickVertical * rotationPitchRate * updateInfo.DeltaTime;
-		rotationYaw += input.RightStickHorizontal * rotationYawRate * updateInfo.DeltaTime;
+		rotationPitch -= input.LeftStickVertical * rotationPitchRate * updateInfo.DeltaTime;
+		rotationYaw += input.LeftStickHorizontal * rotationYawRate * updateInfo.DeltaTime;
 	}
 	// Do the thing where we magnetize our input.
 	// TODO: Handle the HUD update here too I guess, because this is where a flag will be "selected"
@@ -881,15 +988,80 @@ void __declspec(naked) SetCorrectTerrainForMission_ASM()
 		jmp[returnAddress]
 	}
 }
-void __declspec(naked) QGQGQGQ()
+void __declspec(naked) SetGameplayFlowMode()
 {
-	static uint32_t sub_662010 = 0x662010;
-	static uint32_t returnAddress = 0x00D0A7E0;
+	//yeah this could be a CMP, i just dont know how i would do it with such a long value
+	static uint32_t normal = 0x00D0A7E0;
+	static uint32_t whiteWorld = 0x00D0A746;
+
+	static bool pamb = Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].isWhiteWorld;
+
+		__asm
+		{
+ 			jmp[normal]
+		}
+}
+
+int test = 0;
+HOOK(void, __fastcall, LoadAR, 0x0069C270, DWORD* This, DWORD* a2, Hedgehog::Base::CSharedString a3, Hedgehog::Base::CSharedString* a4, DWORD* a5, void* Edx)
+{
+	if (test == 0)
+	{
+		Hedgehog::Base::CSharedString og = *a4;
+		Hedgehog::Base::CSharedString newn = Hedgehog::Base::CSharedString("EnemyBeeton.ar");
+		a4 = &newn;
+		originalLoadAR(This, a2, a3, a4, a5, Edx);
+		test += 1;
+		a4 = &og;
+	}
+	originalLoadAR(This, a2, a3, a4, a5, Edx);
+}
+
+HOOK(char, __fastcall, GoalOutro, 0x00D078B0, byte* a2, DWORD* a3, DWORD* This)
+{
+	auto v3 = This[4];
+	
+	if (v3 == 10)
+	{
+
+	}
+
+	return originalGoalOutro(a2, a3, This);
+}
+void __declspec(naked) SetHUDMode()
+{
+	static uint32_t pam = 0x00D907B3;
+	static uint32_t normal = 0x00D9079F;
+	static bool pamb = Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].isWhiteWorld;
 	__asm
 	{
-		jmp[returnAddress]
+		cmp pamb, 1
+		je PamHUD
+		jmp[normal]
+		PamHUD:
+		jmp[pam]
 	}
+	/*}*/
+
 }
+void __declspec(naked) SetFlowMode()
+{
+	static uint32_t pam = 0x00582391;
+	static uint32_t normal = 0x005823B8;
+	static bool pamb = Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].isWhiteWorld;
+	__asm
+	{
+		cmp pamb, 1
+		je PamHUD
+		jmp[normal]
+		PamHUD:
+		push    esi
+		jmp[pam]
+	}
+	/*}*/
+
+}
+
 
 void TitleWorldMap::Install()
 {
@@ -897,16 +1069,21 @@ void TitleWorldMap::Install()
 	//WRITE_MEMORY(0xD7712E, uint32_t, 2);
 	//INSTALL_HOOK(TitleUI_CDemoMenuObjectAdvance);
 	WRITE_JUMP(0xD56CCA, SetCorrectTerrainForMission_ASM);
-	WRITE_JUMP(0x00D9078D, 0x00D907B3);
-	WRITE_JUMP(0x00582390, 0x005823B8);
+	WRITE_JUMP(0x00D9078D, SetHUDMode); //Skip loading PAM000 HUD
+	WRITE_JUMP(0x00582390, SetFlowMode); //Completely skip initializing CGameplayFlowPlayableMenu
 
-	WRITE_JUMP(0x00D0DFA0, 0x00D0DDC0);
+	WRITE_JUMP(0x00D0DFA0, 0x00D0DDC0);//Try to load title instead (does nothing)
+	WRITE_JUMP(0x010A0B4A, 0x010A0B5A); //Force Act pause menu
+	WRITE_JUMP(0x00584CEE, 0x00588820);
+	WRITE_JUMP(0x00D0A743, SetGameplayFlowMode);
+	//WRITE_JUMP(0x00CF8E08, TestPam);
 
-
-	WRITE_JUMP(0x00D0A743, QGQGQGQ);
+	//WRITE_JUMP(0x015B84F8, 0x015B84FC);
 	/*WRITE_JUMP(0x010B978C, 0x010B984D);*/
-	INSTALL_HOOK(TitleWM_CMain_CState_SelectMenu);
+	//INSTALL_HOOK(TitleWM_CMain_CState_SelectMenu);
 	//INSTALL_HOOK(sub_571170);
+	INSTALL_HOOK(LoadAR);
+	INSTALL_HOOK(GoalOutro);
 	INSTALL_HOOK(Title_CameraUpdate);
 	INSTALL_HOOK(TitleW_CMain);
 	INSTALL_HOOK(TitleW_UpdateApplication);

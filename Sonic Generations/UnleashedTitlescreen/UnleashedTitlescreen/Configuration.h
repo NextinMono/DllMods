@@ -7,9 +7,12 @@ struct LevelData
 {
 	std::string levelID;
 	std::string optionName;
+	bool isWhiteWorld;
+	bool isCapital;
 };
 struct FlagData
 {
+	std::string description;
 	std::vector<LevelData> data;
 };
 struct WorldData

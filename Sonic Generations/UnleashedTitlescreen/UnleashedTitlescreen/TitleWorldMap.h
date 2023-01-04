@@ -22,7 +22,7 @@ public:
 
 class TitleWorldMap
 {
-	
+
 public:
 
 	// Earth's position is in the center of the screen.

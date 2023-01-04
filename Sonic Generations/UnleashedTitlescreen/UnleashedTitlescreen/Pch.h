@@ -1,11 +1,5 @@
-﻿#pragma once
+﻿#define WIN32_LEAN_AND_MEAN
 
-#define WIN32_LEAN_AND_MEAN
-constexpr float RAD2DEGf = 57.2958f;
-constexpr float DEG2RADf = 0.0174533f;
-
-constexpr double RAD2DEG = 57.29578018188477;
-constexpr double DEG2RAD = 0.01745329238474369;
 #include <BlueBlur.h>
 #include "INIReader.h"
 #include "ModLoader.h"
@@ -14,9 +8,7 @@ constexpr double DEG2RAD = 0.01745329238474369;
 #include "Common.h"
 #include "ScoreGenerationsAPI.h"
 #include "ArchivePatcher.h"
-#define DEBUG_DRAW_TEXT_DLL_IMPORT
-#include "DebugDrawText.h"
-
+#include "detours\include\detours.h"
 #include <fstream>
 #include <json/json.h>
 #include <cstdint>
@@ -28,15 +20,16 @@ constexpr double DEG2RAD = 0.01745329238474369;
 #include <winuser.h>
 #include <fstream>
 #include <stdio.h>
-#define C_RED     "\x1b[31m"
-#define C_GREEN   "\x1b[32m"
-#define C_YELLOW  "\x1b[33m"
-#define C_BLUE    "\x1b[34m"
-#define C_MAGENTA "\x1b[35m"
-#define C_CYAN    "\x1b[36m"
-#define C_RESET   "\x1b[0m"
-#include "detours\include\detours.h"
+#define DEBUG_DRAW_TEXT_DLL_IMPORT	
+#include "DebugDrawText.h"	
+//
+//constexpr float RAD2DEGf = 57.2958f;
+//constexpr float DEG2RADf = 0.0174533f;
 
+
+//
+
+//
 #include "Configuration.h"
 #include "TitleWorldMap.h"
 #include "LetterboxHelper.h"

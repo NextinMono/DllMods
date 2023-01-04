@@ -114,6 +114,7 @@
 #include <Sonic/CSD/CsdDatabaseWrapper.h>
 #include <Sonic/CSD/CsdProject.h>
 #include <Sonic/CSD/GameObjectCSD.h>
+#include <Sonic/Debug/DebugStageSelectMenu.h>
 #include <Sonic/FxPipeline/FxSceneRenderer.h>
 #include <Sonic/FxPipeline/FxScheduler.h>
 #include <Sonic/FxPipeline/Jobs/FxJob.h>
@@ -133,7 +134,6 @@
 #include <Sonic/Message/MsgGetHomingAttackPosition.h>
 #include <Sonic/Message/MsgGetHomingAttackPriority.h>
 #include <Sonic/Message/MsgGetPosition.h>
-#include <Sonic/Message/MsgDebugView.h>
 #include <Sonic/Message/MsgGetRotation.h>
 #include <Sonic/Message/MsgHitReactionPlate.h>
 #include <Sonic/Message/MsgKill.h>
