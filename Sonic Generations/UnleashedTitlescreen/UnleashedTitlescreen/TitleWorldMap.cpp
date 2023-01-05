@@ -18,7 +18,7 @@ constexpr double DEG2RAD = 0.01745329238474369;
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreenW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> infobg1, infoimg1, infoimg2, infoimg3, infoimg4, headerBGW, headerIMGW, footerBGW, footerIMGW;
 Chao::CSD::RCPtr<Chao::CSD::CScene> cursorL, cursorT, cursorB, cursorR;
-Chao::CSD::RCPtr<Chao::CSD::CScene> cts_name, cts_guide_window, cts_guide_ss, cts_guide_txt, cts_guide_4_misson, cts_guide_5_medal;
+Chao::CSD::RCPtr<Chao::CSD::CScene> cts_name, cts_cursor_effect, cts_guide_window, cts_guide_ss, cts_guide_txt, cts_guide_4_misson, cts_guide_5_medal;
 Chao::CSD::RCPtr<Chao::CSD::CScene> cts_stage_window, cts_stage_select, cts_name_2, stageSelectFlag, cts_stage_info_window, cts_guide_1_hiscore, cts_guide_2_besttime, cts_guide_3_rank, cts_stage_4_misson, cts_stage_5_medal;
 Chao::CSD::RCPtr<Chao::CSD::CScene> flag[9];
 Chao::CSD::RCPtr<Chao::CSD::CScene> deco_text[6];
@@ -74,6 +74,7 @@ void SetHideEverythingWM(bool hide)
 	cursorB->SetHideFlag(hide);
 	cursorR->SetHideFlag(hide);
 	cts_name->SetHideFlag(hide);
+	cts_cursor_effect->SetHideFlag(hide);
 	cts_guide_ss->SetHideFlag(hide);
 	cts_guide_window->SetHideFlag(hide);
 	cts_guide_txt->SetHideFlag(hide);
@@ -240,57 +241,85 @@ void PopulateStageSelect(int id)
 
 
 }
+TitleWorldMap::SaveStageInfo GetInfoForStage(std::string id)
+{
+	vector<string>::iterator it = std::find(Configuration::gensStages.begin(), Configuration::gensStages.end(), id);
+	TitleWorldMap::SaveStageInfo returnI = TitleWorldMap::SaveStageInfo();
+	returnI.stageID_string = id;
+	//Return an empty Info struct if the stage isnt a native gens stage. This should be expanded to have custom stage slot save files in the future.
+	if (it == Configuration::gensStages.end())
+		return returnI;
+
+	returnI.stageIDForGens = std::distance(Configuration::gensStages.begin(), it);
+	returnI.isStageCompleted = Common::IsStageCompleted(returnI.stageIDForGens);
+	Common::GetStageData(returnI.stageIDForGens, returnI.bestScore, returnI.bestTime, returnI.bestTime2, returnI.bestTime3, returnI.bestRank, returnI.bestRing, returnI.redRingCount);
+	return returnI;
+}
+void PopulateCountryPreviewInfo(int flag)
+{
+	int redRingMax = 5 * Configuration::worldData.data[flag].data.size();
+	int redRingCurrent = 0;
+	int stageCompletedAmount = 0;
+	for (size_t i = 0; i < Configuration::worldData.data[flag].data.size() ; i++)
+	{
+		auto e = GetInfoForStage(Configuration::worldData.data[flag].data[i].levelID);
+		redRingCurrent += e.redRingCount;
+		stageCompletedAmount += e.isStageCompleted;
+	}
+	char* redRingsCurrent = new char[8];
+	char* redRingsMax = new char[8];
+	char* stageMax = new char[8];
+	char* stageCount = new char[8];
+	sprintf(redRingsCurrent, "%02d", redRingCurrent);
+	sprintf(redRingsMax, "%02d", redRingMax);
+	sprintf(stageMax, "%02d", Configuration::worldData.data[flag].data.size());
+	sprintf(stageCount, "%02d", stageCompletedAmount);
+
+	cts_guide_4_misson->GetNode("num_nume")->SetText(stageCount);
+	cts_guide_4_misson->GetNode("num_deno")->SetText(stageMax);
+
+	cts_guide_5_medal->GetNode("s_num_nume")->SetText(redRingsCurrent);
+	cts_guide_5_medal->GetNode("s_num_deno")->SetText(redRingsMax);
+
+	cts_guide_5_medal->GetNode("m_num_nume")->SetText(redRingsCurrent);
+	cts_guide_5_medal->GetNode("m_num_deno")->SetText(redRingsMax);
+}
 void PopulateStageWindowInfo(std::string id)
 {
+	auto info = GetInfoForStage(id);
 
-	auto it = std::find(Configuration::gensStages.begin(), Configuration::gensStages.end(), id);
-	if (it != Configuration::gensStages.end()) 
+	// Time
+	uint32_t minutes, seconds, milliseconds;
+	uint32_t totalMilliseconds = info.bestTime * 1000.0f;
+	minutes = totalMilliseconds / 60000;
+	if (info.bestTime > 0.0f && minutes <= 99)
 	{
-		uint32_t stageID = std::distance(Configuration::gensStages.begin(), it);
-		uint32_t bestScore;
-		float bestTime;
-		float bestTime2;
-		float bestTime3;
-		uint32_t bestRank;
-		uint32_t bestRing;
-		uint32_t redRingCount;
-		Common::GetStageData(stageID, bestScore, bestTime, bestTime2, bestTime3, bestRank, bestRing, redRingCount);
-		// Time
-		uint32_t minutes, seconds, milliseconds;
-		uint32_t totalMilliseconds = bestTime * 1000.0f;
-		minutes = totalMilliseconds / 60000;
-		if (bestTime > 0.0f && minutes <= 99)
-		{
-			seconds = (totalMilliseconds % 60000) / 1000;
-			milliseconds = (totalMilliseconds % 60000) % 1000;
-		}
-		else
-		{
-			minutes = 00;
-			seconds = 00;
-			milliseconds = 000;
-		}
-		char* scoreCount = new char[8];
-		char* redCount = new char[2];
-		char* bestTimeC = new char[16];
-		sprintf(bestTimeC, "%02d:%02d:%02d", minutes, seconds, milliseconds);
-		sprintf(scoreCount, "%08d", bestScore);
-		sprintf(redCount, "%02d",redRingCount);
-
-		cts_guide_2_besttime->GetNode("num")->SetText(bestTimeC);
-		cts_guide_1_hiscore->GetNode("num")->SetText(scoreCount);
-		cts_guide_3_rank->GetNode("rank_shade")->SetPatternIndex(bestRank);
-		cts_guide_3_rank->GetNode("rank_img")->SetPatternIndex(bestRank);
-
-		cts_stage_5_medal->GetNode("s_num_nume")->SetText(redCount);
-		cts_stage_5_medal->GetNode("s_num_deno")->SetText("5");
-
-		cts_stage_5_medal->GetNode("m_num_nume")->SetText(redCount);
-		cts_stage_5_medal->GetNode("m_num_deno")->SetText("5");
+		seconds = (totalMilliseconds % 60000) / 1000;
+		milliseconds = (totalMilliseconds % 60000) % 1000;
 	}
+	else
+	{
+		minutes = 00;
+		seconds = 00;
+		milliseconds = 000;
+	}
+	char* scoreCount = new char[8];
+	char* redCount = new char[2];
+	char* bestTimeC = new char[16];
+	sprintf(bestTimeC, "%02d:%02d:%02d", minutes, seconds, milliseconds);
+	sprintf(scoreCount, "%08d", info.bestScore);
+	sprintf(redCount, "%02d", info.redRingCount);
 
+	cts_guide_2_besttime->GetNode("num")->SetText(bestTimeC);
+	cts_guide_1_hiscore->GetNode("num")->SetText(scoreCount);
+	cts_guide_3_rank->GetNode("rank_shade")->SetPatternIndex(info.bestRank);
+	cts_guide_3_rank->GetNode("rank_img")->SetPatternIndex(info.bestRank);
 
+	cts_stage_5_medal->GetNode("s_num_nume")->SetText(redCount);
+	cts_stage_5_medal->GetNode("s_num_deno")->SetText("05");
 
+	cts_stage_5_medal->GetNode("m_num_nume")->SetText(redCount);
+	cts_stage_5_medal->GetNode("m_num_deno")->SetText("05");
 }
 CVector2 WorldToUIPosition(const CVector& input)
 {
@@ -356,6 +385,7 @@ void __fastcall CTitleWRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CG
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cursorR);
 
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_name);
+	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_cursor_effect);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_ss);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_window);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreenW.Get(), cts_guide_txt);
@@ -472,6 +502,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	cts_guide_ss = rcTitleScreenW->CreateScene("cts_guide_ss");
 	cts_guide_txt = rcTitleScreenW->CreateScene("cts_guide_txt");
 	cts_name = rcTitleScreenW->CreateScene("cts_name");
+	cts_cursor_effect = rcTitleScreenW->CreateScene("cts_cursor_effect");
 	cts_guide_4_misson = rcTitleScreenW->CreateScene("cts_guide_4_misson");
 	cts_guide_5_medal = rcTitleScreenW->CreateScene("cts_guide_5_medal");
 
@@ -497,6 +528,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	CSDCommon::PlayAnimation(*footerBGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*headerIMGW, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	CSDCommon::PlayAnimation(*cts_name, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	CSDCommon::PlayAnimation(*cts_cursor_effect, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
 	for (size_t i = 0; i < 9; i++)
 	{
@@ -558,6 +590,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	cts_stage_window->SetHideFlag(true);
 	cts_stage_select->SetHideFlag(true);
 	cts_name_2->SetHideFlag(true);
+	cts_cursor_effect->SetHideFlag(true);
 	stageSelectFlag->SetHideFlag(true);
 	cts_stage_info_window->SetHideFlag(true);
 	cts_stage_4_misson->SetHideFlag(true);
@@ -685,11 +718,11 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 			}
 			if (amountSel != lastAmountSel && currentFlagSelected == lastFlagIn)
 			{
-
 				if (amountSel > 0)
 				{
 					cursorSelected = true;
 					CSDCommon::PlayAnimation(*cts_name, "Intro_1_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+					CSDCommon::PlayAnimation(*cts_cursor_effect, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 					PlayCursorAnim("Select_Anim");
 					cts_guide_4_misson->SetHideFlag(false);
 					cts_guide_5_medal->SetHideFlag(false);
@@ -700,7 +733,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					CSDCommon::PlayAnimation(*cts_guide_txt, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 					CSDCommon::PlayAnimation(*cts_guide_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 					Common::PlaySoundStatic(cursorSelectHandle, 800004);
-
+					
+					PopulateCountryPreviewInfo(lastValidFlagSelected);
 					SetLevelTextCast(Configuration::worldData.data[lastValidFlagSelected].description.c_str());
 					//cts_guide_txt->GetNode("text_size")->SetText(Configuration::worldData.data[lastValidFlagSelected].description.c_str());
 
@@ -804,6 +838,7 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 				}
 			}
 			cts_name->SetHideFlag(!cursorSelected);
+			cts_cursor_effect->SetHideFlag(!cursorSelected);
 			lastAmountSel = amountSel;
 		}
 		CheckCursorAnimStatus();

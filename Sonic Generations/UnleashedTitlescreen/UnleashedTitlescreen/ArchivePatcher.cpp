@@ -30,7 +30,7 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 		str = stream.str();
 	}
-	auto list = Configuration::GetAllLevelIDs(true);
+	auto list = Configuration::GetAllLevelIDs(false);
 	list.push_back("pam000");
 	//NEED TO ADD ARCHIVES AFTER <DefAppend>cmn200</DefAppend> AND BEFORE </Node> OF CMN200!!!!!!!!!!!!!!!!!!
 	std::string cmn200;

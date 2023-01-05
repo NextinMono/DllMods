@@ -40,7 +40,19 @@ public:
 	static void PlayPanningAnim();
 	static void EnableInput();
 
-
+	struct SaveStageInfo 
+	{
+		std::string stageID_string;
+		uint32_t stageIDForGens;
+		bool isStageCompleted;
+		uint32_t bestScore;
+		float bestTime;
+		float bestTime2;
+		float bestTime3;
+		uint32_t bestRank;
+		uint32_t bestRing;
+		uint32_t redRingCount;
+	};
 	/*struct RGBColor
 	{
 		float r;
