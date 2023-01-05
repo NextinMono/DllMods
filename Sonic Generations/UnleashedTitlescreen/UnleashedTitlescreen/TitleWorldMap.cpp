@@ -369,7 +369,8 @@ void TitleWorldMap::CreateScreen(Sonic::CGameObject* pParentGameObject)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreenW = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreenW, 0.5f, "HUD", false), "main", pParentGameObject);
 
 		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgRequestChangeModule>(6));
-		//pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(CQuaternion(1, 1, 1, 1)));
+		pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDirection>(CVector4(-79.8565f, 0, 4.78983f, 0.2f)));
+		//pParentGameObject->SendMessage(pParentGameObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetGlobalLightDiffuse>(CVector4(1, 1, 1, 1)));
 	}
 }
 void TitleWorldMap::KillScreen()
@@ -584,6 +585,10 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 	//Pretty much just "if titleworldmap exists"
 	if (flag[0] && cts_guide_4_misson && cts_guide_5_medal)
 	{
+		//Set light properties
+		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDiffuse = CVector(0.02f, 0.02f, 0.02f);
+		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
+		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightSpecular = CVector(15, 15, 15);
 		if(!stageWindowOpen)
 		SetCursorPos(CVector2(inputPtr->LeftStickHorizontal * multiplier, -inputPtr->LeftStickVertical * multiplier));		
 		//Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
@@ -1076,6 +1081,12 @@ void TitleWorldMap::Install()
 	WRITE_JUMP(0x010A0B4A, 0x010A0B5A); //Force Act pause menu
 	WRITE_JUMP(0x00584CEE, 0x00588820);
 	WRITE_JUMP(0x00D0A743, SetGameplayFlowMode);
+
+	WRITE_JUMP(0x0058D41F, 0x0058D7D8);//Skip setting light properties every second
+	Eigen::Vector3f* lightColor = (Eigen::Vector3f*)0x01A42308;
+	lightColor->x() = 0.5976471f;
+	lightColor->y() = 0.5835295f;
+	lightColor->z() = 0.5364707f;
 	//WRITE_JUMP(0x00CF8E08, TestPam);
 
 	//WRITE_JUMP(0x015B84F8, 0x015B84FC);

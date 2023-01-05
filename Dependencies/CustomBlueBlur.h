@@ -8,15 +8,31 @@ namespace Sonic::Message
 	class MsgSetGlobalLightDirection : public Hedgehog::Universe::MessageTypeSet
 	{
 	public:
-		HH_FND_MSG_MAKE_TYPE(0x016A9BF8);
+		HH_FND_MSG_MAKE_TYPE(0x016814CC);
 
-		Hedgehog::Math::CQuaternion m_Direction;
+		Hedgehog::Math::CVector4 m_Direction;
 
-		MsgSetGlobalLightDirection(const Hedgehog::Math::CQuaternion& rotation) : m_Direction(rotation) {}
+		MsgSetGlobalLightDirection(const Hedgehog::Math::CVector4& rotation) : m_Direction(rotation) {}
 	};
 
 	BB_ASSERT_OFFSETOF(MsgSetGlobalLightDirection, m_Direction, 0x10);
 	BB_ASSERT_SIZEOF(MsgSetGlobalLightDirection, 0x20);
+
+}namespace Sonic::Message
+{
+
+	class MsgSetGlobalLightDiffuse : public Hedgehog::Universe::MessageTypeSet
+	{
+	public:
+		HH_FND_MSG_MAKE_TYPE(0x016814E8);
+
+		Hedgehog::Math::CVector4 m_Direction;
+
+		MsgSetGlobalLightDiffuse(const Hedgehog::Math::CVector4& rotation) : m_Direction(rotation) {}
+	};
+
+	BB_ASSERT_OFFSETOF(MsgSetGlobalLightDiffuse, m_Direction, 0x10);
+	BB_ASSERT_SIZEOF(MsgSetGlobalLightDiffuse, 0x20);
 
 }
 namespace Sonic::Message

@@ -545,41 +545,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 
 
-void __declspec(naked) SetLightPos_X()
-{
-	//https://godbolt.org/
-	static uint32_t pAddr = 0x0058D54B;
-	static float x = -79.8565f;
 
-	__asm // NEW: 0| CONTINUE:1 | OPTIONS: 3 | QUIT:  4
-	{
-		movss xmm0, x;
-		jmp[pAddr]
-	}
-}
-void __declspec(naked) SetLightPos_Y()
-{
-	//https://godbolt.org/
-	static uint32_t pAddr = 0x0058D559;
-	static float y = 0;
-
-	__asm // NEW: 0| CONTINUE:1 | OPTIONS: 3 | QUIT:  4
-	{
-		movss xmm0, y;
-		jmp[pAddr]
-	}
-}void __declspec(naked) SetLightPos_Z()
-{
-	//https://godbolt.org/
-	static uint32_t pAddr = 0x0058D567;
-	static float z = 4.78983f;
-
-	__asm // NEW: 0| CONTINUE:1 | OPTIONS: 3 | QUIT:  4
-	{
-		movss xmm0, z;
-		jmp[pAddr]
-	}
-}
 void Title::Install()
 {
 	//Set up title screen so that it resembles Unleashed function-wise
@@ -590,20 +556,8 @@ void Title::Install()
 
 
 	WRITE_JUMP(0x0058CE33, 0x0058CEAB);
+
 	
-	WRITE_JUMP(0x0058D543, SetLightPos_X);
-	WRITE_JUMP(0x0058D551, SetLightPos_Y);
-	WRITE_JUMP(0x0058D55F, SetLightPos_Z);
-	WRITE_MEMORY(0x1704474, float, 0.4f); //FOV
-	Eigen::Vector2f* qa = (Eigen::Vector2f*)0x1A42300;
-	qa->x() = -0.8544828f;
-	qa->y() = -0.0472794f;
-
-
-	Eigen::Vector3f* lightColor = (Eigen::Vector3f*)0x01A42308;
-	lightColor->x() = 0.5976471f;
-	lightColor->y() = 0.5835295f;
-	lightColor->z() = 0.5364707f;
 
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);
