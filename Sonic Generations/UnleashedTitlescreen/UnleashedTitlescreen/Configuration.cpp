@@ -2,14 +2,14 @@ int Configuration::LogoType = 0;
 bool Configuration::IgnoreWarnings = false;
 std::string Configuration::modPath;
 WorldData Configuration::worldData;
+std::vector<std::string> Configuration::gensStages;
 
-std::vector<std::string> gensStages = { "ghz200", "cpz200", "ssz200","sph200", "cte200", "ssh200", "csc200", "euc200", "pla200", "ghz100", "cpz100", "ssz100","sph100", "cte100", "ssh100", "csc100", "euc100", "pla100" };
 void Configuration::Read()
 {
 	INIReader reader(INI_FILE);
 	Configuration::LogoType = reader.GetInteger("Appearance", "LogoType", LogoType);
 	Configuration::IgnoreWarnings = reader.GetBoolean("General", "IgnoreWarnings", IgnoreWarnings);
-
+	Configuration::gensStages = { "ghz100","ghz200","cpz100","cpz200","ssz100","ssz200","sph100","sph200","cte100", "cte200","ssh100","ssh200","csc100","csc200","euc100","euc200","pla100","pla200"};
 	std::ifstream jsonFile(STAGE_LIST_FILE/*, std::ios::in*/);
 	Json::Value root;
 	jsonFile >> root;
@@ -49,7 +49,7 @@ std::vector<std::string> Configuration::GetAllLevelIDs(bool onlyCustom)
 				}
 			}
 			else
-			returned.push_back(Configuration::worldData.data[i].data[x].levelID);
+				returned.push_back(Configuration::worldData.data[i].data[x].levelID);
 		}
 	}
 	return returned;

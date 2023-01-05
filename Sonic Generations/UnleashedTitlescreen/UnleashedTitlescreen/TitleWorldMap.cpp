@@ -1,8 +1,13 @@
 #include <algorithm>	
-// I recommend committing these to Pch.h whenever you have this header,	
-// it's much more useful for debugging than print spam.	
-//#define DEBUG_DRAW_TEXT_DLL_IMPORT	
-//#include "DebugDrawText.h"	
+//	TODO:
+//	Make sun gameobject to spawn the particle that Qution made
+//	Make passing-time mechanic, along with being able to tell if a flag is in the shade or not
+//	Add proper white-world support
+
+//	TODO for Infinite Levels:
+//	Fix MsgResultChangeState from not playing
+//	Fix GoalRing redirecting you to the same stage or another stage (it loads pam000 but it gets replaced)
+//	Fix Enemy archives not loading via archive tree
 
 using namespace hh::math;
 
@@ -235,6 +240,58 @@ void PopulateStageSelect(int id)
 
 
 }
+void PopulateStageWindowInfo(std::string id)
+{
+
+	auto it = std::find(Configuration::gensStages.begin(), Configuration::gensStages.end(), id);
+	if (it != Configuration::gensStages.end()) 
+	{
+		uint32_t stageID = std::distance(Configuration::gensStages.begin(), it);
+		uint32_t bestScore;
+		float bestTime;
+		float bestTime2;
+		float bestTime3;
+		uint32_t bestRank;
+		uint32_t bestRing;
+		uint32_t redRingCount;
+		Common::GetStageData(stageID, bestScore, bestTime, bestTime2, bestTime3, bestRank, bestRing, redRingCount);
+		// Time
+		uint32_t minutes, seconds, milliseconds;
+		uint32_t totalMilliseconds = bestTime * 1000.0f;
+		minutes = totalMilliseconds / 60000;
+		if (bestTime > 0.0f && minutes <= 99)
+		{
+			seconds = (totalMilliseconds % 60000) / 1000;
+			milliseconds = (totalMilliseconds % 60000) % 1000;
+		}
+		else
+		{
+			minutes = 00;
+			seconds = 00;
+			milliseconds = 000;
+		}
+		char* scoreCount = new char[8];
+		char* redCount = new char[2];
+		char* bestTimeC = new char[16];
+		sprintf(bestTimeC, "%02d:%02d:%02d", minutes, seconds, milliseconds);
+		sprintf(scoreCount, "%08d", bestScore);
+		sprintf(redCount, "%02d",redRingCount);
+
+		cts_guide_2_besttime->GetNode("num")->SetText(bestTimeC);
+		cts_guide_1_hiscore->GetNode("num")->SetText(scoreCount);
+		cts_guide_3_rank->GetNode("rank_shade")->SetPatternIndex(bestRank);
+		cts_guide_3_rank->GetNode("rank_img")->SetPatternIndex(bestRank);
+
+		cts_stage_5_medal->GetNode("s_num_nume")->SetText(redCount);
+		cts_stage_5_medal->GetNode("s_num_deno")->SetText("5");
+
+		cts_stage_5_medal->GetNode("m_num_nume")->SetText(redCount);
+		cts_stage_5_medal->GetNode("m_num_deno")->SetText("5");
+	}
+
+
+
+}
 CVector2 WorldToUIPosition(const CVector& input)
 {
 	const auto camera = TitleWorldMap::Camera;
@@ -463,7 +520,7 @@ HOOK(int, __fastcall, TitleW_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* 
 	}
 	ShowTextAct(false);
 
-	
+
 	//By default the cursor in the worldmap is set to the left anchor 
 	cursorL = rcTitleScreenW->CreateScene("cts_cursor");
 	cursorT = rcTitleScreenW->CreateScene("cts_cursor");
@@ -577,8 +634,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 	char** h = (char**)stageTerrainAddress;
 	const char* terr = *h;
 
-	if(terr != lastStageID)
-	DebugDrawText::log((std::string("Loading Stage ID:") + std::string(terr)).c_str());
+	if (terr != lastStageID)
+		DebugDrawText::log((std::string("Loading Stage ID:") + std::string(terr)).c_str());
 
 	lastStageID = terr;
 
@@ -589,8 +646,8 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDiffuse = CVector(0.02f, 0.02f, 0.02f);
 		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
 		Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightSpecular = CVector(15, 15, 15);
-		if(!stageWindowOpen)
-		SetCursorPos(CVector2(inputPtr->LeftStickHorizontal * multiplier, -inputPtr->LeftStickVertical * multiplier));		
+		if (!stageWindowOpen)
+			SetCursorPos(CVector2(inputPtr->LeftStickHorizontal * multiplier, -inputPtr->LeftStickVertical * multiplier));
 		//Sonic::CGameDocument::GetInstance()->m_pMember->m_spLightManager->m_GlobalLightDirection = CVector(-79.8565f, 0, 4.78983f);
 		uint32_t totalRing = 0;
 		for (size_t i = 0; i < 18; i++)
@@ -712,37 +769,43 @@ HOOK(void*, __fastcall, TitleW_UpdateApplication, 0xE7BED0, Sonic::CGameObject* 
 					cts_stage_5_medal->SetHideFlag(true);
 					CSDCommon::PlayAnimation(*cts_stage_info_window, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 0, true, true);
 				}
+				//Stage selection highlight & stage launch
 				if (stageWindowOpen)
 				{
+					//Pressing A requires a delay because otherwise even just tapping it will press A twice when this is called and it'll launch the stage immediately
 					if (timeStageSelectDelay < 5)
 						timeStageSelectDelay += 1;
+					//Enables loading to the stage
 					if (inputPtr->IsTapped(Sonic::eKeyState_A) && timeStageSelectDelay >= 5)
 					{
 						Title::canLoad = 1;
 					}
+					//Selection increase
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickDown) && stageSelectedWindow != stageSelectedWindowMax)
 					{
-						stageSelectHandle.reset();
+						stageSelectedWindow += 1;
 						Common::PlaySoundStatic(stageSelectHandle, 0);
-							stageSelectedWindow += 1;
-						CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (stageSelectedWindow - 1) * 10, stageSelectedWindow * 10);
+						if (stageSelectedWindow > 0) //technically not needed
+							CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (stageSelectedWindow - 1) * 10, stageSelectedWindow * 10);
+
 					}
+					//Selection decrease
 					if (inputPtr->IsTapped(Sonic::eKeyState_LeftStickUp))
 					{
-						Common::PlaySoundStatic(stageSelectHandle, 0);
 						stageSelectedWindow -= 1;
+						Common::PlaySoundStatic(stageSelectHandle, 0);
 						if (stageSelectedWindow < 5)
 							CSDCommon::PlayAnimation(*cts_stage_select, "Select_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 130 - ((stageSelectedWindow + 1) * 10), 130 - (stageSelectedWindow) * 10);
+
 					}
 					Common::ClampInt(stageSelectedWindow, 0, stageSelectedWindowMax);
+
+					PopulateStageWindowInfo(Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].levelID);
 				}
 			}
 			cts_name->SetHideFlag(!cursorSelected);
 			lastAmountSel = amountSel;
-
 		}
-
-
 		CheckCursorAnimStatus();
 	}
 	return originalTitleW_UpdateApplication(This, Edx, elapsedTime, a3);
@@ -909,13 +972,13 @@ HOOK(void, __fastcall, Title_CameraUpdate, 0x0058CDA0, TransitionTitleCamera* Th
 	else
 	{
 		constexpr float dotThreshold = 0.95f; // Value I determined to work pretty well.
-		for (CVector position : flagPositions )
+		for (CVector position : flagPositions)
 		{
 			const CVector direction = (position - TitleWorldMap::emblemPosition).normalized();
-			if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold && currentFlagSelected == -1 )
+			if (-direction.dot(camera->m_MyCamera.m_Direction) < dotThreshold && currentFlagSelected == -1)
 				continue;
-			if(introPlayed)
-			MagnetizeToFlag(direction, updateInfo.DeltaTime);
+			if (introPlayed)
+				MagnetizeToFlag(direction, updateInfo.DeltaTime);
 			break;
 		}
 	}
@@ -995,37 +1058,28 @@ void __declspec(naked) SetCorrectTerrainForMission_ASM()
 }
 void __declspec(naked) SetGameplayFlowMode()
 {
-	//yeah this could be a CMP, i just dont know how i would do it with such a long value
+	//todo: find a way to make it not crash with whiteworld
 	static uint32_t normal = 0x00D0A7E0;
 	static uint32_t whiteWorld = 0x00D0A746;
 
 	static bool pamb = Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].isWhiteWorld;
 
-		__asm
-		{
- 			jmp[normal]
-		}
+	__asm
+	{
+		jmp[normal]
+	}
 }
 
-int test = 0;
 HOOK(void, __fastcall, LoadAR, 0x0069C270, DWORD* This, DWORD* a2, Hedgehog::Base::CSharedString a3, Hedgehog::Base::CSharedString* a4, DWORD* a5, void* Edx)
 {
-	if (test == 0)
-	{
-		Hedgehog::Base::CSharedString og = *a4;
-		Hedgehog::Base::CSharedString newn = Hedgehog::Base::CSharedString("EnemyBeeton.ar");
-		a4 = &newn;
-		originalLoadAR(This, a2, a3, a4, a5, Edx);
-		test += 1;
-		a4 = &og;
-	}
+	//doesnt load the archives required (or atleast CPKRedir doesnt say)
 	originalLoadAR(This, a2, a3, a4, a5, Edx);
 }
 
 HOOK(char, __fastcall, GoalOutro, 0x00D078B0, byte* a2, DWORD* a3, DWORD* This)
 {
 	auto v3 = This[4];
-	
+
 	if (v3 == 10)
 	{
 
@@ -1046,8 +1100,6 @@ void __declspec(naked) SetHUDMode()
 		PamHUD:
 		jmp[pam]
 	}
-	/*}*/
-
 }
 void __declspec(naked) SetFlowMode()
 {
@@ -1061,18 +1113,25 @@ void __declspec(naked) SetFlowMode()
 		jmp[normal]
 		PamHUD:
 		push    esi
-		jmp[pam]
+			jmp[pam]
 	}
-	/*}*/
-
+}
+void __declspec(naked) Something()
+{
+	static uint32_t normal = 0x00D9075C;
+	static bool pamb = Configuration::worldData.data[lastValidFlagSelected].data[stageSelectedWindow].isWhiteWorld;
+	__asm
+	{
+		mov     bl, pamb
+		jmp[normal]
+	}
 }
 
 
 void TitleWorldMap::Install()
 {
-	//WRITE_MEMORY(0xD77102, uint32_t, 2);
-	//WRITE_MEMORY(0xD7712E, uint32_t, 2);
-	//INSTALL_HOOK(TitleUI_CDemoMenuObjectAdvance);
+
+	WRITE_JUMP(0x00D90749, Something);
 	WRITE_JUMP(0xD56CCA, SetCorrectTerrainForMission_ASM);
 	WRITE_JUMP(0x00D9078D, SetHUDMode); //Skip loading PAM000 HUD
 	WRITE_JUMP(0x00582390, SetFlowMode); //Completely skip initializing CGameplayFlowPlayableMenu
@@ -1081,7 +1140,7 @@ void TitleWorldMap::Install()
 	WRITE_JUMP(0x010A0B4A, 0x010A0B5A); //Force Act pause menu
 	WRITE_JUMP(0x00584CEE, 0x00588820);
 	WRITE_JUMP(0x00D0A743, SetGameplayFlowMode);
-
+	WRITE_JUMP(0x015B8188, 0x015B8198);
 	WRITE_JUMP(0x0058D41F, 0x0058D7D8);//Skip setting light properties every second
 	Eigen::Vector3f* lightColor = (Eigen::Vector3f*)0x01A42308;
 	lightColor->x() = 0.5976471f;
@@ -1089,10 +1148,6 @@ void TitleWorldMap::Install()
 	lightColor->z() = 0.5364707f;
 	//WRITE_JUMP(0x00CF8E08, TestPam);
 
-	//WRITE_JUMP(0x015B84F8, 0x015B84FC);
-	/*WRITE_JUMP(0x010B978C, 0x010B984D);*/
-	//INSTALL_HOOK(TitleWM_CMain_CState_SelectMenu);
-	//INSTALL_HOOK(sub_571170);
 	INSTALL_HOOK(LoadAR);
 	INSTALL_HOOK(GoalOutro);
 	INSTALL_HOOK(Title_CameraUpdate);

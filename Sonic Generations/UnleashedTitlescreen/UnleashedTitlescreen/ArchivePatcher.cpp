@@ -30,12 +30,13 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 		str = stream.str();
 	}
-
+	auto list = Configuration::GetAllLevelIDs(true);
+	list.push_back("pam000");
 	//NEED TO ADD ARCHIVES AFTER <DefAppend>cmn200</DefAppend> AND BEFORE </Node> OF CMN200!!!!!!!!!!!!!!!!!!
 	std::string cmn200;
 	{
 		std::stringstream stream;
-		for (auto& node : Configuration::GetAllLevelIDs(true))
+		for (auto& node : list)
 		{
 			stream << "   <Node>\n";
 			stream << "     <Name>" << node << "</Name>\n";
@@ -49,10 +50,10 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 	std::string enemydependencies;
 	{
 		std::stringstream stream;
-		for (auto& node : Configuration::GetAllLevelIDs(true))
+		for (auto& node : list)
 		{
 			stream << "   <DefAppend>\n";
-			stream << "     <Name>" << node << "_cmn</Name>\n";
+			stream << "     <Name>" << node << "</Name>\n";
 			stream << "     <Archive>EnemyCommon</Archive>\n";
 			stream << "     <Archive>EnemyELauncher</Archive>\n";
 			stream << "     <Archive>EnemyAeroCannon</Archive>\n";
@@ -66,23 +67,24 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 		}
 		enemydependencies = stream.str();
 	}
-	const size_t newSize = size + str.size() + cmn200.size() /*+ enemydependencies.size()*/;
+	const size_t newSize = size + str.size() + cmn200.size() + enemydependencies.size();
 	const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
 
-	char* pInsertionPos = strstr(pData, "<Include>");
-	char* pInsertionPos_CMN200 = strstr(pData, "<DefAppend>cmn200</DefAppend>") + strlen("<DefAppend>cmn200</DefAppend>")+2;
 
 	// Copy the data from the original buffer into a new buffer
 	std::string buffer(pData, size);
 
-	// Insert str into the buffer at pInsertionPos
-	buffer.insert(pInsertionPos - pData, str);
-	buffer.insert(pInsertionPos_CMN200 - pData, cmn200);
 
-	/*int e = std::string(pData).find("<Name>EnemyCommon</Name>");
-	int f = std::string(pData).find("<Name>ghz_cmn</Name>", e);
+	//As a compromise, ive added a bunch of comments in the archivetree xml, we need to find a better way to do this without needing these comments.
 
-	buffer.insert(f, enemydependencies);*/
+	//v https://www.youtube.com/watch?v=bgs9OhjAE2g v
+	auto pInsertionPos_enemy = buffer.find("<!--SWATSWM ENTRY-->");
+	buffer.insert(pInsertionPos_enemy, enemydependencies);
+
+	auto pInsertionPos = buffer.find("<!--INCLUDE ENTRY-->");
+	buffer.insert(pInsertionPos, str);
+	auto pInsertionPos_CMN200 = buffer.find("<!--SWATSWM-CMN2 ENTRY-->");
+	buffer.insert(pInsertionPos_CMN200, cmn200);
 	memcpy(pBuffer.get(), buffer.c_str(), buffer.size());
 
 	bool result;
@@ -95,9 +97,9 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 void ArchivePatcher::Install()
 {
-	archiveDependencies.push_back(ArchiveDependency("egb200", {"pla_cmn", "ghz_cmn", "egb200_cmn"}));
-	archiveDependencies.push_back(ArchiveDependency("afr200", { "pla_cmn", "ghz_cmn", "egb200_cmn" }));
-	archiveDependencies.push_back(ArchiveDependency("cmn200", { "egb200","afr200" }));
+	archiveDependencies.push_back(ArchiveDependency("egb200", {}));
+	archiveDependencies.push_back(ArchiveDependency("afr200", {}));
+	archiveDependencies.push_back(ArchiveDependency("cmn200", { }));
 	archiveDependencies.push_back(ArchiveDependency("ExtraUISounds", { "pam000"}));
 
 	INSTALL_HOOK(ParseArchiveTree);

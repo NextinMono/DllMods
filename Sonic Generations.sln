@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32602.291
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{0D6EA313-F767-4163-BDC2-73B07305F10B}"
 	ProjectSection(SolutionItems) = preProject
@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{0D6EA3
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCU", "Sonic Generations\ColorsHUD\ColorsHUD\ColorsHUD.vcxproj", "{30C32A8F-341B-42EB-AE08-43119AB25E46}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnleashedTitle", "Sonic Generations\UnleashedTitlescreen\UnleashedTitlescreen\UnleashedTitle.vcxproj", "{C59A48F1-7673-4A1E-B829-D5FC590CB594}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SRHUD", "Sonic Generations\SRHUD\SRHUD\SRHUD.vcxproj", "{81FF2197-4586-4C43-BB91-47F6179B6E1B}"
 EndProject
@@ -28,10 +26,6 @@ Global
 		{30C32A8F-341B-42EB-AE08-43119AB25E46}.Debug|x86.Build.0 = Debug|Win32
 		{30C32A8F-341B-42EB-AE08-43119AB25E46}.Release|x86.ActiveCfg = Release|Win32
 		{30C32A8F-341B-42EB-AE08-43119AB25E46}.Release|x86.Build.0 = Release|Win32
-		{C59A48F1-7673-4A1E-B829-D5FC590CB594}.Debug|x86.ActiveCfg = Debug|Win32
-		{C59A48F1-7673-4A1E-B829-D5FC590CB594}.Debug|x86.Build.0 = Debug|Win32
-		{C59A48F1-7673-4A1E-B829-D5FC590CB594}.Release|x86.ActiveCfg = Release|Win32
-		{C59A48F1-7673-4A1E-B829-D5FC590CB594}.Release|x86.Build.0 = Release|Win32
 		{81FF2197-4586-4C43-BB91-47F6179B6E1B}.Debug|x86.ActiveCfg = Debug|Win32
 		{81FF2197-4586-4C43-BB91-47F6179B6E1B}.Debug|x86.Build.0 = Debug|Win32
 		{81FF2197-4586-4C43-BB91-47F6179B6E1B}.Release|x86.ActiveCfg = Release|Win32

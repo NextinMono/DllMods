@@ -31,7 +31,9 @@ public:
 	static int LogoType;
 	static bool IgnoreWarnings;
 	static std::string modPath;
-	static WorldData worldData;
+	static WorldData worldData; 
+	static std::vector<std::string> gensStages;
+
 
 
 };

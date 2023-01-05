@@ -538,13 +538,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 }
 
-//FUNCTION_PTR(int, __fastcall, sub_D131B0, 0xD131B0, Hedgehog::math::CVector* This, int a2);
-//void Setlightdir() {
-//	sub_D131B0(Hedgehog::math::CVector(0,0,0), )
-//}
-
-
-
 
 void Title::Install()
 {
@@ -554,11 +547,7 @@ void Title::Install()
 	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance); //Override button after-function
 	WRITE_JUMP(0x00572B2E, 0x00572B45); //Disable scroll sound
 
-
 	WRITE_JUMP(0x0058CE33, 0x0058CEAB);
-
-	
-
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);
 	WRITE_MEMORY(0x016E11F4, void*, CTitleRemoveCallback);
