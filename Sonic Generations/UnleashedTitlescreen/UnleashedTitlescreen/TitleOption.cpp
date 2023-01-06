@@ -96,6 +96,7 @@ void __declspec(naked) TitleUI_DisableOptionsMusic()
 		jmp[pAddr]
 	}
 }
+
 void TitleOption::Install()
 {
 	WRITE_MEMORY(0x16E14D8, void*, CHudSonicStageRemoveCallback);

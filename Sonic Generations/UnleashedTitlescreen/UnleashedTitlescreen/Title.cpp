@@ -10,6 +10,8 @@ boost::shared_ptr<Sonic::CCamera> spCamera;
 Sonic::CCamera* cameraa2;
 static uint32_t cameraInitRan = 0;
 uint32_t* Title::OutState;
+
+static SharedPtrTypeless titleMusicHandle;
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 
 bool Title::canLoad = 0;
@@ -79,6 +81,7 @@ void ContinueToWM()
 		Title::SetHideEverything(true);
 		TitleWorldMap::Start();
 		TitleWorldMap::EnableInput();
+		titleMusicHandle.reset();
 		inWM = true;
 	}
 }
@@ -290,21 +293,10 @@ HOOK(void, __fastcall, Title_CMain_CState_SelectMenuBegin, 0x572750, hh::fnd::CS
 		parsedSave = true;
 	}
 }
-void MakeTitleLight()
-{
-	auto gameDocument = Sonic::CGameDocument::GetInstance();
-	auto pos = Hedgehog::Math::CVector(-0.5173238, -0.8544828, -0.0472794);
-	auto rcLight = boost::make_shared<Hedgehog::Mirage::CLightData>();
-	rcLight->m_Color = { 0.5976471f, 0.5835295f,0.5364707f, 1 };
-	rcLight->m_Position = pos;
-	rcLight->m_Type = Hedgehog::Mirage::ELightType::eLightType_Point;
-	gameDocument->m_pMember->m_spLightManager->AddPointLight(rcLight);
-}
 HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* Edx, int a2, int a3, void** a4)
 {
 	CTitleRemoveCallback(This, nullptr, nullptr);
 	Title::SetScrollDirection(true);
-	//MakeTitleLight();
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 	auto spCsdProject = wrapper.GetCsdProject("ui_title_unleashed");
 	rcTitleScreen = spCsdProject->m_rcProject;
@@ -390,6 +382,8 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 
 HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 {
+	if(!titleMusicHandle)
+	Common::PlaySoundStatic(titleMusicHandle, 800030);
 	if (enteredStart && rcTitleMenu && rcTitlebg)
 	{
 		CSDCommon::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, false, true);
