@@ -2,6 +2,7 @@
 
 #define INI_FILE "mod.ini"
 #define STAGE_LIST_FILE "stage_list.json"
+#define MOD_PATH ""
 
 struct LevelData
 {
@@ -28,8 +29,10 @@ public:
 	/// </summary>
 	static void Read();
 	static std::vector<std::string> GetAllLevelIDs(bool onlyCustom);
+	static int GetCapital(int flagID);
 	static int LogoType;
 	static bool IgnoreWarnings;
+	static bool CompatibilityMode;
 	static std::string modPath;
 	static WorldData worldData; 
 	static std::vector<std::string> gensStages;

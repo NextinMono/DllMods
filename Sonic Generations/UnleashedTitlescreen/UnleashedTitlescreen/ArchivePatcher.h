@@ -18,4 +18,5 @@ public:
     static std::vector<ArchiveDependency> archiveDependencies;
 
     static void Install();
+    static void LoadExtraUISounds();
 };

@@ -1,5 +1,6 @@
 int Configuration::LogoType = 0;
 bool Configuration::IgnoreWarnings = false;
+bool Configuration::CompatibilityMode = false;
 std::string Configuration::modPath;
 WorldData Configuration::worldData;
 std::vector<std::string> Configuration::gensStages;
@@ -8,16 +9,17 @@ void Configuration::Read()
 {
 	INIReader reader(INI_FILE);
 	Configuration::LogoType = reader.GetInteger("Appearance", "LogoType", LogoType);
-	Configuration::IgnoreWarnings = reader.GetBoolean("General", "IgnoreWarnings", IgnoreWarnings);
-	Configuration::gensStages = { "ghz100","ghz200","cpz100","cpz200","ssz100","ssz200","sph100","sph200","cte100", "cte200","ssh100","ssh200","csc100","csc200","euc100","euc200","pla100","pla200"};
+	Configuration::IgnoreWarnings = reader.GetBoolean("Main", "IgnoreWarnings", IgnoreWarnings);
+	Configuration::CompatibilityMode = reader.Get("Main", "IncludeDir1", "disk_sounds") == "";
+	Configuration::gensStages = { "ghz100","ghz200","cpz100","cpz200","ssz100","ssz200","sph100","sph200","cte100", "cte200","ssh100","ssh200","csc100","csc200","euc100","euc200","pla100","pla200" };
 	std::ifstream jsonFile(STAGE_LIST_FILE/*, std::ios::in*/);
-	
+
 	worldData = WorldData();
 
 	std::vector<std::string> modList;
 	Common::GetModIniList(modList);
 	modList.insert(modList.end(), ""); //Unleashed title's own stage_list
-	
+
 	/// <summary>
 	/// What I want to have is a system that parses all the stage_list files from all mods, last being the titlescreen itself, and
 	/// if theres more than 1 stage_list but it doesnt override everything, override just the index itself
@@ -51,7 +53,7 @@ void Configuration::Read()
 				worldData.data[i].data[x].isWhiteWorld = element[x]["isWhiteWorld"].asBool();
 				worldData.data[i].data[x].isCapital = element[x]["isCapital"].asBool();
 			}
-		}		
+		}
 		break;
 
 	}
@@ -75,6 +77,19 @@ std::vector<std::string> Configuration::GetAllLevelIDs(bool onlyCustom)
 			}
 			else
 				returned.push_back(Configuration::worldData.data[i].data[x].levelID);
+		}
+	}
+	return returned;
+}
+int Configuration::GetCapital(int flagID)
+{
+	int returned = -1;
+	for (size_t i = 0; i < Configuration::worldData.data[flagID].data.size(); i++)
+	{
+		if (Configuration::worldData.data[flagID].data[i].isCapital)
+		{
+			returned = i;
+			return returned;
 		}
 	}
 	return returned;

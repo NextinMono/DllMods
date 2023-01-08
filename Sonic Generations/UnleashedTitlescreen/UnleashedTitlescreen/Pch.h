@@ -19,6 +19,11 @@
 #include <windows.h>
 #include <winuser.h>
 #include <fstream>
+
+#define WITH_MINIAUDIO
+#include <soloud.h>
+#include <soloud_wav.h>
+
 #include <stdio.h>
 #define DEBUG_DRAW_TEXT_DLL_IMPORT	
 #include "DebugDrawText.h"	
@@ -30,6 +35,7 @@
 //
 
 //
+#include "MiniAudioHelper.h"
 #include "Configuration.h"
 #include "TitleWorldMap.h"
 #include "LetterboxHelper.h"

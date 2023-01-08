@@ -348,9 +348,9 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 	if (rcTitleLogo_1)
 		CSDCommon::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
+	ArchivePatcher::LoadExtraUISounds();
 	playingStartAnim = true;
 	Title::CreateScreen(This);
-
 	return originalTitle_CMain(This, Edx, a2, a3, a4);
 }
 
@@ -382,8 +382,8 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 
 HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, int a1)
 {
-	if(!titleMusicHandle)
-	Common::PlaySoundStatic(titleMusicHandle, 800030);
+	//if(!titleMusicHandle)
+	//Common::PlaySoundStatic(titleMusicHandle, 800030);
 	if (enteredStart && rcTitleMenu && rcTitlebg)
 	{
 		CSDCommon::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, false, true);
@@ -541,7 +541,7 @@ void Title::Install()
 	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance); //Override button after-function
 	WRITE_JUMP(0x00572B2E, 0x00572B45); //Disable scroll sound
 
-	WRITE_JUMP(0x0058CE33, 0x0058CEAB);
+	//WRITE_JUMP(0x0058CE33, 0x0058CEAB);
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);
 	WRITE_MEMORY(0x016E11F4, void*, CTitleRemoveCallback);

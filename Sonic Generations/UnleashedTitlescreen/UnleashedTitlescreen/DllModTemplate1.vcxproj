@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\SoLoud-wav.2020.2.7.1\build\native\SoLoud-wav.props" Condition="Exists('packages\SoLoud-wav.2020.2.7.1\build\native\SoLoud-wav.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -98,7 +99,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\..\Dependencies\BlueBlur;$(SolutionDir)..\..\..\Dependencies\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\..\Dependencies\BlueBlur;$(SolutionDir)..\..\..\Dependencies\;$(SolutionDir)..\..\..\Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>Pch.h</ForcedIncludeFiles>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -182,6 +183,7 @@
     <ClCompile Include="ArchivePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CSDCommon.cpp" />
+    <ClCompile Include="MiniAudioHelper.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="LetterboxHelper.cpp" />
     <ClCompile Include="Pch.cpp">
@@ -204,6 +206,7 @@
     <ClInclude Include="CSDCommon.h" />
     <ClInclude Include="DllMain.cpp" />
     <ClInclude Include="LetterboxHelper.h" />
+    <ClInclude Include="MiniAudioHelper.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="Title.h" />
     <ClInclude Include="TitleOption.h" />
@@ -221,5 +224,6 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\JsonCpp.Windows.1.9.2\build\JsonCpp.Windows.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\JsonCpp.Windows.1.9.2\build\JsonCpp.Windows.targets'))" />
+    <Error Condition="!Exists('packages\SoLoud-wav.2020.2.7.1\build\native\SoLoud-wav.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\SoLoud-wav.2020.2.7.1\build\native\SoLoud-wav.props'))" />
   </Target>
 </Project>

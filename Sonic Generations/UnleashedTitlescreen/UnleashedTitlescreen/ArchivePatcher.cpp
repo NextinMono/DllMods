@@ -97,11 +97,18 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 void ArchivePatcher::Install()
 {
+
+	
+
+	//rawData = database->GetRawData("test.txt");
 	archiveDependencies.push_back(ArchiveDependency("egb200", {}));
 	archiveDependencies.push_back(ArchiveDependency("afr200", {}));
 	archiveDependencies.push_back(ArchiveDependency("cmn200", { }));
-	archiveDependencies.push_back(ArchiveDependency("ExtraUISounds", { "pam000"}));
 
 	INSTALL_HOOK(ParseArchiveTree);
 	//INSTALL_HOOK(sub_D4C480);
+}
+
+void ArchivePatcher::LoadExtraUISounds()
+{
 }
