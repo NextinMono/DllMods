@@ -40,6 +40,7 @@ public:
 	static void PlayPanningAnim();
 	static void EnableInput();
 
+	
 	struct SaveStageInfo 
 	{
 		std::string stageID_string;
@@ -53,15 +54,6 @@ public:
 		uint32_t bestRing;
 		uint32_t redRingCount;
 	};
-	/*struct RGBColor
-	{
-		float r;
-		float g;
-		float b;
 
-		RGBColor operator*(const float& f)
-		{
-			return RGBColor(r * f, g * f, b * f);
-		}
-	};*/
+	
 };

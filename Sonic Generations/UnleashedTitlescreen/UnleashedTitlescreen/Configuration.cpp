@@ -43,7 +43,6 @@ void Configuration::Read()
 		{
 			worldData.data.push_back(FlagData());
 			worldData.data[i].description = std::string(arrayFlag[i]["Description"].asCString());
-			worldData.data[i].description = std::string(arrayFlag[i]["Description"].asCString());
 			Json::Value element = arrayFlag[i]["LevelData"];
 			for (int x = 0; x < element.size(); x++)
 			{
@@ -52,6 +51,18 @@ void Configuration::Read()
 				worldData.data[i].data[x].optionName = std::string(element[x]["optionName"].asCString());
 				worldData.data[i].data[x].isWhiteWorld = element[x]["isWhiteWorld"].asBool();
 				worldData.data[i].data[x].isCapital = element[x]["isCapital"].asBool();
+			}
+			if (arrayFlag[i]["NightLevelData"] != NULL)
+			{
+				element = arrayFlag[i]["NightLevelData"];
+				for (int x = 0; x < element.size(); x++)
+				{
+					worldData.data[i].dataNight.push_back(LevelData());
+					worldData.data[i].dataNight[x].levelID = std::string(element[x]["levelID"].asCString());
+					worldData.data[i].dataNight[x].optionName = std::string(element[x]["optionName"].asCString());
+					worldData.data[i].dataNight[x].isWhiteWorld = element[x]["isWhiteWorld"].asBool();
+					worldData.data[i].dataNight[x].isCapital = element[x]["isCapital"].asBool();
+				}
 			}
 		}
 		break;

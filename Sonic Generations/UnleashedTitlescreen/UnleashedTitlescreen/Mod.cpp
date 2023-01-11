@@ -17,6 +17,7 @@ extern "C" __declspec(dllexport) void Init()
 	}*//*
 	Configuration::modPath = modDir + STAGE_LIST_FILE;*/
 	MiniAudioHelper::Initialize();
+	LuanneManager::Install();
 	ArchivePatcher::Install();
 	LetterboxHelper::Initialize(1280, 720);
 	Title::Install();

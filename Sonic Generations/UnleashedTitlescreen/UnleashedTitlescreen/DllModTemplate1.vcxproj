@@ -181,8 +181,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ArchivePatcher.cpp" />
+    <ClCompile Include="C:\Users\windo\Downloads\blueskythlikesclouds DllMods master Source-GenerationsQuickBoot\LuanneManager.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CSDCommon.cpp" />
+    <ClCompile Include="MainSequenceMod.cpp" />
     <ClCompile Include="MiniAudioHelper.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="LetterboxHelper.cpp" />
@@ -206,6 +208,8 @@
     <ClInclude Include="CSDCommon.h" />
     <ClInclude Include="DllMain.cpp" />
     <ClInclude Include="LetterboxHelper.h" />
+    <ClInclude Include="LuanneManager.h" />
+    <ClInclude Include="MainSequenceMod.h" />
     <ClInclude Include="MiniAudioHelper.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="Title.h" />

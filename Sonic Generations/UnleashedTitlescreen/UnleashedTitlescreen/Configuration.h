@@ -15,6 +15,7 @@ struct FlagData
 {
 	std::string description;
 	std::vector<LevelData> data;
+	std::vector<LevelData> dataNight;
 };
 struct WorldData
 {

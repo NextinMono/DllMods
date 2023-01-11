@@ -19,6 +19,8 @@
 #include <windows.h>
 #include <winuser.h>
 #include <fstream>
+#include <algorithm>	
+#include <vector>
 
 #define WITH_MINIAUDIO
 #include <soloud.h>
@@ -35,6 +37,8 @@
 //
 
 //
+#include "MainSequenceMod.h"
+#include "LuanneManager.h"
 #include "MiniAudioHelper.h"
 #include "Configuration.h"
 #include "TitleWorldMap.h"
