@@ -1,4 +1,5 @@
 int Configuration::LogoType = 0;
+TitleType Configuration::MenuType = (TitleType)0;
 bool Configuration::IgnoreWarnings = false;
 bool Configuration::CompatibilityMode = false;
 std::string Configuration::modPath;
@@ -9,6 +10,7 @@ void Configuration::Read()
 {
 	INIReader reader(INI_FILE);
 	Configuration::LogoType = reader.GetInteger("Appearance", "LogoType", LogoType);
+	Configuration::MenuType = (TitleType)reader.GetInteger("Appearance", "MenuType", MenuType);
 	Configuration::IgnoreWarnings = reader.GetBoolean("Main", "IgnoreWarnings", IgnoreWarnings);
 	Configuration::CompatibilityMode = reader.Get("Main", "IncludeDir1", "disk_sounds") == "";
 	Configuration::gensStages = { "ghz100","ghz200","cpz100","cpz200","ssz100","ssz200","sph100","sph200","cte100", "cte200","ssh100","ssh200","csc100","csc200","euc100","euc200","pla100","pla200" };
@@ -88,6 +90,22 @@ std::vector<std::string> Configuration::GetAllLevelIDs(bool onlyCustom)
 			}
 			else
 				returned.push_back(Configuration::worldData.data[i].data[x].levelID);
+		}
+	}
+	return returned;
+}
+std::vector<std::string> Configuration::GetAllWhiteWorld()
+{
+	std::vector<std::string> returned;
+	for (size_t i = 0; i < Configuration::worldData.data.size(); i++)
+	{
+		for (size_t x = 0; x < Configuration::worldData.data[i].data.size(); x++)
+		{
+			if (Configuration::worldData.data[i].data[x].isWhiteWorld)
+			{
+				returned.push_back(Configuration::worldData.data[i].data[x].levelID);
+				continue;
+			}
 		}
 	}
 	return returned;

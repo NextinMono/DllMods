@@ -67,7 +67,35 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 		}
 		enemydependencies = stream.str();
 	}
-	const size_t newSize = size + str.size() + cmn200.size() + enemydependencies.size();
+
+	auto list2 = Configuration::GetAllWhiteWorld();
+	std::string pam1;
+	{
+		std::stringstream stream;
+		for (auto& node : list2)
+		{
+			stream << "   <Node>\n";
+			stream << "     <Name>" << node << "</Name>\n";
+			stream << "     <Archive>" << node << "</Archive>\n";
+			stream << "     <Order>" << 0 << "</Order>\n";
+			stream << "   </Node>\n";
+		}
+		pam1 = stream.str();
+	}
+	std::string pam2;
+	{
+		std::stringstream stream;
+		for (auto& node : list2)
+		{
+			stream << "   <Node>\n";
+			stream << "     <Name>" << node << "</Name>\n";
+			stream << "     <Archive>" << node << "</Archive>\n";
+			stream << "     <Order>" << 0 << "</Order>\n";
+			stream << "   </Node>\n";
+		}
+		pam2 = stream.str();
+	}
+	const size_t newSize = size + str.size() + cmn200.size() + enemydependencies.size() + pam2.size() + pam1.size();
 	const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
 
 
@@ -76,7 +104,8 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 
 	//As a compromise, ive added a bunch of comments in the archivetree xml, we need to find a better way to do this without needing these comments.
-
+	//
+	// <!--PAMTHING2-->
 	//v https://www.youtube.com/watch?v=bgs9OhjAE2g v
 	auto pInsertionPos_enemy = buffer.find("<!--SWATSWM ENTRY-->");
 	buffer.insert(pInsertionPos_enemy, enemydependencies);
@@ -85,6 +114,10 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 	buffer.insert(pInsertionPos, str);
 	auto pInsertionPos_CMN200 = buffer.find("<!--SWATSWM-CMN2 ENTRY-->");
 	buffer.insert(pInsertionPos_CMN200, cmn200);
+	auto pInsertionPos_PAM1 = buffer.find("<!--PAMTHING1-->");
+	buffer.insert(pInsertionPos_PAM1, pam1);
+	auto pInsertionPos_PAM2 = buffer.find("<!--PAMTHING2-->");
+	buffer.insert(pInsertionPos_PAM2, pam2);
 	memcpy(pBuffer.get(), buffer.c_str(), buffer.size());
 
 	bool result;
@@ -104,6 +137,12 @@ void ArchivePatcher::Install()
 	archiveDependencies.push_back(ArchiveDependency("egb200", {}));
 	archiveDependencies.push_back(ArchiveDependency("afr200", {}));
 	archiveDependencies.push_back(ArchiveDependency("cmn200", { }));
+	archiveDependencies.push_back(ArchiveDependency("myk000", { "StageGate"}));
+	archiveDependencies.push_back(ArchiveDependency("WorldMap", { "Title"}));
+	archiveDependencies.push_back(ArchiveDependency("TitleModel", { "Title"}));
+	archiveDependencies.push_back(ArchiveDependency("GenericWindow", { "Title"}));
+
+
 
 	INSTALL_HOOK(ParseArchiveTree);
 	//INSTALL_HOOK(sub_D4C480);

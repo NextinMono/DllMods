@@ -22,9 +22,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{8907ca89-a7b4-48d8-b62f-7157fabdd3e5}</ProjectGuid>
-    <RootNamespace>SWATitleWorldMap</RootNamespace>
+    <RootNamespace>Werehog</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
-    <ProjectName>SWATitleWorldMap</ProjectName>
+    <ProjectName>Werehog</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -73,7 +73,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\UnleashedTitlescreenGens</OutDir>
+    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\Werehog</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -83,7 +83,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>G:\Steam\steamapps\common\Sonic Generations\mods\UnleashedTitlescreenGens</OutDir>
+    <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,17 +143,16 @@
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\..\Dependencies\BlueBlur;$(SolutionDir)..\..\..\Dependencies\;$(SolutionDir)..\..\..\Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\..\Dependencies\BlueBlur;$(SolutionDir)..\..\..\Dependencies\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>Pch.h</ForcedIncludeFiles>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)..\..\..\Dependencies\BlueBlur\BlueBlur.lib;$(SolutionDir)..\..\..\Dependencies\Detours\lib\x86\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\Dependencies\;$(SolutionDir)..\..\..\Dependencies\Detours\lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>detours.lib;syelog.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\Dependencies\Detours\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -182,14 +181,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ArchivePatcher.cpp" />
-    <ClCompile Include="C:\Users\windo\Downloads\blueskythlikesclouds DllMods master Source-GenerationsQuickBoot\LuanneManager.cpp" />
     <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="CSDCommon.cpp" />
-    <ClCompile Include="DecorationTextManager.cpp" />
-    <ClCompile Include="MainSequenceMod.cpp" />
-    <ClCompile Include="MiniAudioHelper.cpp" />
     <ClCompile Include="Mod.cpp" />
-    <ClCompile Include="LetterboxHelper.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pch.h</PrecompiledHeaderFile>
@@ -200,24 +193,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Title.cpp" />
-    <ClCompile Include="TitleOption.cpp" />
-    <ClCompile Include="TitleWorldMap.cpp" />
+    <ClCompile Include="Sonic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArchivePatcher.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="CSDCommon.h" />
-    <ClInclude Include="DecorationTextManager.h" />
     <ClInclude Include="DllMain.cpp" />
-    <ClInclude Include="LetterboxHelper.h" />
-    <ClInclude Include="LuanneManager.h" />
-    <ClInclude Include="MainSequenceMod.h" />
-    <ClInclude Include="MiniAudioHelper.h" />
     <ClInclude Include="Pch.h" />
-    <ClInclude Include="Title.h" />
-    <ClInclude Include="TitleOption.h" />
-    <ClInclude Include="TitleWorldMap.h" />
+    <ClInclude Include="Sonic.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

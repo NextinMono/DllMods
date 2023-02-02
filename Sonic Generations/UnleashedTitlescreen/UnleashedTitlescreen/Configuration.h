@@ -21,6 +21,11 @@ struct WorldData
 {
 	std::vector<FlagData> data;
 };
+enum TitleType {
+	Retail,
+	Preview,
+	E3
+};
 class Configuration
 {
 	
@@ -30,9 +35,11 @@ public:
 	/// </summary>
 	static void Read();
 	static std::vector<std::string> GetAllLevelIDs(bool onlyCustom);
+	static std::vector<std::string> GetAllWhiteWorld();
 	static int GetCapital(int flagID);
 	static int LogoType;
 	static bool IgnoreWarnings;
+	static TitleType MenuType;
 	static bool CompatibilityMode;
 	static std::string modPath;
 	static WorldData worldData; 

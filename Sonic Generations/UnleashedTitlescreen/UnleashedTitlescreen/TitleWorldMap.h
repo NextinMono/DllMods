@@ -39,6 +39,8 @@ public:
 	static hh::math::CQuaternion QuaternionFromAngleAxis(float angle, const hh::math::CVector& axis);
 	static void PlayPanningAnim();
 	static void EnableInput();
+	static bool Active;
+	static bool LoadingReplacementEnabled;
 
 	
 	struct SaveStageInfo 
