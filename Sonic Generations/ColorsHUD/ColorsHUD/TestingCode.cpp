@@ -19,6 +19,8 @@ HOOK(void, __fastcall, Test6, 0x1296DE0, void* Edx)
 }
 void TestingCode::Install()
 {
+	//Test cast stretch
+	WRITE_JUMP(0x006830BD, 0x006838EA);
 #pragma region Resolution/Aspect Ratio Scaling
 	//FUNCTION_PTR(void, __cdecl, TestSetAspect, 0x675440, int width, int height);
 	//FUNCTION_PTR(void, __cdecl, SetResolution, 0x675400, float width, float height);

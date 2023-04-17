@@ -30,6 +30,8 @@
 
 #include "detours\include\detours.h"
 
+#define DEBUG_DRAW_TEXT_DLL_IMPORT
+#include <DebugDrawText.h>
 #include "HudBtnGuide.h"
 #include "Test.h"
 #include "CSDCommon.h"

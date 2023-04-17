@@ -22,5 +22,3 @@ extern "C" __declspec(dllexport) void PostInit()
 {
 	ScoreGenerationsAPI::SetVisibility(false);
 }
-
-__declspec(dllexport) ModInfo GensModInfo = { ModLoaderVer, GameVer };

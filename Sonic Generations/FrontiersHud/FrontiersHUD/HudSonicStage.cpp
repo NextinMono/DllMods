@@ -388,7 +388,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	{
 		hiddenOxy = false;
 		oxygenCount += in_rUpdateInfo.DeltaTime;	
-		CSDCommon::PlayAnimation(*oxygenCircle, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (32 - oxygenCount) / 32 *100);
+		CSDCommon::PlayAnimation(*oxygenCircle, "gauge_up", Chao::CSD::eMotionRepeatType_PlayOnce, 1, (32 - oxygenCount) / 32 * 100);
 		printf("\nWATER %f\n", 32 - oxygenCount);
 	}
 	else

@@ -971,6 +971,13 @@ namespace Common
 		else
 			return value;
 	}
+	inline void RepeatFloat(float& value, float min, float max)
+	{
+		if (value > max)
+			value = min;
+		else if (value < min)
+			value = max;			
+	}
 	inline void PlayBGM(char const* cueName, float fadeInTime)
 	{
 		FUNCTION_PTR(unsigned int, __stdcall, PlayAudioFromCueName, 0xD62440, void* gameDocument, Hedgehog::Base::CSharedString & cueName, float fadeInTime);

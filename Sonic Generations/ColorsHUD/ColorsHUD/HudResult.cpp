@@ -1,5 +1,4 @@
 boost::shared_ptr<Sonic::CGameObjectCSD> spResult, spBtnGuide, spCountdownTimer;
-boost::shared_ptr<Sonic::CGameObjectCSD> spResult, spBtnGuide, spCountdownTimer;
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectResult, rcProjectBtnGuide, rcProjectCountdownTimer;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultTitle;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultSideCounters;

@@ -17,7 +17,7 @@ HOOK(int, __cdecl, vsprintff, 0xA6A665, char* DstBuf, const char* Format, va_lis
 
 }
 void ErrorMessages::Install() {
-	INSTALL_HOOK(InvalidBitset);
+	/*INSTALL_HOOK(InvalidBitset);
 	INSTALL_HOOK(vsprintff);
-	INSTALL_HOOK(SFDPrint);
+	INSTALL_HOOK(SFDPrint);*/
 }

@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FrontiersHUD", "Sonic Gener
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomizableControls", "Sonic Generations\CustomizableControls\CustomizableControls\CustomizableControls.vcxproj", "{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClassicHUD", "Sonic Generations\ClassicHUD\ClassicHUD\ClassicHUD.vcxproj", "{690718BF-CAE3-4B3E-8CB9-CC4C4F0FFFCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -38,6 +40,10 @@ Global
 		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Debug|x86.Build.0 = Debug|Win32
 		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Release|x86.ActiveCfg = Release|Win32
 		{D7A3D076-8EA7-4AD0-B7EE-FDF2575CF1B5}.Release|x86.Build.0 = Release|Win32
+		{690718BF-CAE3-4B3E-8CB9-CC4C4F0FFFCF}.Debug|x86.ActiveCfg = Debug|Win32
+		{690718BF-CAE3-4B3E-8CB9-CC4C4F0FFFCF}.Debug|x86.Build.0 = Debug|Win32
+		{690718BF-CAE3-4B3E-8CB9-CC4C4F0FFFCF}.Release|x86.ActiveCfg = Release|Win32
+		{690718BF-CAE3-4B3E-8CB9-CC4C4F0FFFCF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

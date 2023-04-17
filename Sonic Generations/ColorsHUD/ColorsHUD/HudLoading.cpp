@@ -359,7 +359,6 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 	CSDCommon::PlayAnimation(*rcActInfo, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	//TODO: Make this use clamp instead of this awful math
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
-	printf("\n\n\n\n\n\n%d\n\n\n", stageID);
 	int stageName = stageID % 2 ? stageID - 1 : stageID;
 	stageName-= stageName / 2;
 	if (stageName < 0)

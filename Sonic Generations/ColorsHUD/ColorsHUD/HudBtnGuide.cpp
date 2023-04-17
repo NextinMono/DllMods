@@ -16,7 +16,42 @@ bool endingQuickstep;
 int lastNavigationType = -1;
 inline FUNCTION_PTR(void, __fastcall, AdvanceTrickss, 0x52F390, Sonic::CGameObject* This, void* Edx, int a2);
 inline FUNCTION_PTR(void, __fastcall, FinalTricks, 0x52F8F0, Sonic::CGameObject* This, void* Edx, int a2);
+bool isSlowedDown = false;
 
+
+
+
+int maxTricks = 4;
+int currentTricks = 0;
+float timeSinceStartTricks = 0;
+bool areTricksComplete;
+bool tricksLocked = false;
+bool* GetTimeScaleEnabled()
+{
+	return (bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C });
+}
+
+float* GetTimeScale()
+{
+	return (float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A0 });
+}
+
+void SlowTime(float dt)
+{
+	isSlowedDown = true;
+	*(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C }) = true;
+	*GetTimeScale() = max(*GetTimeScale() - dt * 0.5f, 0.08f);
+}
+
+void ResetTime()
+{
+	if (*GetTimeScaleEnabled())
+	{
+		isSlowedDown = false;
+		*GetTimeScaleEnabled() = false;
+		*GetTimeScale() = 1.0f;
+	}
+}
 void HudBtnGuide::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
 
@@ -72,7 +107,7 @@ HOOK(void, __fastcall, HGT_CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGam
 	CSDCommon::PlayAnimation(*trick_text, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	trick_text->SetHideFlag(true);
 
-	onebtn->GetNode("icon_btn")->SetPatternIndex(35);
+	onebtn->GetNode("icon_btn")->SetPatternIndex(11);
 	onebtn->GetNode("icon_btn_KB_text")->SetHideFlag(true);
 	CSDCommon::PlayAnimation(*onebtn, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	onebtn->SetHideFlag(true);
@@ -82,8 +117,11 @@ HOOK(void, __fastcall, HGT_CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGam
 
 	HudBtnGuide::CreateScreen(This);
 }
+inline FUNCTION_PTR(void, __thiscall, AdvTest, 0x52F390, Sonic::CGameObject* This, int a2);
 HOOK(void, __fastcall, StartTricks, 0x52F030, Sonic::CGameObject* This, void* edx, int a2)
 {
+	areTricksComplete = false;
+	tricksLocked = false;
 	originalStartTricks(This, edx, a2);
 	textChoice = -1;
 	tricksStarted = true;
@@ -91,20 +129,22 @@ HOOK(void, __fastcall, StartTricks, 0x52F030, Sonic::CGameObject* This, void* ed
 	onebtn->SetHideFlag(false);
 	CSDCommon::PlayAnimation(*onebtn, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 }
-
-HOOK(void, __fastcall, AdvanceTricks, 0x52F390, Sonic::CGameObject* This, void* edx, int a2)
+void DisplayAdvancedTrickText(int specific)
 {
-	textChoice++;
-	if (textChoice > 3)
-		textChoice = 3;
-	trick_text->GetNode("text")->SetPatternIndex(textChoice);
-	trick_text->GetNode("text_0001")->SetPatternIndex(textChoice);
+	trick_text->GetNode("text")->SetPatternIndex(specific);
+	trick_text->GetNode("text_0001")->SetPatternIndex(specific);
 	trick_text->m_MotionDisableFlag = 0;
 	trick_text->SetHideFlag(false);
 	CSDCommon::PlayAnimation(*trick_text, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	introAnimPlayed = true;
+
+}
+
+HOOK(void, __fastcall, AdvanceTricks, 0x52F390, Sonic::CGameObject* This, void* edx, int a2)
+{
 	return originalAdvanceTricks(This, edx, a2);
 }
+
 HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
 	Configuration::Read();
@@ -195,27 +235,14 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 
 			introAnimPlayed = false;
 		}
-		if (textChoice <= 0 && tricksStarted && onebtn->m_MotionDisableFlag == 1)
-		{
-			CSDCommon::PlayAnimation(*onebtn, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
-		}
+		
 	}
-}
-HOOK(void, __fastcall, FinalTrick, 0x52F8F0, Sonic::CGameObject* This, void* Edx, int a2)
-{
-	const byte mode = *(byte*)(a2 + 16);
-	tricksStarted = false;
-	if (mode != 0)
+	if (textChoice <= 0 && tricksStarted && onebtn->m_MotionDisableFlag == 1)
 	{
-		trick_text->GetNode("text")->SetPatternIndex(4);
-		trick_text->GetNode("text_0001")->SetPatternIndex(4);
-		CSDCommon::PlayAnimation(*trick_text, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-		introAnimPlayed = true;
+		CSDCommon::PlayAnimation(*onebtn, "pelter_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 	}
-	CSDCommon::PlayAnimation(*onebtn, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	textChoice = -1;
-	return originalFinalTrick(This, Edx, a2);
 }
+
 HOOK(void, __fastcall, Test, 0x11B3790, Sonic::CGameObject* This, void* Edx, int a2, int a3, int* a4)
 {
 	return originalTest(This, Edx, a2, a3, a4);
@@ -394,10 +421,80 @@ HOOK(DWORD, *__cdecl, sub_525B70, 0x525B70,DWORD* This , void* Edx)
 	printf("stuff");
 	return originalsub_525B70(This, Edx);
 }
-//HOOK(void, __fastcall, TestSetTricksState, 0xE4B3F0, int This)
-//{
-//	originalTestSetTricksState(This);
-//}
+HOOK(void, __fastcall, TrickUpdate, 0xE4B3F0, DWORD* This)
+{
+	auto inputState = Sonic::CInputState::GetInstance();
+	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
+	timeSinceStartTricks++;
+	if (!areTricksComplete)
+	{
+		if (!tricksLocked)
+		{
+			if (inputPtr->IsTapped(Sonic::eKeyState_A))
+			{
+				ResetTime();
+				timeSinceStartTricks = 0;
+				currentTricks++;
+				if (currentTricks > maxTricks)
+				{
+					*((byte*)This + 120) = 1;
+					currentTricks = 0;
+					areTricksComplete = true;
+					CONTEXT->ChangeState("Fall");
+					/*This[24] = 3;
+					originalTrickUpdate(This);
+					return;*/
+				}
+				textChoice = currentTricks;
+				This[24] = 1; //State
+				This[32] = currentTricks;
+				This[33] = currentTricks;
+				This[34] = currentTricks; //trick amount?
+				originalTrickUpdate(This);
+				DisplayAdvancedTrickText(currentTricks - 1);
+			}
+			if (timeSinceStartTricks > 30)
+			{
+				SlowTime(0.1f);
+			}
+		}
+		
+	}
+	else
+	{
+		//Exit out of everything related to tricks
+		if (!tricksLocked)
+		{
+			areTricksComplete = false;
+			tricksLocked = true;
+			This[24] = 3;
+			originalTrickUpdate(This);
+			return;
+		}		
+	}
+	
+	
+	char buff[16];
+	snprintf(buff, 16, "State: %x", This[24]);
+	DebugDrawText::log(buff, 0);/*
+	originalTrickUpdate(This);*/
+}
+HOOK(void, __fastcall, FinalTrick, 0x52F8F0, Sonic::CGameObject* This, void* Edx, int a2)
+{
+	const byte mode = *(byte*)(a2 + 16);
+	tricksStarted = false;
+	if (mode != 0)
+	{
+		trick_text->GetNode("text")->SetPatternIndex(4);
+		trick_text->GetNode("text_0001")->SetPatternIndex(4);
+		CSDCommon::PlayAnimation(*trick_text, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		introAnimPlayed = true;
+	}
+	currentTricks = 0;
+	CSDCommon::PlayAnimation(*onebtn, "Outro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	textChoice = -1;
+	return originalFinalTrick(This, Edx, a2);
+}
 HOOK(Hedgehog::Universe::MessageTypeSet, *__fastcall,SendMessage, 0x76AA80, Hedgehog::Universe::MessageTypeSet* This, void* Edx)
 {
 
@@ -412,7 +509,17 @@ HOOK(Hedgehog::Universe::MessageTypeSet, *__fastcall,SendMessage, 0x76AA80, Hedg
 //		jmp[returnAddress]
 //	}
 //}
-
+//00E4B4FE
+void __declspec(naked) ForceTricks()
+{
+	static uint32_t sub_446E30 = 0x446E30;
+	static uint32_t returnAddress = 0x01097130;
+	static int skill;
+	__asm
+	{
+		jmp[returnAddress]
+	}
+}
 void HudBtnGuide::Install()
 {
 	//INSTALL_HOOK(MsgStartQuickStepSign);/*
@@ -426,7 +533,19 @@ void HudBtnGuide::Install()
 	//INSTALL_HOOK(TestTwo);
 	//INSTALL_HOOK(NavigationCollisionSignal);
 	//INSTALL_HOOK(Test);
+	/*WRITE_JUMP(0x00E4B625, 0x00E4B632);*/
+	/*WRITE_JUMP(0x00E4B4E4, 0x00E4B552);*/
+
+	//Override stick input (?)
+	WRITE_JUMP(0x00E4B556, 0x00E4B561);
+
+	WRITE_JUMP(0x00E4BC5A, 0x00E4BC67);
+
+	//// Always go lower path initially
+	//WRITE_MEMORY(0x1014870, uint8_t, 0xE9, 0x1E, 0x01, 0x00, 0x00);
+
 	INSTALL_HOOK(StartTricks);
+	INSTALL_HOOK(TrickUpdate);
 	INSTALL_HOOK(FinalTrick);
 	INSTALL_HOOK(AdvanceTricks);
 	INSTALL_HOOK(HGT_CHudSonicStageUpdateParallel);
