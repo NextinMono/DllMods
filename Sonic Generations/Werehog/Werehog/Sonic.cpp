@@ -28,8 +28,11 @@ std::vector<WerehogAttack> attacks;
 
 bool canJump;
 int jumpcount;
+int comboAttackIndex;
+float timerCombo;
 float timerAttack;
-float timerAttackMax = 60;
+float timerComboMax = 1.55f;
+float timerAttackMax= 1.25f;
 int comboProgress = 0;
 //replace with something that makes more sense
 double calculateDistance(const std::vector<EKeyState>& array1, const std::vector<EKeyState>& array2) {
@@ -64,7 +67,7 @@ float GetVelocity()
 }
 void RegisterInputs()
 {
-	if (timerAttack < timerAttackMax)
+	if (timerCombo < timerComboMax)
 	{
 		auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 		auto state = inputPtr->TappedState;
@@ -83,28 +86,17 @@ void RegisterInputs()
 	else
 		currentButtonChain.clear();
 }
-void ExecuteAttackCommand(int attackIndex,int comboIndex)
-{
-	auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, true);
-	Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
-	//auto ChestNode = playerContext->m_pPlayer->m_spCharacterModel->GetNode("Hand_R"); //Set up Chest bone matrix for VFX
-	//Eigen::Affine3f affine;
-	//affine = ChestNode->m_WorldMatrix;
-
-	//if (!particle)
-	//	Common::fCGlitterCreate(playerContext->m_pPlayer->m_spContext.get(), particle, &ChestNode, "slash", 1);
-	PlayAnim(attacks.at(attackIndex).animations[comboIndex]);
-	Common::PlaySoundStatic(sound, attacks.at(attackIndex).cueIDs[comboIndex]);
-}
-
-void SpawnParticleOnHand(const char* glitterName, bool right)
+void DespawnParticlesHand()
 {
 	particle.reset();
 	particle1.reset();
 	particle2.reset();
 	particle3.reset();
 	particle4.reset();
+}
+void SpawnParticleOnHand(const char* glitterName, bool right)
+{
+	DespawnParticlesHand();
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	auto index = playerContext->m_pPlayer->m_spCharacterModel->GetNode(right ? "Index1_R" : "Index1_L");
 	auto middle = playerContext->m_pPlayer->m_spCharacterModel->GetNode(right ? "Middle1_R" : "Middle1_L");
@@ -123,13 +115,26 @@ void SpawnParticleOnHand(const char* glitterName, bool right)
 		Common::fCGlitterCreate(playerContext->m_pPlayer->m_spContext.get(), particle4, &thumb, glitterName, 1);
 
 }
-void DespawnParticlesHand()
+void ExecuteAttackCommand(int attackIndex,int comboIndex)
 {
-	particle.reset();
-	particle1.reset();
-	particle2.reset();
-	particle3.reset();
-	particle4.reset();
+	comboAttackIndex = attackIndex;
+	auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, true);
+	Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
+	PlayAnim(attacks.at(attackIndex).animations[comboIndex]);
+	Common::PlaySoundStatic(sound, attacks.at(attackIndex).cueIDs[comboIndex]);
+
+	SpawnParticleOnHand("slash", true);
+	SpawnParticleOnHand("slash", false);
+	timerAttack = 0;
+}
+
+//find a better way please
+bool init = false;
+void Particle_Checker()
+{
+	if (timerAttack > timerAttackMax)
+		DespawnParticlesHand();
 }
 HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
@@ -138,38 +143,42 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 	// Force disable extended boost.
 	*(uint32_t*)((uint32_t)*CONTEXT->ms_pInstance + 0x680) = 1;
-	Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
-	std::string stateCheckS(stateCheck.c_str());
-	// Always clamp boost to 100.
 	CONTEXT->m_ChaosEnergy = min(CONTEXT->m_ChaosEnergy, 0);
 
+	Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
+	std::string stateCheckS(stateCheck.c_str());
 
-
-	playerContext->m_spParameter->m_scpNode->m_ValueMap[Sonic::Player::ePlayerSpeedParameter_BoostEnableChaosEnergy] = 1000.0f;
-	playerContext->m_spParameter->m_scpNode->m_ValueMap[Sonic::Player::ePlayerSpeedParameter_AirBoostEnableChaosEnergy] = 1000.0f;
+	if (!init)
+	{
+		playerContext->m_JumpThrust = CVector(playerContext->m_JumpThrust.x(), 12, playerContext->m_JumpThrust.z());
+		playerContext->m_spParameter->m_scpNode->m_ValueMap[Sonic::Player::ePlayerSpeedParameter_BoostEnableChaosEnergy] = 1000.0f;
+		playerContext->m_spParameter->m_scpNode->m_ValueMap[Sonic::Player::ePlayerSpeedParameter_AirBoostEnableChaosEnergy] = 1000.0f;
+		playerContext->m_pSkills = 0;
+		
+	}
 
 	/*sonic->m_spParameter->m_scpNode->m_ValueMap.erase(Sonic::Player::ePlayerSpeedParameter_BoostEnableChaosEnergy);
 	sonic->m_spParameter->m_scpNode->m_ValueMap.erase(Sonic::Player::ePlayerSpeedParameter_AirBoostEnableChaosEnergy);*/
-
+	DebugDrawText::log((std::string("Timer Combo:") +std::to_string(timerCombo)).c_str(), 0);
+	DebugDrawText::log((std::string("Timer Combo Max:") + std::to_string(timerComboMax)).c_str(),0);
+	DebugDrawText::log((std::string("Timer Attack:") +std::to_string(timerAttack)).c_str(), 0);
+	DebugDrawText::log((std::string("Timer Attack Max:") + std::to_string(timerAttackMax)).c_str(),0);
+	DebugDrawText::log((std::string("Current combo:") + std::string(attacks[comboAttackIndex].comboName)).c_str(), 0);
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 
 	if (inputPtr->IsDown(eKeyState_X) || inputPtr->IsDown(eKeyState_Y))
 	{
-		timerAttack = 0;
+		timerCombo = 0;
 	}
 	RegisterInputs();
-	if (inputPtr->IsDown(eKeyState_DpadLeft))
-	{
-		SpawnParticleOnHand("slash", true);
-	}
+	Particle_Checker();
 	if (inputPtr->IsDown(Sonic::eKeyState_RightTrigger))
 		playerContext->m_MaxVelocity = 20;
 	else
 		playerContext->m_MaxVelocity = 10;
 
-	playerContext->m_JumpThrust = CVector(playerContext->m_JumpThrust.x(), 12, playerContext->m_JumpThrust.z());
 	DebugDrawText::log(stateCheckS.c_str(), 0);
-	if (timerAttack > timerAttackMax)
+	if (timerCombo > timerComboMax)
 	{
 		comboProgress = 0;
 		currentButtonChain.clear();
@@ -177,7 +186,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	}
 	else
 	{
-		if ((timerAttack > 5 && comboProgress > 0 || comboProgress == 0) && currentButtonChain.size() > comboProgress)
+		if ((timerCombo > 0.1f && comboProgress > 0 || comboProgress == 0) && (timerAttack > timerAttackMax) && currentButtonChain.size() > comboProgress)
 		{
 			int closestAttackIndex = 0;
 			int closestComboIndex = 0;
@@ -193,18 +202,16 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 					ExecuteAttackCommand(i, comboProgress);
 					doneAttack = true;
 					comboProgress++;
-					timerAttack = 0;
+					timerCombo = 0;
+					timerAttackMax = attack.duration[comboProgress];
 					break;
 				}
-
 			}
 		}
-
 	}
-	timerAttack += 1;
 	//if (inputPtr->IsTapped(Sonic::eKeyState_X))
 	//{
-	//	timerAttack = 0;
+	//	timerCombo = 0;
 	//	switch (xCount)
 	//	{
 	//	case 0:
@@ -284,10 +291,9 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 
 		jumpcount++;
 	}
-	/* if (stateCheckS.find("Jump") != std::string::npos)
-	 {
 
-	 }*/
+	timerCombo += in_rUpdateInfo.DeltaTime;
+	timerAttack += in_rUpdateInfo.DeltaTime;
 
 }
 HOOK(char, __stdcall, SonicStateGrounded, 0xDFF660, int* a1, bool a2)
@@ -295,6 +301,15 @@ HOOK(char, __stdcall, SonicStateGrounded, 0xDFF660, int* a1, bool a2)
 	canJump = true;
 	jumpcount = 0;
 	return originalSonicStateGrounded(a1, a2);
+}
+
+HOOK(void, __fastcall, CPlayerAddCallback, 0xE799F0, Sonic::Player::CPlayer* This, void* Edx,
+	const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder, Sonic::CGameDocument* pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase)
+{
+	originalCPlayerAddCallback(This, Edx, worldHolder, pGameDocument, spDatabase);
+
+	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	
 }
 void evSonic::Install()
 {
@@ -312,7 +327,7 @@ void evSonic::Install()
 	Sonic::EKeyState combo[5];
 	int cueIDs[5];
 	const char* animations[5];*/
-	attacks.push_back(WerehogAttack({ "Wild Whirl", {eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X }, {134,134,135,136,136 }, {"Evilsonic_attackNCA","Evilsonic_attackNCB","Evilsonic_attackNCC","Evilsonic_attackNCD","Evilsonic_attackNCE"}, {2,2,3,3,5} }));
+	attacks.push_back(WerehogAttack({ "Wild Whirl", {eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X }, {134,134,135,136,136 }, {"Evilsonic_attackNCA","Evilsonic_attackNCB","Evilsonic_attackNCC","Evilsonic_attackNCD","Evilsonic_attackNCE"}, {0.55F,0.55F,0.55F,0.55F,0.75f} }));
 	attacks.push_back(WerehogAttack({ "Wild Whirl2", {eKeyState_Y,eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X }, {134,134,135,136,136 }, {"Evilsonic_attackNCA","Evilsonic_attackNCB","Evilsonic_attackNCC","Evilsonic_attackNCD","Evilsonic_attackNCE"}, {2,2,3,3,5} }));
 	WRITE_MEMORY(0x01271FD1, char*, "ef_null"); // Disable original game's jumpball creation
 	WRITE_MEMORY(0x015E9078, char*, "ef_null"); // Disable empty boost
