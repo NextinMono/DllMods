@@ -7,7 +7,6 @@
 #include "Helpers.h"
 #include "Common.h"
 #include "ScoreGenerationsAPI.h"
-#include "ArchivePatcher.h"
 #include "detours\include\detours.h"
 #include <fstream>
 #include <cstdint>
@@ -25,6 +24,8 @@
 #include <stdio.h>
 #define DEBUG_DRAW_TEXT_DLL_IMPORT	
 #include "DebugDrawText.h"	
+#include "CustomAnimationManager.h"	
 
+#include "ArchiveTreePatcher.h"
 #include "Configuration.h"
 #include "Sonic.h"

@@ -631,6 +631,7 @@ void ScoreUpdateListener(int currentFrame)
 		ScoreManager_AddEntry(2, currentFrame);
 	}
 }
+inline FUNCTION_PTR(void, __thiscall, SwitchTest, 0x00D8E310, Sonic::CGameObject* This);
 HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
 	originalCHudSonicStageUpdateParallel(This, Edx, in_rUpdateInfo);
@@ -790,6 +791,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 				SetBoostValue(playerContext->m_ChaosEnergy);
 
 		}
+		
 		//Wisp Conversion
 		Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
 		std::string stateCheckS(stateCheck.c_str());
@@ -1186,4 +1188,5 @@ void HudSonicStage::Install()
 	WRITE_MEMORY(0x168D33C, const char, "%04d");
 
 	WRITE_MEMORY(0x168E8E0, const char, "%04d");
+
 }

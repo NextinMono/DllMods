@@ -17,13 +17,14 @@ extern "C" __declspec(dllexport) void Init(ModInfo* info)
 		modDir.erase(pos + 1);
 	}
 	Configuration::modPath = modDir;
-	MiniAudioHelper::Initialize();
-	//LuanneManager::Install();
-	ArchivePatcher::Install();
-	Title::Install();
-	TitleWorldMap::Install();
-	DecorationTextManager::Install();
-	TitleOption::Install();
+	//MiniAudioHelper::Initialize();
+	////LuanneManager::Install();
+	//ArchivePatcher::Install();
+	//Title::Install();
+	//TitleWorldMap::Install();
+	//DecorationTextManager::Install();
+	//TitleOption::Install();
+	//EnemyTrigger::applyPatches();
 
-	CSDCommon::Initialize();
+	//CSDCommon::Initialize();
 }

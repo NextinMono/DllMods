@@ -81,6 +81,6 @@ public:
 		return (a * (1.0 - f)) + (b * f);
 	}
 
-
+	static void SplitTextToSeparateCasts(Chao::CSD::CScene* scene, const char* formatCastName, const char* text, int maxCharacterPerLine, int maxLines);
 	static void Initialize();
 };

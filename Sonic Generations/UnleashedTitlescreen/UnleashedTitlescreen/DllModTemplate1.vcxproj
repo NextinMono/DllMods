@@ -186,6 +186,7 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CSDCommon.cpp" />
     <ClCompile Include="DecorationTextManager.cpp" />
+    <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="MainSequenceMod.cpp" />
     <ClCompile Include="MiniAudioHelper.cpp" />
     <ClCompile Include="Mod.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="CSDCommon.h" />
     <ClInclude Include="DecorationTextManager.h" />
     <ClInclude Include="DllMain.cpp" />
+    <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="LetterboxHelper.h" />
     <ClInclude Include="LuanneManager.h" />
     <ClInclude Include="MainSequenceMod.h" />

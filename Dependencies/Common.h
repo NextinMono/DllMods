@@ -30,25 +30,25 @@ uint32_t const CStringDestructor = 0x661550;
 using SharedPtrTypeless = boost::shared_ptr<void>;
 enum SonicCollision : uint32_t
 {
-	TypeNoAttack			= 0x1E61B5C,
-	TypeRagdoll				= 0x1E61B60,
-	TypeSonicSpinCharge		= 0x1E61B64,
-	TypeSonicSpin			= 0x1E61B68,
-	TypeSonicUnbeaten		= 0x1E61B6C,
-	TypeSuperSonic			= 0x1E61B70,
-	TypeSonicSliding		= 0x1E61B74,
-	TypeSonicHoming			= 0x1E61B78,
-	TypeSonicSelectJump		= 0x1E61B7C,
-	TypeSonicDrift			= 0x1E61B80,
-	TypeSonicBoost			= 0x1E61B84,
-	TypeSonicStomping		= 0x1E61B88,
-	TypeSonicTrickAttack	= 0x1E61B8C,
-	TypeSonicSquatKick		= 0x1E61B90,
-	TypeSonicClassicSpin	= 0x1E61B94,
-	TypeExplosion			= 0x1E61B98,
-	TypeBossAttack			= 0x1E61B9C,
-	TypeGunTruckAttack		= 0x1E61BA0,
-	TypeRagdollEnemyAttack	= 0x1E61BA4,
+	TypeNoAttack = 0x1E61B5C,
+	TypeRagdoll = 0x1E61B60,
+	TypeSonicSpinCharge = 0x1E61B64,
+	TypeSonicSpin = 0x1E61B68,
+	TypeSonicUnbeaten = 0x1E61B6C,
+	TypeSuperSonic = 0x1E61B70,
+	TypeSonicSliding = 0x1E61B74,
+	TypeSonicHoming = 0x1E61B78,
+	TypeSonicSelectJump = 0x1E61B7C,
+	TypeSonicDrift = 0x1E61B80,
+	TypeSonicBoost = 0x1E61B84,
+	TypeSonicStomping = 0x1E61B88,
+	TypeSonicTrickAttack = 0x1E61B8C,
+	TypeSonicSquatKick = 0x1E61B90,
+	TypeSonicClassicSpin = 0x1E61B94,
+	TypeExplosion = 0x1E61B98,
+	TypeBossAttack = 0x1E61B9C,
+	TypeGunTruckAttack = 0x1E61BA0,
+	TypeRagdollEnemyAttack = 0x1E61BA4,
 };
 
 enum ImpulseType : uint32_t
@@ -71,7 +71,27 @@ enum ImpulseType : uint32_t
 	BoardJumpAdlibTrickB,
 	BoardJumpAdlibTrickC
 };
-
+struct MsgApplyImpulse
+{
+	INSERT_PADDING(0x10);
+	Eigen::Vector3f m_position; // 0x10
+	INSERT_PADDING(0x4);
+	Eigen::Vector3f m_impulse; // 0x20
+	INSERT_PADDING(0x4);
+	float m_outOfControl; // 0x30
+	INSERT_PADDING(0x4);
+	ImpulseType m_impulseType; // 0x38
+	float m_keepVelocityTime; // 0x3C
+	bool m_notRelative; // 0x40 if false, add impulse direction relative to Sonic
+	bool m_snapPosition; // 0x41 snap Sonic to m_position
+	INSERT_PADDING(0x3);
+	bool m_pathInterpolate; // 0x45 linked to 80
+	INSERT_PADDING(0xA);
+	Eigen::Vector3f m_unknown80; // 0x50 related to position interpolate?
+	INSERT_PADDING(0x4);
+	float m_alwaysMinusOne; // 0x60 seems to be always -1.0f
+	INSERT_PADDING(0xC);
+};
 struct CSonicStateFlags
 {
 	bool EarthGround;
@@ -889,7 +909,50 @@ enum StageMissionType : uint32_t
 
 namespace Common
 {
-	
+	static void* SonicContextSetCollision(SonicCollision collisionType, bool enabled)
+	{
+		static void* const pEnableFunc = (void*)0xE65610;
+		static void* const pDisableFunc = (void*)0xE655C0;
+		__asm
+		{
+			mov		edi, PLAYER_CONTEXT
+			mov		edi, [edi]
+
+			mov		ecx, collisionType
+			mov		ecx, [ecx]
+			push	ecx
+
+			cmp		enabled, 0
+			je		jump
+
+			call[pEnableFunc]
+			jmp		end
+
+			jump :
+			call[pDisableFunc]
+
+				end :
+		}
+	}
+	inline void fEventTrigger(void* This, int Event)
+	{
+		FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
+		fpEventTrigger(This, Event);
+	}
+	inline void CreatePlayerSupportShockWave(hh::math::CVector const& pos, float height, float radius, float duration)
+	{
+		struct ShockWaveParam
+		{
+			float m_height;
+			float m_radius;
+			float m_duration;
+			size_t m_actorID;
+		};
+		FUNCTION_PTR(void*, __cdecl, fCreatePlayerSupportShockWave, 0x123D090, boost::shared_ptr<Sonic::CGameObject>&spObject, hh::math::CVector const* pos, ShockWaveParam const& param);
+		boost::shared_ptr<Sonic::CGameObject> spObject;
+		fCreatePlayerSupportShockWave(spObject, &pos, { height, radius, duration, Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID });
+		Sonic::CGameDocument::GetInstance()->AddGameObject(spObject);
+	}
 	static void* fCGlitterCreate
 	(
 		void* pContext,
@@ -1051,7 +1114,7 @@ namespace Common
 			}
 		}
 	}
-
+	
 	inline bool IsModIdEnabled(std::string const& id, std::string* o_iniPath = nullptr)
 	{
 		std::vector<std::string> modIniList;
@@ -1208,6 +1271,9 @@ namespace Common
 		FUNCTION_PTR(bool, __stdcall, fpIsStageCompleted, 0x107ADC0, uint32_t stageID);
 		return fpIsStageCompleted(stageID);
 	}
+
+	
+
 	inline bool GetStageData
 	(
 		uint32_t stageID,
@@ -1269,6 +1335,15 @@ namespace Common
 		auto vec = vec1 - vec2;
 		float mag1 = sqrt(vec.x() * vec.x() + vec.y() * vec.y());
 		return mag1;
+	}
+
+	
+	inline void ApplyPlayerApplyImpulse(MsgApplyImpulse const& message)
+	{
+		FUNCTION_PTR(void, __thiscall, processPlayerMsgAddImpulse, 0xE6CFA0, void* This, void* message);
+		alignas(16) MsgApplyImpulse msgApplyImpulse = message;
+		void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
+		processPlayerMsgAddImpulse(player, &msgApplyImpulse);
 	}
 }
 #pragma region HyperBE32 Original

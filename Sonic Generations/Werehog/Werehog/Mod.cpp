@@ -13,5 +13,6 @@ extern "C" __declspec(dllexport) void Init()
 	Configuration::modPath = modDir + STAGE_LIST_FILE;*/
 	
 	//ArchivePatcher::Install();
+	CustomAnimationManager::Install();
 	evSonic::Install();
 }

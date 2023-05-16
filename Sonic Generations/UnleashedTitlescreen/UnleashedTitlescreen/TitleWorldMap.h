@@ -41,6 +41,7 @@ public:
 	static void EnableInput();
 	static bool Active;
 	static bool LoadingReplacementEnabled;
+	static bool ForceLoadToFlowTitle;
 
 	
 	struct SaveStageInfo 

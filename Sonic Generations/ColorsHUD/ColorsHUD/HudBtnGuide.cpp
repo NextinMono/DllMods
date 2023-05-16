@@ -40,7 +40,7 @@ void SlowTime(float dt)
 {
 	isSlowedDown = true;
 	*(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C }) = true;
-	*GetTimeScale() = max(*GetTimeScale() - dt * 0.5f, 0.08f);
+	*GetTimeScale() = max(*GetTimeScale() - dt * 0.2f, 0.08f);
 }
 
 void ResetTime()
@@ -117,18 +117,7 @@ HOOK(void, __fastcall, HGT_CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGam
 
 	HudBtnGuide::CreateScreen(This);
 }
-inline FUNCTION_PTR(void, __thiscall, AdvTest, 0x52F390, Sonic::CGameObject* This, int a2);
-HOOK(void, __fastcall, StartTricks, 0x52F030, Sonic::CGameObject* This, void* edx, int a2)
-{
-	areTricksComplete = false;
-	tricksLocked = false;
-	originalStartTricks(This, edx, a2);
-	textChoice = -1;
-	tricksStarted = true;
-	trick_text->SetHideFlag(false);
-	onebtn->SetHideFlag(false);
-	CSDCommon::PlayAnimation(*onebtn, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-}
+
 void DisplayAdvancedTrickText(int specific)
 {
 	trick_text->GetNode("text")->SetPatternIndex(specific);
@@ -172,61 +161,6 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 	}
 	}
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	//Hedgehog::Base::CSharedString stateCheck = playerContext->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
-	//std::string stateCheckS(stateCheck.c_str());
-	//printf(stateCheck.c_str());
-	//printf("\n");
-	if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_A)) {
-		/*
-		Sonic::CInputState::GetInstance()->m_PadStates = Sonic::eKeyState_LeftStickUp;*/
-	}
-	#pragma region Experimental A-Tricking (disabled)
-	/*
-	printf("\nBoost: %f\n", Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy);*/
-	/*if (tricksStarted)
-	{
-		printf("%s\n", Sonic::Player::CPlayerSpeedContext::GetInstance()->GetCurrentAnimationName().c_str());
-		auto inputState = Sonic::CInputState::GetInstance();
-		auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
-		if (Sonic::CInputState::GetInstance()->GetPadState().IsTapped(Sonic::eKeyState_A)) {
-
-			AdvanceTrickss(advancetricktest, EDXTest, a2Test);
-			if (textChoice >3)
-			{
-				FinalTricks(advancetricktest, EDXTest, 0);
-				CONTEXT->m_ChaosEnergy += 5;
-			}
-			else
-			{
-				switch (textChoice)
-				{
-					case 0:
-					{
-						Sonic::Player::CPlayerSpeedContext::GetInstance()->ChangeAnimation("Trick_u1");
-						break;
-					}
-					case 1 :
-					{
-						Sonic::Player::CPlayerSpeedContext::GetInstance()->ChangeAnimation("Trick_l2");
-						break;
-					}
-					case 2 :
-					{
-						Sonic::Player::CPlayerSpeedContext::GetInstance()->ChangeAnimation("Trick_r2");
-						break;
-					}
-					case 3:
-					{
-						Sonic::Player::CPlayerSpeedContext::GetInstance()->ChangeAnimation("Trick_d2");
-						break;
-					}
-
-				};
-				CONTEXT->m_ChaosEnergy += 7.5f;
-			}
-		}
-	}*/
-#pragma endregion
 	if (introAnimPlayed)
 	{
 		if (trick_text->m_MotionDisableFlag == 1)
@@ -235,7 +169,7 @@ HOOK(void, __fastcall, HGT_CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGame
 
 			introAnimPlayed = false;
 		}
-		
+
 	}
 	if (textChoice <= 0 && tricksStarted && onebtn->m_MotionDisableFlag == 1)
 	{
@@ -261,7 +195,7 @@ HOOK(void, *_fastcall, NavigationCollisionSignal, 0x1222CC0, int This, void* Edx
 		return originalNavigationCollisionSignal(This, Edx, a2);
 	}
 	//Check if any message enabled other stuff first
-	
+
 	////Toggle
 	//if (lastNavigationType == navigationType && lastNavigationType != -1) //Hide
 	//{
@@ -294,8 +228,8 @@ HOOK(void, *_fastcall, NavigationCollisionSignal, 0x1222CC0, int This, void* Edx
 			lastNavigationType = 0;
 			break;
 		}
-	}
-		
+		}
+
 		//case 6:
 		//{
 		//	//Button to Button
@@ -311,7 +245,7 @@ HOOK(void, *_fastcall, NavigationCollisionSignal, 0x1222CC0, int This, void* Edx
 		//	lastNavigationType = 8;
 		//	break;
 		//}
-		}
+	}
 	//}
 
 	//int navigationType = *(DWORD*)(This + 348);
@@ -385,17 +319,17 @@ HOOK(int, __stdcall, sub_B21A30, 0xB21A30, Sonic::CGameObject* a1)
 HOOK(int, __stdcall, Test8, 0xD6B310, int a1, int a2, int a3, Hedgehog::Base::CSharedString* a4, void* Edx)
 {
 	printf("TRIG");
-	return originalTest8(a1, a2, a3, a4,Edx);
+	return originalTest8(a1, a2, a3, a4, Edx);
 }
 HOOK(int, __cdecl, MsgStartQuickStepSign, 0x46F250, int a1, char* a2, hh::math::CVector* a3, int* a4)
 {
 	SignState = HudBtnGuide::Quickstep;
-			sign->SetHideFlag(false);
+	sign->SetHideFlag(false);
 
-			CSDCommon::PlayAnimation(*sign, "Intro_Anim_qs", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-			lastNavigationType = 0;
+	CSDCommon::PlayAnimation(*sign, "Intro_Anim_qs", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	lastNavigationType = 0;
 
-			rightAfter = true;
+	rightAfter = true;
 	return originalMsgStartQuickStepSign(a1, a2, a3, a4);
 }
 
@@ -408,21 +342,52 @@ HOOK(void, __stdcall, MsgStartLeftRightSign, 0xF09480, int a1)
 	lastNavigationType = 0;
 	originalMsgStartLeftRightSign(a1);
 }
-HOOK(void, __fastcall, MsgEndQuickStepSign, 0x10F9E80,DWORD* This, int a2, void* Edx)
+HOOK(void, __fastcall, MsgEndQuickStepSign, 0x10F9E80, DWORD* This, int a2, void* Edx)
 {
-
 	return originalMsgEndQuickStepSign(This, a2, Edx);
 }
 HOOK(char, *__fastcall, sub_E41840, 0xE41840, void* This, void* Edx) {
 	return originalsub_E41840(This, Edx);
 }
-HOOK(DWORD, *__cdecl, sub_525B70, 0x525B70,DWORD* This , void* Edx)
+HOOK(DWORD, *__cdecl, sub_525B70, 0x525B70, DWORD* This, void* Edx)
 {
 	printf("stuff");
 	return originalsub_525B70(This, Edx);
 }
+float initialYVelocity = 10;
+bool applyYVelocity = false;
+bool customVelocity = true;
+inline FUNCTION_PTR(void, __thiscall, AdvTest, 0x52F390, Sonic::CGameObject* This, int a2);
+HOOK(void, __fastcall, StartTricks, 0x52F030, Sonic::CGameObject* This, void* edx, int a2)
+{
+	areTricksComplete = false;
+	tricksLocked = false;
+	originalStartTricks(This, edx, a2);
+	textChoice = -1;
+	tricksStarted = true;
+	trick_text->SetHideFlag(false);
+	onebtn->SetHideFlag(false);
+
+	if (customVelocity)
+	{
+		//If the trick ramp isn't vertical, divide by 2
+		if (CONTEXT->m_Velocity.y() < abs(CONTEXT->m_Velocity.x()) || CONTEXT->m_Velocity.y() < abs(CONTEXT->m_Velocity.z()))
+		{
+			CONTEXT->m_Velocity.x() /= 2;
+			CONTEXT->m_Velocity.z() /= 2;
+			applyYVelocity = true;
+		}
+		else
+			applyYVelocity = false;
+	}
+	//initialYVelocity = CONTEXT->m_Velocity.y();
+	CSDCommon::PlayAnimation(*onebtn, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+}
 HOOK(void, __fastcall, TrickUpdate, 0xE4B3F0, DWORD* This)
 {
+	char debug[32];
+	snprintf(debug, 32, "Vel: %f, %f, %f", CONTEXT->m_Velocity.x(), CONTEXT->m_Velocity.y(), CONTEXT->m_Velocity.z());
+	DebugDrawText::log(debug, 0);
 	auto inputState = Sonic::CInputState::GetInstance();
 	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
 	timeSinceStartTricks++;
@@ -430,7 +395,7 @@ HOOK(void, __fastcall, TrickUpdate, 0xE4B3F0, DWORD* This)
 	{
 		if (!tricksLocked)
 		{
-			if (inputPtr->IsTapped(Sonic::eKeyState_A))
+			if (inputPtr->IsTapped(Sonic::eKeyState_A) && timeSinceStartTricks > 10)
 			{
 				ResetTime();
 				timeSinceStartTricks = 0;
@@ -441,10 +406,14 @@ HOOK(void, __fastcall, TrickUpdate, 0xE4B3F0, DWORD* This)
 					currentTricks = 0;
 					areTricksComplete = true;
 					CONTEXT->ChangeState("Fall");
-					/*This[24] = 3;
-					originalTrickUpdate(This);
-					return;*/
+					if (applyYVelocity)
+					{
+						CONTEXT->m_Velocity.x() *= 2;
+						CONTEXT->m_Velocity.z() *= 2;
+					}
 				}
+				if(applyYVelocity && customVelocity)
+				CONTEXT->m_Velocity.y() = initialYVelocity;
 				textChoice = currentTricks;
 				This[24] = 1; //State
 				This[32] = currentTricks;
@@ -453,12 +422,16 @@ HOOK(void, __fastcall, TrickUpdate, 0xE4B3F0, DWORD* This)
 				originalTrickUpdate(This);
 				DisplayAdvancedTrickText(currentTricks - 1);
 			}
-			if (timeSinceStartTricks > 30)
+			if (timeSinceStartTricks > 5 && currentTricks == 0)
+			{
+				SlowTime(0.1f);
+			}
+			else if (timeSinceStartTricks > 30 && currentTricks > 0)
 			{
 				SlowTime(0.1f);
 			}
 		}
-		
+
 	}
 	else
 	{
@@ -470,10 +443,10 @@ HOOK(void, __fastcall, TrickUpdate, 0xE4B3F0, DWORD* This)
 			This[24] = 3;
 			originalTrickUpdate(This);
 			return;
-		}		
+		}
 	}
-	
-	
+
+
 	char buff[16];
 	snprintf(buff, 16, "State: %x", This[24]);
 	DebugDrawText::log(buff, 0);/*
@@ -495,7 +468,7 @@ HOOK(void, __fastcall, FinalTrick, 0x52F8F0, Sonic::CGameObject* This, void* Edx
 	textChoice = -1;
 	return originalFinalTrick(This, Edx, a2);
 }
-HOOK(Hedgehog::Universe::MessageTypeSet, *__fastcall,SendMessage, 0x76AA80, Hedgehog::Universe::MessageTypeSet* This, void* Edx)
+HOOK(Hedgehog::Universe::MessageTypeSet, *__fastcall, SendMessage, 0x76AA80, Hedgehog::Universe::MessageTypeSet* This, void* Edx)
 {
 
 	printf("\n%d\n", This->m_SenderActorID);

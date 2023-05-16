@@ -52,6 +52,7 @@ void DecorationTextManager::ToggleScreen(const bool visible, Sonic::CGameObject*
 	else
 		KillScreen();
 }
+
 DecoTextInfo DecorationTextManager::InitializeText(const char* text, float spacing, int alignment, Hedgehog::math::CVector position)
 {
 	

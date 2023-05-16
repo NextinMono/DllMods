@@ -39,6 +39,7 @@
 //
 #include "MainSequenceMod.h"
 #include "DecorationTextManager.h"
+#include "EnemyTrigger.h"
 #include "LuanneManager.h"
 #include "MiniAudioHelper.h"
 #include "Configuration.h"

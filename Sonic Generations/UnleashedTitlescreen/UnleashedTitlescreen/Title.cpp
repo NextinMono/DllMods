@@ -1,23 +1,22 @@
-Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreen;
-Chao::CSD::RCPtr<Chao::CSD::CScene> rcTitleLogo_1, rcTitlebg, rcTitleMenu, rcTitleMenuScroll, rcTitleMenuTXT, black_bg, bg_window, fg_window, txt_window;
+﻿Chao::CSD::RCPtr<Chao::CSD::CProject> rcTitleScreen;
+Chao::CSD::RCPtr<Chao::CSD::CScene> rcTitleLogo_1, rcTitlebg, rcTitleMenu, rcTitleMenuScroll, rcTitleMenuTXT, black_bg, bg_window, fg_window, txt_window, footer_window;
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreen;
 boost::shared_ptr<Sonic::StageSelectMenu::CDebugStageSelectMenuXml> spDebugMenu;
 
 Title::TitleIndexState currentTitleIndex = Title::TitleIndexState::New_Game;
-int maxTitleIndex = 3;
-bool enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim, isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete, parsedSave = false;
+Hedgehog::Math::CVector2* scale = new Hedgehog::Math::CVector2(1, 1);
+bool enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim, isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete, parsedSave, showedWindow, inWorldMap = false;
 bool inTitle, scrollHorizontally = true;
-int holdTimer = 0;
-boost::shared_ptr<Sonic::CCamera> spCamera;
-Sonic::CCamera* cameraa2;
-static uint32_t cameraInitRan = 0;
-uint32_t* Title::OutState;
-
-
-FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 bool Title::canLoad = 0;
 bool Title::InInstall = 0;
+int maxTitleIndex = 3;
+int holdTimer = 0;
+
+boost::shared_ptr<Sonic::CCamera> spCamera;
+static uint32_t cameraInitRan = 0;
+static AudioHandle stageSelectHandle;
 void* TitleStateContextBase;
+
 void Title::SetSubmenu(bool enabled)
 {
 	isInSubmenu = enabled;
@@ -33,7 +32,16 @@ void ExitingTitle()
 	inTitle = false;
 	isStartAnimComplete = false;
 }
-
+void PlayTitleBGM(void* baseClass, const char* cueName)
+{
+	uint32_t func = 0x00570620;
+	__asm
+	{
+		mov esi, cueName
+		mov eax, baseClass
+		call func
+	};
+};
 void __declspec(naked) TitleUI_SetCutsceneTimer()
 {
 	static uint32_t pAddr = 0x00571FD1;
@@ -53,22 +61,11 @@ void __declspec(naked) TitleUI_SetCutsceneTimer()
 			jmp[pAddr2]
 	}
 }
-void PlayTitleBGM(void* baseClass, const char* cueName)
-{
-	uint32_t func = 0x00570620;
-	__asm
-	{
-		mov esi, cueName
-		mov eax, baseClass
-		call func
-	};
-};
-bool inWM = false;
 void ContinueToWM()
 {
-	if (!inWM) 
+	if (!inWorldMap)
 	{
-		inWM = true;
+		inWorldMap = true;
 		Title::SetHideEverything(true, true);
 		PlayTitleBGM(TitleStateContextBase, "Option");
 		CSDCommon::FreezeMotion(*rcTitleLogo_1);
@@ -78,6 +75,8 @@ void ContinueToWM()
 }
 void ShowInstallScreen()
 {
+
+	PlayTitleBGM(TitleStateContextBase, "");
 	Title::InInstall = true;
 	black_bg->SetHideFlag(false);
 	static boost::shared_ptr<hh::db::CRawData> rawData;
@@ -124,16 +123,16 @@ void __declspec(naked) TitleUI_SetCustomExecFunction()
 			cmp     currentTitleIndex, 3
 				jne	InstallScreen
 				mov isInSubmenu, 1
-			jmp[adQuit]
+				jmp[adQuit]
 
-			InstallScreen: 
+				InstallScreen :
 				cmp     currentTitleIndex, 4
 				jne	FunctionFinish
 				call ShowInstallScreen
 				jmp FunctionFinish
 
 				FunctionFinish :
-				jmp[pAddr]
+			jmp[pAddr]
 		}
 	}
 }
@@ -159,7 +158,7 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 			jne	Options
 			call ExitingTitle
 			call ContinueToWM
-			cmp Title:: canLoad, 1
+			cmp Title::canLoad, 1
 			je LoadingForContinue
 			jmp	FunctionFinish
 
@@ -178,7 +177,7 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 			FunctionFinish :
 			jmp[pAddr]
 
-			LoadingForContinue:
+			LoadingForContinue :
 			jmp[adContinue]
 	}
 }
@@ -212,7 +211,6 @@ void __declspec(naked) TitleUI_SetCustomExecFunctionAdvance()
 //		jmp[pAddr]
 //	}
 //}
-
 void __fastcall CTitleRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
 
@@ -224,32 +222,32 @@ void __fastcall CTitleRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGa
 	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), rcTitleMenuTXT);
 	Chao::CSD::CProject::DestroyScene(rcTitleScreen.Get(), black_bg);
 	rcTitleScreen = nullptr;
-	enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim, isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete = false;
+	enteredStart, isInSubmenu, moved, hasSavefile, playingStartAnim, reversedAnim, isStartAnimComplete, startButtonAnimComplete, startBgAnimComplete, showedWindow = false;
 	inTitle, parsedSave = false;
 	currentTitleIndex = Title::TitleIndexState::New_Game;
 	holdTimer = 0;
 	Title::canLoad = 0;
-	inWM = 0;
+	inWorldMap = 0;
 }
 void Title::SetHideEverything(bool visible, bool logoVisible)
 {
 	if (rcTitleLogo_1)
 	{
-		/*if (logoVisible) 
+		/*if (logoVisible)
 		{
 			CSDCommon::PlayAnimation(*rcTitleLogo_1, "Outro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		}
 		else*/
-			rcTitleLogo_1->SetHideFlag(visible);
+		rcTitleLogo_1->SetHideFlag(visible);
 	}
 	if (rcTitlebg)
-	rcTitlebg->SetHideFlag(visible);
+		rcTitlebg->SetHideFlag(visible);
 	if (rcTitleMenu)
-	rcTitleMenu->SetHideFlag(visible);
+		rcTitleMenu->SetHideFlag(visible);
 	if (rcTitleMenuScroll)
-	rcTitleMenuScroll->SetHideFlag(visible);
+		rcTitleMenuScroll->SetHideFlag(visible);
 	if (rcTitleMenuTXT)
-	rcTitleMenuTXT->SetHideFlag(visible);
+		rcTitleMenuTXT->SetHideFlag(visible);
 }
 void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
@@ -258,7 +256,6 @@ void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreen, 0.5f, "HUD", false), "main", pParentGameObject);
 	}
 }
-
 void Title::KillScreen()
 {
 	if (spTitleScreen)
@@ -267,7 +264,6 @@ void Title::KillScreen()
 		spTitleScreen = nullptr;
 	}
 }
-
 void Title::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
 {
 	if (visible)
@@ -275,7 +271,6 @@ void Title::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObje
 	else
 		KillScreen();
 }
-
 void Title::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
 {
 	scene->SetMotion("Intro_Anim");
@@ -284,10 +279,8 @@ void Title::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
 	scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	scene->Update(0.0f);
 }
-
 void UpdateTitleText()
 {
-
 	if (currentTitleIndex < 0)
 		currentTitleIndex = Title::TitleIndexState::Quit;
 	else if (currentTitleIndex > maxTitleIndex)
@@ -360,19 +353,22 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 		maxTitleIndex = 1;
 		break;
 	}
-	}	
+	}
 	rcTitlebg = rcTitleScreen->CreateScene("bg");
 	rcTitleMenu = rcTitleScreen->CreateScene("menu");
 	rcTitleMenuScroll = rcTitleScreen->CreateScene("menu_scroll");
 	rcTitleMenuTXT = rcTitleScreen->CreateScene("txt");
 	black_bg = rcTitleScreen->CreateScene("black_bg");
 	bg_window = rcTitleScreen->CreateScene("bg_window");
-	fg_window = rcTitleScreen->CreateScene("window_fg");
+	fg_window = rcTitleScreen->CreateScene("window_box");
 	txt_window = rcTitleScreen->CreateScene("window_text");
+	footer_window = rcTitleScreen->CreateScene("window_footer");
 	bg_window->SetHideFlag(true);
 	fg_window->SetHideFlag(true);
 	txt_window->SetHideFlag(true);
-
+	footer_window->SetHideFlag(true);
+	CSDCommon::PlayAnimation(*fg_window, "Size_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
+	CSDCommon::FreezeMotion(*fg_window, 48 /* TIMES the maximum characters in a line in the text.*/);
 	black_bg->SetHideFlag(true);
 	if (rcTitleMenuTXT)
 	{
@@ -399,16 +395,15 @@ HOOK(int, __fastcall, Title_CMain, 0x0056FBE0, Sonic::CGameObject* This, void* E
 	if (rcTitleLogo_1)
 		CSDCommon::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 
-	ArchivePatcher::LoadExtraUISounds();
 	playingStartAnim = true;
 	Title::CreateScreen(This);
 	return originalTitle_CMain(This, Edx, a2, a3, a4);
 }
 HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateMachineBase::CStateBase* This)
-{	
-	if (enteredStart)		
+{
+	if (enteredStart)
 		return originalTitle_CMain_CState_SelectMenu(This);
-	
+
 	TitleWorldMap::PlayPanningAnim();
 	if (rcTitleMenu)
 		CSDCommon::FreezeMotion(*rcTitleMenu);
@@ -429,7 +424,6 @@ HOOK(DWORD, *__cdecl, Title_CMain_CState_SelectMenu, 0x11D1210, hh::fnd::CStateM
 
 	return originalTitle_CMain_CState_SelectMenu(This);
 }
-
 HOOK(int, __fastcall, Title_CMain_CState_WaitStart, 0x11D1410, hh::fnd::CStateMachineBase::CStateBase* a1)
 {
 	//if(!titleMusicHandle)
@@ -468,7 +462,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 
 
-	if (inTitle && !inWM)
+	if (inTitle && !inWorldMap)
 	{
 
 		if (currentTitleIndex == 3 && isInSubmenu && inputPtr->IsDown(Sonic::eKeyState_B)) //janky way of knowing when the quit prompt is aborted
@@ -506,7 +500,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 				currentTitleIndex = (Title::TitleIndexState)((int)(currentTitleIndex)+1);
 				if (currentTitleIndex > maxTitleIndex)
 					currentTitleIndex = Title::TitleIndexState::New_Game;
-
+				MiniAudioHelper::PlaySound(stageSelectHandle, 0, "Cursor", false);
 				CSDCommon::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				CSDCommon::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 100, false, true);
 				UpdateTitleText();
@@ -515,14 +509,16 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 			if (IsLeftDown() && !moved)
 			{
 				currentTitleIndex = (Title::TitleIndexState)((int)(currentTitleIndex)-1);
+				MiniAudioHelper::PlaySound(stageSelectHandle, 0, "Cursor", false);
 				if (currentTitleIndex < 0 || currentTitleIndex > maxTitleIndex) //uint32s become huge when going negative
-					currentTitleIndex = Title::TitleIndexState::Quit;
+					currentTitleIndex = (Title::TitleIndexState)maxTitleIndex;
 
 				CSDCommon::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 				CSDCommon::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0, 100, false, true);
 				UpdateTitleText();
 				moved = true;
 			}
+
 			if ((!IsLeftDown() && !IsRightDown()) && moved)
 			{
 				holdTimer += 1;
@@ -531,6 +527,7 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 			}
 			if ((IsLeftDown() || IsRightDown()) && moved)
 			{
+
 				holdTimer = holdTimer + 1.0f;
 				printf("\nTIMER %d", holdTimer);
 				if (holdTimer > 20)
@@ -546,8 +543,6 @@ HOOK(void*, __fastcall, Title_UpdateApplication, 0xE7BED0, Sonic::CGameObject* T
 
 	return originalTitle_UpdateApplication(This, Edx, elapsedTime, a3);
 }
-
-
 HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 {
 	int returned = 0;
@@ -565,11 +560,34 @@ HOOK(int, __fastcall, Title_CMain_ExecSubMenu, 0x572D00, DWORD* This)
 		return returned; //will 9/10 times return 0
 
 }
-static Hedgehog::base::CHolderBase v1;
-Hedgehog::Math::CVector2* scale = new Hedgehog::Math::CVector2(1,1);
-bool showedWindow;
+void AttachConverseText(Sonic::CGameObject* a1, void* objectReturn, const char* fcoName)
+{
+	uint32_t func = 0x01102C30;
+	uint32_t Hedgehog__Base__CHolderBase____ct = 0x0065FBE0;
+	uint32_t stuff = 0x1E66B34;
+	__asm
+	{
+		push fcoName
+		lea     eax, a1
+		lea     esi, objectReturn
+		call    func
+	};
+};
+void ShowWindowWithTextMaybe(const char* cast, void* handle, const char* displayText)
+{
+	uint32_t func = 0x01102B40;
+	uint32_t Hedgehog__Base__CHolderBase____ct = 0x0065FBE0;
+	uint32_t stuff = 0x1E66B34;
+	__asm
+	{
+		push displayText
+		push handle
+		mov eax, cast
+		call    func
+	};
+};
 HOOK(void, __fastcall, sub_571F80, 0x571F80, int This)
-{	
+{
 	auto inputState = Sonic::CInputState::GetInstance();
 	auto inputPtr = &inputState->m_PadStates[inputState->m_CurrentPadStateIndex];
 	switch (*(DWORD*)(This + 36))
@@ -582,25 +600,30 @@ HOOK(void, __fastcall, sub_571F80, 0x571F80, int This)
 			CSDCommon::PlayAnimation(*bg_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			CSDCommon::PlayAnimation(*fg_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			CSDCommon::PlayAnimation(*txt_window, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+			CSDCommon::PlayAnimation(*footer_window, "Usual_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 			bg_window->SetHideFlag(false);
 			fg_window->SetHideFlag(false);
 			txt_window->SetHideFlag(false);
+			footer_window->SetHideFlag(false);
 			auto pos = fg_window->GetNode("text_area")->GetPosition();
 			txt_window->SetPosition(pos.x(), pos.y());
-			txt_window->GetNode("Text_blue")->SetText("#autosave_txt");
+			CSDCommon::SplitTextToSeparateCasts(*txt_window, "text_line_%d", "This game utilizes\nan autosave feature.\nPlease do not turn off\nthe console or remove\nany storage device when\nthe autosave icon º appears\non the screen.", 199, 7);
+			//txt_window->GetNode("text_line_0")->SetText("#autosave_txt");
 			showedWindow = true;
 		}
 
 		if (inputPtr->IsTapped(Sonic::eKeyState_A))
 		{
+			MiniAudioHelper::PlaySound(stageSelectHandle, 1000005, "", false, false);
 			bg_window->SetHideFlag(true);
 			fg_window->SetHideFlag(true);
 			txt_window->SetHideFlag(true);
+			footer_window->SetHideFlag(true);
 			originalsub_571F80(This);
 		}
 		return;
 	}
-		default:
+	default:
 		originalsub_571F80(This);
 	}
 
@@ -616,40 +639,21 @@ HOOK(void, __cdecl, DebugDrawTextDraw, 0x750820, void*, float x, float y, void*,
 
 	char formattedMultiByte[1024];
 	WideCharToMultiByte(CP_UTF8, 0, formatted, -1, formattedMultiByte, sizeof(formattedMultiByte), 0, 0);
-	
+
 	size_t resx = (size_t)(LetterboxHelper::Resolution->x() * scale->x());
 	size_t resy = (size_t)(LetterboxHelper::Resolution->y() * scale->y());
 	size_t gg = *(size_t*)0x180C6B0;
 	size_t aspect = (resx / resy) * scale->x();
-	DebugDrawText::draw(formattedMultiByte, { (size_t)(x / *(size_t*)0x180C6B0 * resx) % resx, (size_t)(y / *(size_t*)0x1B24560 * resy ) % resy}, aspect);
-}
-bool shownAutosave = false;
-void __declspec(naked) ShowAutosaveWindow()
-{
-	static uint32_t show = 0x0057241B;
-	static uint32_t normal = 0x0057250F;
-	__asm
-	{
-		cmp shownAutosave, 1
-		je NormalReturn
-
-		mov shownAutosave, 1
-		jmp[show]
-
-		NormalReturn:
-		jmp[normal]
-	}
+	DebugDrawText::draw(formattedMultiByte, { (size_t)(x / *(size_t*)0x180C6B0 * resx) % resx, (size_t)(y / *(size_t*)0x1B24560 * resy) % resy }, aspect);
 }
 void Title::Install()
 {
-	scale = new Hedgehog::Math::CVector2(LetterboxHelper::NativeResolution->x() / 1280, (size_t)LetterboxHelper::NativeResolution->y() / 720);
 	//Set up title screen so that it resembles Unleashed function-wise
 	WRITE_JUMP(0x00571FCA, TitleUI_SetCutsceneTimer); //Set title AFK wait amount - it varies depending on framerate
 	WRITE_JUMP(0x00572D23, TitleUI_SetCustomExecFunction); //Override Button Function
 	WRITE_JUMP(0x005732C3, TitleUI_SetCustomExecFunctionAdvance); //Override button after-function
-	WRITE_JUMP(0x00572B2E, 0x00572B45); //Disable scroll sound	
+	WRITE_JUMP(0x00572B2E, (void*)0x00572B45); //Disable scroll sound	
 
-	//WRITE_JUMP(0x0058CE33, 0x0058CEAB);
 	//UI
 	INSTALL_HOOK(Title_UpdateApplication);
 	WRITE_MEMORY(0x016E11F4, void*, CTitleRemoveCallback);
@@ -657,12 +661,8 @@ void Title::Install()
 	WRITE_NOP(0x00572976, 6); //Always skip waiting for anim in ExecSubMenu
 	WRITE_NOP(0x00572930, 6); //Always skip waiting for anim in ExecSubMenu
 
-	//WRITE_STRING(0x016A6B94, "");
-	////WRITE_JUMP(0x005727DB, 0x005727E7); //Remove Titlemusic
-	//WRITE_JUMP(0x00571EC9, 0x00571ED5); //Remove Titlemusic
-	//WRITE_JUMP(0x00572750, 0x005727ED); //Remove Titlemusic
 	//Prevent going back to PRESS START screen after entering
-	WRITE_JUMP(0x00572B92, 0x572CF7);
+	WRITE_JUMP(0x00572B92, (void*)0x572CF7);
 
 	//State Hooks
 	INSTALL_HOOK(sub_571F80);
@@ -673,10 +673,5 @@ void Title::Install()
 	INSTALL_HOOK(Title_CMain_CState_SelectMenu);
 	INSTALL_HOOK(DebugDrawTextDraw);
 
-
-	////Cancels save, need to figure it out before release
-	//WRITE_JUMP(0x005723AE, ShowAutosaveWindow); //Always show Autosave Dialog
-	//WRITE_JUMP(0x005724FA, 0x0057250F); //Always show Autosave Dialog
-	//WRITE_JUMP(0x00570460, 0x005704FE); //Always show Autosave Dialog
-	//WRITE_STRING(0x016E1114, "");
+	scale = new Hedgehog::Math::CVector2(LetterboxHelper::NativeResolution->x() / 1280, (size_t)LetterboxHelper::NativeResolution->y() / 720);
 }
