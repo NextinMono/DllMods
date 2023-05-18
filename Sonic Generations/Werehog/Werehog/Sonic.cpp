@@ -30,6 +30,15 @@ float timerAttackMax= 1.25f;
 int comboProgress = 0;
 float lifeWerehog = 5.0f;
 bool unleashMode;
+bool isGrounded;
+Sonic::EKeyState lastTap;
+enum WerehogState
+{
+	Normal,
+	Dash,
+	Guard
+};
+WerehogState currentState;
 //replace with something that makes more sense
 double calculateDistance(const std::vector<EKeyState>& array1, const std::vector<EKeyState>& array2) {
 	if (array1.size() != array2.size()) {
@@ -45,12 +54,21 @@ double calculateDistance(const std::vector<EKeyState>& array1, const std::vector
 
 	return std::sqrt(sum);
 }
+std::string GetStateNameFromTable(std::string in)
+{
+	for (size_t i = 0; i < XMLParser::animationTable.size(); i++)
+	{
+		if (XMLParser::animationTable[i].MotionName == in)
+			return std::format("Evilsonic_attack{0}", XMLParser::animationTable[i].FileName);
+	}
+}
 void PlayAnim(std::string name)
 {
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	const auto spAnimInfo = boost::make_shared<Sonic::Message::MsgGetAnimationInfo>();
 	playerContext->m_pPlayer->SendMessageImm(playerContext->m_pPlayer->m_ActorID, spAnimInfo);
-	playerContext->ChangeAnimation(name.c_str());
+	const char* palalaqgg = name.c_str();
+	playerContext->ChangeAnimation(palalaqgg);
 }
 float GetVelocity()
 {
@@ -62,9 +80,10 @@ float GetVelocity()
 }
 void RegisterInputs()
 {
+	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
+	lastTap = inputPtr->DownState;
 	if (timerCombo < timerComboMax)
 	{
-		auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
 		auto state = inputPtr->TappedState;
 		if(state == eKeyState_A || state == eKeyState_X || state == eKeyState_Y)
 		currentButtonChain.push_back(state);
@@ -207,7 +226,6 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	DebugDrawText::log((std::string("Timer Combo Max:") + std::to_string(timerComboMax)).c_str(),0);
 	DebugDrawText::log((std::string("Timer Attack:") +std::to_string(timerAttack)).c_str(), 0);
 	DebugDrawText::log((std::string("Timer Attack Max:") + std::to_string(timerAttackMax)).c_str(),0);
-	DebugDrawText::log((std::string("Current combo:") + std::string(attacks[comboAttackIndex].comboName)).c_str(), 0);
 	DebugDrawText::log((std::string("Combo progress:") + std::to_string(comboProgress)).c_str(), 0);
 	DebugDrawText::log((std::string("Boost") + std::to_string(CONTEXT->m_ChaosEnergy)).c_str(), 0);
 	DebugDrawText::log("\n", 0);
@@ -258,7 +276,6 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	if (timerCombo > timerComboMax)
 	{
 		comboProgress = 0;
-		currentButtonChain.clear();
 		Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, false); 
 		if (inputPtr->IsDown(Sonic::eKeyState_RightTrigger))
 			playerContext->m_MaxVelocity = 20;
@@ -267,78 +284,91 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	}
 	else
 	{
-		if ((timerCombo > 0.1f && comboProgress > 0 || comboProgress == 0) && (timerAttack > timerAttackMax) && currentButtonChain.size() > comboProgress)
+		if ((timerCombo > 0.1f && comboProgress > 0 || comboProgress == 0) && (timerAttack > timerAttackMax))
 		{
-			int closestAttackIndex = 0;
-			int closestComboIndex = 0;
-			bool doneAttack = false;
-			// Iterate through the attacks and find the closest combo
-			for (size_t i = 0; i < attacks.size(); ++i)
-			{
-				if (doneAttack) break;
-				auto attack = attacks[i];
+			if (lastTap == eKeyState_X || lastTap == eKeyState_Y || lastTap == eKeyState_A)
 
-				if (attack.combo[comboProgress] == currentButtonChain[comboProgress]) {
-					// Execute the attack command based on the closest combo
-					ExecuteAttackCommand(i, comboProgress);
-					doneAttack = true;
-					comboProgress++;
-					timerCombo = 0;
-					timerAttackMax = attack.duration[comboProgress-1];
-					playerContext->m_MaxVelocity = attack.moveSpeed;
-					break;
-				}
+			{
+
+				if (comboProgress == 0)
+				{
+					std::string attackName = "Start_";
+					if (currentState == WerehogState::Dash)
+						attackName += "Dash_";
+					if (currentState == WerehogState::Guard)
+						attackName += "Guard_";
+					if (!isGrounded)
+					{
+						attackName += "Air_";
+						switch (lastTap)
+						{
+						case eKeyState_X:
+						{
+							attackName += "XButtonDown";
+							break;
+						}
+						case eKeyState_Y:
+						{
+							attackName += "YButtonDown";
+							break;
+						}
+						}
+					}
+					else
+					{
+						switch (lastTap)
+						{
+						case eKeyState_X:
+						{
+							attackName += "XButtonUP";
+							break;
+						}
+						case eKeyState_Y:
+						{
+							attackName += "YButtonUP";
+							break;
+						}
+						}
+					}
+					for (size_t i = 0; i < XMLParser::starterAttacks.size(); i++)
+					{
+						if (XMLParser::starterAttacks[i].ActionName == attackName)
+						{
+							PlayAnim(GetStateNameFromTable(XMLParser::starterAttacks[i].MotionName));
+							break;
+						}
+					}
 			}
+			}
+			
+
+
+
+			//int closestAttackIndex = 0;
+			//int closestComboIndex = 0;
+			//bool doneAttack = false;
+			//// Iterate through the attacks and find the closest combo
+			//for (size_t i = 0; i < attacks.size(); ++i)
+			//{
+			//	if (doneAttack) break;
+			//	auto attack = attacks[i];
+
+			//	if (attack.combo[comboProgress] == currentButtonChain[comboProgress]) {
+			//		// Execute the attack command based on the closest combo
+			//		ExecuteAttackCommand(i, comboProgress);
+			//		doneAttack = true;
+			//		comboProgress++;
+			//		timerCombo = 0;
+			//		timerAttackMax = attack.duration[comboProgress-1];
+			//		playerContext->m_MaxVelocity = attack.moveSpeed;
+			//		break;
+			//	}
+			//}
 		}
 	}
-	//if (inputPtr->IsTapped(Sonic::eKeyState_X))
-	//{
-	//	timerCombo = 0;
-	//	switch (xCount)
-	//	{
-	//	case 0:
-	//	{
-	//		PlayAnim("Evilsonic_attackNCA");
-	//		/*playerContext->SetStateFlag(63, 1);*/
-	//		Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, true);
-	//		Common::PlaySoundStatic(sound, 134);
-	//		auto matrix = playerContext->m_pPlayer->m_spCharacterModel->GetNode("Arm12_R")->m_WorldMatrix.translation();
-	//		Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
-	//		break;
-	//	}
-	//	case 1:
-	//	{
-	//		PlayAnim("Evilsonic_attackNCB");
-	//		Common::PlaySoundStatic(sound, 134);
-	//		Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
-	//		break;
-	//	}
-	//	case 2:
-	//	{
-	//		PlayAnim("Evilsonic_attackNCC");
-	//		Common::PlaySoundStatic(sound, 135);
-	//		Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
-	//		break;
-	//	}
-	//	case 3:
-	//	{
-	//		PlayAnim("Evilsonic_attackNCD");
-	//		Common::PlaySoundStatic(sound, 136);
-	//		Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
-	//		break;
-	//	}
-	//	case 4:
-	//	{
-	//		PlayAnim("Evilsonic_attackNCE");
-	//		Common::PlaySoundStatic(sound, 136);
-	//		Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 8, 0.1f);
-	//		break;
-	//	}
-	//	}
-	//	xCount++;
-	//}
 	if (inputPtr->IsTapped(Sonic::eKeyState_A))
 	{
+		isGrounded = false;
 		if (canJump && jumpcount >= 1)
 		{
 			Eigen::Vector3f playerPosition;
@@ -382,6 +412,7 @@ HOOK(char, __stdcall, SonicStateGrounded, 0xDFF660, int* a1, bool a2)
 {
 	canJump = true;
 	jumpcount = 0;
+	isGrounded = true;
 	return originalSonicStateGrounded(a1, a2);
 }
 
@@ -427,13 +458,13 @@ HOOK(void, __fastcall, ProcMsgRestartStage, 0xE76810, Sonic::Player::CPlayer* Th
 
 void evSonic::Install()
 {
-	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNCA", "evilsonic_attackNCA");
+	/*CustomAnimationManager::RegisterAnimation("Evilsonic_attackNCA", "evilsonic_attackNCA");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNCB", "evilsonic_attackNCB");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNCC", "evilsonic_attackNCC");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNCD", "evilsonic_attackNCD");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNCE", "evilsonic_attackNCE");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNSA", "evilsonic_attackNSA");
-	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNSB", "evilsonic_attackNSB");
+	CustomAnimationManager::RegisterAnimation("Evilsonic_attackNSB", "evilsonic_attackNSB");*/
 	CustomAnimationManager::RegisterAnimation("Evilsonic_damageMB", "evilsonic_damageMB");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_guard_idle", "evilsonic_guard_idle");
 	CustomAnimationManager::RegisterAnimation("Evilsonic_BerserkerS", "evilsonic_BerserkerS");
@@ -446,8 +477,8 @@ void evSonic::Install()
 	Sonic::EKeyState combo[5];
 	int cueIDs[5];
 	const char* animations[5];*/
-	attacks.push_back(WerehogAttack({ "Wild Whirl", {eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X }, {134,134,135,136,136 }, {"Evilsonic_attackNCA","Evilsonic_attackNCB","Evilsonic_attackNCC","Evilsonic_attackNCD","Evilsonic_attackNCE"}, {0.15F,0.15F,0.15F,0.55F,0.85f}, 1 }));
-	attacks.push_back(WerehogAttack({ "Wild Whirl2", {eKeyState_Y,eKeyState_Y }, {134,134,135,136,136 }, {"Evilsonic_attackNSA","Evilsonic_attackNSB"}, {0.15F,0.15F},1 }));
+	/*attacks.push_back(WerehogAttack({ "Wild Whirl", {eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X,eKeyState_X }, {134,134,135,136,136 }, {"Evilsonic_attackNCA","Evilsonic_attackNCB","Evilsonic_attackNCC","Evilsonic_attackNCD","Evilsonic_attackNCE"}, {0.15F,0.15F,0.15F,0.55F,0.85f}, 1 }));
+	attacks.push_back(WerehogAttack({ "Wild Whirl2", {eKeyState_Y,eKeyState_Y }, {134,134,135,136,136 }, {"Evilsonic_attackNSA","Evilsonic_attackNSB"}, {0.15F,0.15F},1 }));*/
 	WRITE_MEMORY(0x01271FD1, char*, "ef_null"); // Disable original game's jumpball creation
 	WRITE_MEMORY(0x015E9078, char*, "ef_null"); // Disable empty boost
 	

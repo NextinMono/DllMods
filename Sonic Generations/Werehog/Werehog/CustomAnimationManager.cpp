@@ -23,8 +23,8 @@ HOOK(void*, __cdecl, InitializeSonicAnimationList, 0x1272490)
 
             CAnimationStateInfo& entry = entries[set->count + i];
 
-            entry.name = CUSTOM_ANIMATIONS[animIndex].stateName;
-            entry.fileName = CUSTOM_ANIMATIONS[animIndex].fileName;
+            entry.name = CUSTOM_ANIMATIONS[animIndex].stateName.c_str();
+            entry.fileName = CUSTOM_ANIMATIONS[animIndex].fileName.c_str();
             entry.speed = 1.0f;
             entry.playbackType = 1;
             entry.field10 = 0;
@@ -54,13 +54,13 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
     for (size_t i = 0; i < 2 * GetAnimCount(); i++)
     {
         const size_t animIndex = i % GetAnimCount();
-        const hh::base::CSharedString animName = CUSTOM_ANIMATIONS[animIndex].stateName;
+        const hh::base::CSharedString animName = CUSTOM_ANIMATIONS[animIndex].stateName.c_str();
 
         boost::shared_ptr<void> animationState;
         createAnimationState(A2, animationState, animName, animName);
     }
 }
-void CustomAnimationManager::RegisterAnimation(const char* stateName, const char* fileName)
+void CustomAnimationManager::RegisterAnimation(std::string stateName, std::string fileName)
 {
     if (initialized)
         printf("\nYou cannot register animations after initialization!");
@@ -70,6 +70,7 @@ void CustomAnimationManager::RegisterAnimation(const char* stateName, const char
         entry.fileName = fileName;
         entry.stateName = stateName;
         CUSTOM_ANIMATIONS.push_back(entry);
+        printf(std::format("Registered animation ({0}, {1})", stateName, fileName).c_str());
     }
 }
 
