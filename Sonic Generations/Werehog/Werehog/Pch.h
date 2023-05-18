@@ -19,6 +19,7 @@
 #include <fstream>
 #include <algorithm>	
 #include <vector>
+#include <rapidxml/rapidxml.hpp>
 
 
 #include <stdio.h>
@@ -28,4 +29,5 @@
 
 #include "ArchiveTreePatcher.h"
 #include "Configuration.h"
+#include "XMLParser.h"
 #include "Sonic.h"

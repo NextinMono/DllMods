@@ -14,5 +14,6 @@ extern "C" __declspec(dllexport) void Init()
 	
 	//ArchivePatcher::Install();
 	CustomAnimationManager::Install();
+	XMLParser::Install();
 	evSonic::Install();
 }
