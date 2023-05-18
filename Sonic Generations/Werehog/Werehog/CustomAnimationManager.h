@@ -17,8 +17,8 @@ struct CAnimationStateInfo
 
 struct AnimationEntry
 {
-	const char* stateName;
-	const char* fileName;
+	std::string stateName;
+	std::string fileName;
 	
 };
 struct CAnimationStateSet
@@ -32,6 +32,6 @@ class CustomAnimationManager
 
 public:
 	static void Install();
-	static void RegisterAnimation(const char* stateName, const char* fileName);
+	static void RegisterAnimation(std::string stateName, std::string fileName);
 	static std::vector<AnimationEntry> GetAnims();
 };

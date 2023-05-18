@@ -9,7 +9,7 @@ using namespace Sonic;
 //"Pinky1_R" :
 //	Ring1_R" : "
 //	"Thumb1_R" :
-SharedPtrTypeless sound,soundUnleash, soundUnleashStart;
+SharedPtrTypeless sound, soundUnleash, soundUnleashStart;
 SharedPtrTypeless indexParticle_L, indexParticle_R;
 SharedPtrTypeless middleParticle_L, middleParticle_R;
 SharedPtrTypeless pinkyParticle_L, pinkyParticle_R;
@@ -25,12 +25,14 @@ int comboAttackIndex;
 bool isUsingShield;
 float timerCombo;
 float timerAttack;
-float timerComboMax = 1.55f;
-float timerAttackMax= 1.25f;
+float timerComboMax = 0.55f;
+float timerAttackMax = 0.25f;
 int comboProgress = 0;
 float lifeWerehog = 5.0f;
 bool unleashMode;
+bool playingAttack;
 bool isGrounded;
+std::string lastAttackName;
 Sonic::EKeyState lastTap;
 enum WerehogState
 {
@@ -81,12 +83,12 @@ float GetVelocity()
 void RegisterInputs()
 {
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
-	lastTap = inputPtr->DownState;
 	if (timerCombo < timerComboMax)
 	{
 		auto state = inputPtr->TappedState;
-		if(state == eKeyState_A || state == eKeyState_X || state == eKeyState_Y)
-		currentButtonChain.push_back(state);
+		lastTap = inputPtr->DownState;
+		if (state == eKeyState_A || state == eKeyState_X || state == eKeyState_Y)
+			currentButtonChain.push_back(state);
 		if (currentButtonChain.size() > 8)
 		{
 			currentButtonChain.erase(currentButtonChain.begin());
@@ -155,7 +157,7 @@ void SpawnParticleOnHand(const char* glitterName, bool right)
 			Common::fCGlitterCreate(playerContext->m_pPlayer->m_spContext.get(), thumbParticle_R, &thumb, glitterName, 1);
 	}
 
-	
+
 
 }
 
@@ -179,20 +181,41 @@ void CreateBerserkEffect()
 	if (!berserk[2])
 		Common::fCGlitterCreate(playerContext->m_pPlayer->m_spContext.get(), berserk[2], &node2, "evil_berserk02", 1);
 }
-void ExecuteAttackCommand(int attackIndex,int comboIndex)
+void ExecuteAttackCommand(std::string attack, int attackIndex, bool starter = false)
 {
-	comboAttackIndex = attackIndex;
+	//comboAttackIndex = attackIndex;
 	auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, true);
 	Common::CreatePlayerSupportShockWave(playerContext->m_spMatrixNode->m_Transform.m_Position, 0.15f, 5, 0.1f);
-	PlayAnim(attacks.at(attackIndex).animations[comboIndex]);
-	Common::PlaySoundStatic(sound, attacks.at(attackIndex).cueIDs[comboIndex]);
-
+	PlayAnim(GetStateNameFromTable(attack));
+	/*Common::PlaySoundStatic(sound, attacks.at(attackIndex).cueIDs[comboIndex]);*/
+	lastAttackName = starter ? XMLParser::starterAttacks[attackIndex].MotionName : XMLParser::attacks[attackIndex].MotionName;
 	SpawnParticleOnHand("slash", true);
 	SpawnParticleOnHand("slash", false);
 	timerAttack = 0;
 }
-
+void SetPlayerVelocity()
+{
+	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	switch (currentState)
+	{
+	case WerehogState::Dash:
+	{
+		playerContext->m_MaxVelocity = 20;
+		break;
+	}
+	case WerehogState::Normal:
+	{
+		playerContext->m_MaxVelocity = 10;
+		break;
+	}
+	case WerehogState::Guard:
+	{
+		playerContext->m_MaxVelocity = 2;
+		break;
+	}
+	}
+}
 //find a better way please
 bool init = false;
 void Particle_Checker()
@@ -218,16 +241,17 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		playerContext->m_spParameter->m_scpNode->m_ValueMap[Sonic::Player::ePlayerSpeedParameter_BoostEnableChaosEnergy] = 1000.0f;
 		playerContext->m_spParameter->m_scpNode->m_ValueMap[Sonic::Player::ePlayerSpeedParameter_AirBoostEnableChaosEnergy] = 1000.0f;
 		playerContext->m_pSkills = 0;
-		
+
 	}
 	/*sonic->m_spParameter->m_scpNode->m_ValueMap.erase(Sonic::Player::ePlayerSpeedParameter_BoostEnableChaosEnergy);
 	sonic->m_spParameter->m_scpNode->m_ValueMap.erase(Sonic::Player::ePlayerSpeedParameter_AirBoostEnableChaosEnergy);*/
-	DebugDrawText::log((std::string("Timer Combo:") +std::to_string(timerCombo)).c_str(), 0);
-	DebugDrawText::log((std::string("Timer Combo Max:") + std::to_string(timerComboMax)).c_str(),0);
-	DebugDrawText::log((std::string("Timer Attack:") +std::to_string(timerAttack)).c_str(), 0);
-	DebugDrawText::log((std::string("Timer Attack Max:") + std::to_string(timerAttackMax)).c_str(),0);
+	DebugDrawText::log((std::string("Timer Combo:") + std::to_string(timerCombo)).c_str(), 0);
+	DebugDrawText::log((std::string("Timer Combo Max:") + std::to_string(timerComboMax)).c_str(), 0);
+	DebugDrawText::log((std::string("Timer Attack:") + std::to_string(timerAttack)).c_str(), 0);
+	DebugDrawText::log((std::string("Timer Attack Max:") + std::to_string(timerAttackMax)).c_str(), 0);
 	DebugDrawText::log((std::string("Combo progress:") + std::to_string(comboProgress)).c_str(), 0);
 	DebugDrawText::log((std::string("Boost") + std::to_string(CONTEXT->m_ChaosEnergy)).c_str(), 0);
+	DebugDrawText::log((std::string("Tap") + std::to_string(lastTap)).c_str(), 0);
 	DebugDrawText::log("\n", 0);
 	DebugDrawText::log((std::string("Life") + std::to_string(lifeWerehog)).c_str(), 0);
 	auto inputPtr = &Sonic::CInputState::GetInstance()->m_PadStates[Sonic::CInputState::GetInstance()->m_CurrentPadStateIndex];
@@ -243,8 +267,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		soundUnleash.reset();
 	}
 	if ((inputPtr->IsDown(eKeyState_RightBumper) && CONTEXT->m_ChaosEnergy == 100.0f) && !unleashMode)
-	{		
-		
+	{
+
 		PlayAnim("Evilsonic_BerserkerS");
 		CreateBerserkEffect();
 		Common::PlaySoundStatic(soundUnleashStart, 126);
@@ -269,25 +293,33 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	}
 	RegisterInputs();
 	Particle_Checker();
-	
-	
+
+	SetPlayerVelocity();
 
 	DebugDrawText::log(stateCheckS.c_str(), 0);
 	if (timerCombo > timerComboMax)
 	{
 		comboProgress = 0;
-		Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, false); 
+		Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, false);
 		if (inputPtr->IsDown(Sonic::eKeyState_RightTrigger))
-			playerContext->m_MaxVelocity = 20;
+		{
+			currentState = WerehogState::Dash;
+		}
 		else
-			playerContext->m_MaxVelocity = 10;
+		{
+			currentState = WerehogState::Normal;
+		}
 	}
 	else
 	{
-		if ((timerCombo > 0.1f && comboProgress > 0 || comboProgress == 0) && (timerAttack > timerAttackMax))
+		if (timerAttack > timerAttackMax && playingAttack)
 		{
-			if (lastTap == eKeyState_X || lastTap == eKeyState_Y || lastTap == eKeyState_A)
-
+			playingAttack = false;
+			comboProgress++;
+		}
+		if ((timerCombo > 0.5f && comboProgress > 0 || comboProgress == 0) && (timerAttack > timerAttackMax) && currentButtonChain.size() > comboProgress)
+		{
+			if (currentButtonChain[currentButtonChain.size()-1] == eKeyState_X || currentButtonChain[currentButtonChain.size() - 1] == eKeyState_Y || currentButtonChain[currentButtonChain.size() - 1] == eKeyState_A)
 			{
 
 				if (comboProgress == 0)
@@ -316,7 +348,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 					}
 					else
 					{
-						switch (lastTap)
+						switch (currentButtonChain[comboProgress])
 						{
 						case eKeyState_X:
 						{
@@ -334,13 +366,70 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 					{
 						if (XMLParser::starterAttacks[i].ActionName == attackName)
 						{
-							PlayAnim(GetStateNameFromTable(XMLParser::starterAttacks[i].MotionName));
+							comboAttackIndex = i;
+							timerCombo = 0;
+							playingAttack = true;
+							ExecuteAttackCommand(XMLParser::starterAttacks[i].MotionName, comboAttackIndex, true);
 							break;
 						}
 					}
+				}
+				
+					if (comboProgress == 1)
+					{
+						switch (currentButtonChain[comboProgress])
+						{
+						case eKeyState_X:
+						{
+							for (size_t i = 0; i < XMLParser::attacks.size(); i++)
+							{
+								if (lastAttackName == XMLParser::attacks[i].ActionName)
+								{
+									comboAttackIndex = i;
+									timerCombo = 0;
+									playingAttack = true;
+									ExecuteAttackCommand(XMLParser::attacks[i].KEY__XDown, comboAttackIndex, false);
+									break;
+								}
+							}
+							
+							break;
+						}
+						case eKeyState_Y:
+						{
+							for (size_t i = 0; i < XMLParser::attacks.size(); i++)
+							{
+								if (lastAttackName == XMLParser::attacks[i].ActionName)
+								{
+									comboAttackIndex = i;
+									timerCombo = 0;
+									playingAttack = true;
+									ExecuteAttackCommand(XMLParser::attacks[i].KEY__YDown, comboAttackIndex, false);
+									break;
+								}
+							}
+							break;
+						}
+						case eKeyState_A:
+						{
+							for (size_t i = 0; i < XMLParser::attacks.size(); i++)
+							{
+								if (lastAttackName == XMLParser::attacks[i].ActionName)
+								{
+									comboAttackIndex = i;
+									timerCombo = 0;
+									playingAttack = true;
+									ExecuteAttackCommand(XMLParser::attacks[i].KEY__ADown, comboAttackIndex, false);
+									break;
+								}
+							}
+							break;
+						}
+						}
+					}
+				
 			}
-			}
-			
+
 
 
 
@@ -434,7 +523,7 @@ HOOK(int, __fastcall, HomingBegin, 0x01232040, CQuaternion* This)
 	}
 	else
 
-	return 0;
+		return 0;
 }
 HOOK(void, __fastcall, CSonicProcMsgDamage, 0xE27890, Sonic::Player::CSonic* This, void* _, hh::fnd::Message& in_rMsg)
 {
@@ -454,7 +543,7 @@ HOOK(void, __fastcall, ProcMsgRestartStage, 0xE76810, Sonic::Player::CPlayer* Th
 {
 	originalProcMsgRestartStage(This, Edx, message);
 	lifeWerehog = 5.0f;
-} 
+}
 
 void evSonic::Install()
 {
@@ -481,7 +570,7 @@ void evSonic::Install()
 	attacks.push_back(WerehogAttack({ "Wild Whirl2", {eKeyState_Y,eKeyState_Y }, {134,134,135,136,136 }, {"Evilsonic_attackNSA","Evilsonic_attackNSB"}, {0.15F,0.15F},1 }));*/
 	WRITE_MEMORY(0x01271FD1, char*, "ef_null"); // Disable original game's jumpball creation
 	WRITE_MEMORY(0x015E9078, char*, "ef_null"); // Disable empty boost
-	
+
 	INSTALL_HOOK(ProcMsgRestartStage);
 	INSTALL_HOOK(CSonicProcMsgDamage);
 	INSTALL_HOOK(CHudSonicStageUpdateParallel);

@@ -61,15 +61,15 @@ WerehogAttackNew ParseActionNode(rapidxml::xml_node<>* node, rapidxml::xml_node<
 		if (isPartOf(name, "KEY__YDown"))
 			attack.KEY__YDown = std::string(child->value());
 		if (isPartOf(name, "KEY__XDown"))
-			attack.KEY__YDown = std::string(child->value());
+			attack.KEY__XDown = std::string(child->value());
 		if (isPartOf(name, "KEY__ADown"))
-			attack.KEY__YDown = std::string(child->value());
+			attack.KEY__ADown = std::string(child->value());
 		if (isPartOf(name, "KEY__Land"))
-			attack.KEY__YDown = std::string(child->value());
+			attack.KEY__Land = std::string(child->value());
 		if (isPartOf(name, "KEY__AirCombo"))
-			attack.KEY__YDown = std::string(child->value());
+			attack.KEY__AirCombo = std::string(child->value());
 		if (isPartOf(name, "KEY__End"))
-			attack.KEY__YDown = std::string(child->value());
+			attack.KEY__End = std::string(child->value());
 		if (isPartOf(name, "Guard"))
 			attack.Guard = child->value() == "true" ? true : false;
 		if (isPartOf(name, "Avoid"))
