@@ -12,5 +12,6 @@ public:
 
 	
 	static int SpriteType;
+	static bool LoadingEnabled;
 };
 

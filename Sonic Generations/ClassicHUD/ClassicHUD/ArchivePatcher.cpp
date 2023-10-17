@@ -55,9 +55,7 @@ void ArchivePatcher::Install()
 	case 1:
 	{
 		archiveDependencies.push_back(ArchiveDependency("Sonic2", { "SonicActionCommonHud" }));
-		archiveDependencies.push_back(ArchiveDependency("LoadingS2", { "Loading" }));
-		
-		
+		archiveDependencies.push_back(ArchiveDependency("LoadingS2", { "Loading", "ResidentLoading"}));
 		break;
 	}
 	case 2:

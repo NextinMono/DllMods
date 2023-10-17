@@ -420,7 +420,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	{
 		rcMissionTimer = rcMissionColors->CreateScene("info_2");
 		CSDCommon::FreezeMotion(*rcMissionTimer);
-		CSDCommon::IntroAnim(rcMissionTimer);
+		CSDCommon::IntroAnim(*rcMissionTimer);
 		if (Common::GetCurrentStageID() == SMT_bsd)
 		{
 
@@ -441,7 +441,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 			rcMissionTimer->GetNode("num_time")->SetPosition(0, -120);
 
 			CSDCommon::FreezeMotion(*rcMissionSecondP);
-			CSDCommon::IntroAnim(rcMissionSecondP);
+			CSDCommon::IntroAnim(*rcMissionSecondP);
 		}
 	}
 	if (flags & 0x1 && *(uint8_t*)0x1098C82 != 0xEB || Common::GetCurrentStageID() == SMT_bsd) // Lives
@@ -684,19 +684,19 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		SetBoostValue(playerContext->m_ChaosEnergy);
 
 		if (rcPlayerCount)
-			CSDCommon::IntroAnim(rcPlayerCount);
+			CSDCommon::IntroAnim(*rcPlayerCount);
 		if (rcTimeCount)
-			CSDCommon::IntroAnim(rcTimeCount);
+			CSDCommon::IntroAnim(*rcTimeCount);
 		if (rcRingCount)
-			CSDCommon::IntroAnim(rcRingCount);
+			CSDCommon::IntroAnim(*rcRingCount);
 		if (rcBoostBar)
-			CSDCommon::IntroAnim(rcBoostBar);
+			CSDCommon::IntroAnim(*rcBoostBar);
 		if (rcScoreCount)
-			CSDCommon::IntroAnim(rcScoreCount);
+			CSDCommon::IntroAnim(*rcScoreCount);
 		if (rcWispContainer)
-			CSDCommon::IntroAnim(rcWispContainer);
+			CSDCommon::IntroAnim(*rcWispContainer);
 		if (rcStarRing)
-			CSDCommon::IntroAnim(rcStarRing);
+			CSDCommon::IntroAnim(*rcStarRing);
 
 		timeStarted = true;
 	}

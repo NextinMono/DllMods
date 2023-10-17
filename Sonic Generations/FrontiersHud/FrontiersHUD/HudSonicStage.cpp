@@ -5,7 +5,7 @@ boost::shared_ptr<Sonic::CGameObjectCSD> goGameplay, goFrontiers_2;
 Chao::CSD::RCPtr<Chao::CSD::CProject> pGameplay, pFrontiers_2;
 
 //Scenes of projects (ideally keep them all separate from each project, unless they're used together)
-Chao::CSD::RCPtr<Chao::CSD::CScene> ringCount,ringOverlay, gearCount, keyCount, boostCircle, oxygenCircle, lifeCount, boostCircleEmpty, oxygenCircleEmpty, boostTXT, oxygenTXT, skills, speed_ind, speedometer, ringMax, speedometerNumber, score;
+Chao::CSD::RCPtr<Chao::CSD::CScene> ringCount, reference, speedometerTicks,ringOverlay, timeCount, gearCount, keyCount, boostCircle, oxygenCircle, lifeCount, boostCircleEmpty, oxygenCircleEmpty, boostTXT, oxygenTXT, skills, speed_ind, speedometer, ringMax, speedometerNumber, score;
 size_t prevRingCount = -1;
 float waitTimeBoost, oxygenCount = 0;
 bool hiddenOxy = true;
@@ -81,10 +81,13 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), skills);
 		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), speed_ind);
 		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), speedometer);
+		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), reference);
+		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), speedometerTicks);
 		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), speedometerNumber);
 		Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), ringOverlay);
 		Chao::CSD::CProject::DestroyScene(pGameplay.Get(), ringMax);
 		Chao::CSD::CProject::DestroyScene(pGameplay.Get(), ringCount);
+		Chao::CSD::CProject::DestroyScene(pGameplay.Get(), timeCount);
 		Chao::CSD::CProject::DestroyScene(pGameplay.Get(), score);
 	}
 	Chao::CSD::CProject::DestroyScene(pFrontiers_2.Get(), boostCircle);
@@ -100,7 +103,6 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	goGameplay, goFrontiers_2 = nullptr;
 
 }
-
 hh::math::CVector4 GetSonicBoostPosition()
 {
 	auto& position = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_spMatrixNode->m_Transform.m_Position;
@@ -155,10 +157,13 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	ringCount = pGameplay->CreateScene("info_ring");
 	ringCount->SetPosition(0, 0); //for some reason this makes it follow the aspect ratio...
-
+	timeCount = pGameplay->CreateScene("info_time");
+	timeCount->GetNode("num_time_msec")->SetHideFlag(true);
+	CSDCommon::PlayAnimation(*timeCount, "Usual_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
 	ringOverlay = pFrontiers_2->CreateScene("info_ring");
-	ringOverlay->SetPosition(1280 / 2,720/2 );
-	CSDCommon::PlayAnimation(*ringOverlay, "Intro_Anim", Chao::CSD::eMotionRepeatType_Loop, 1, 0);
+	ringOverlay->SetPosition(7,-60);
+	ringOverlay->SetScale(1.7f, 1.7f);
+	CSDCommon::PlayAnimation(*ringOverlay, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 30);
 	
 
 
@@ -173,16 +178,17 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	{
 		//Speedometer
 		speedometer = pFrontiers_2->CreateScene("speedometer");
-		speedometer->SetPosition(commonPos->x() + 2, commonPos->y());
+		speedometer->SetPosition(commonPos->x() + 1, commonPos->y() + 2);
 		speedometer->SetScale(commonScale, commonScale);
-		speedometer->GetNode("icon_generic")->SetHideFlag(true);
-
+		speedometerTicks = pFrontiers_2->CreateScene("speedometer_inside");
+		speedometerTicks->SetPosition(commonPos->x() + 1, commonPos->y() + 2);
+		speedometerTicks->SetScale(commonScale, commonScale);
 		speed_ind = pFrontiers_2->CreateScene("speed_handle");
 		speed_ind->SetPosition(commonPos->x(), commonPos->y());
 		speed_ind->SetScale(commonScale - 0.1f, commonScale - 0.1f);
 		CSDCommon::PlayAnimation(*speedometer, "Intro_Anim", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 100);
 	}
-	if (Configuration::SpeedometerNumberEnabled)
+	if (Configuration::XPNumberEnabled)
 	{
 		//Speedometer Number
 		speedometerNumber = pFrontiers_2->CreateScene("speed_number");
@@ -274,7 +280,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		score->GetNode("icon_generic")->SetHideFlag(true);
 	}
 	//~(0x1 | /*0x2/* | 0x4 | 0x200 | */ | 0x800); 
-	flags &= ~(0x1 | 0x4 ); // Mask to prevent crash when game tries accessing the elements we disabled later on, disables Lives & Rings count
+	flags &= ~(0x1 | 0x2 | 0x4 ); // Mask to prevent crash when game tries accessing the elements we disabled later on, disables Lives & Rings count
 
 	waitTimeBoost = 5;
 
@@ -288,8 +294,8 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	if (!goFrontiers_2 || !goGameplay)
 		return;
 
-	if(ringOverlay)
-	ringOverlay->SetPosition(xadd, yadd);
+	//if(ringOverlay)
+	//ringOverlay->SetPosition(xadd, yadd);
 	printf("\n%ld", (DWORD)0x01B23FD8);
 	char text[256];
 	size_t rowIndex = 1;
@@ -313,7 +319,15 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		waitTimeBoost += in_rUpdateInfo.DeltaTime;
 		hiddenBoost = waitTimeBoost >= 3;
 	}
+	if (timeCount)
+	{
+		size_t minutes, seconds, milliseconds;
+		GetTime(**This->m_pMember->m_pGameDocument, &minutes, &seconds, &milliseconds);
 
+		sprintf(text, "%02d:%02d.%02d", minutes, seconds, milliseconds);
+		timeCount->GetNode("num_time")->SetText(text);
+		//Should add the timeout feature from colors here
+	}
 	if (lifeCount)
 	{
 		const size_t liveCountAddr = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
@@ -350,7 +364,9 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	if (ringCount && playerContext)
 	{
 		sprintf(text, "%03d", playerContext->m_RingCount);
+		if(ringOverlay->m_MotionDisableFlag)
 		ringCount->GetNode("num_ring")->SetText(text);
+		ringOverlay->GetNode("num_ring")->SetText(text);
 
 		if (prevRingCount < playerContext->m_RingCount)
 		{
@@ -480,5 +496,6 @@ void HudSonicStage::Install()
 	INSTALL_HOOK(MsgStartCommonButtonSign);
 	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives
 	WRITE_MEMORY(0x109B5AD, uint8_t, 0x90, 0xE9); // Disable rings
+	WRITE_MEMORY(0x109B490, uint8_t, 0x90, 0xE9); // Disable time
 	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
 }

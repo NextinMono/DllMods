@@ -8,7 +8,7 @@ std::string Configuration::HUDType = "full";
 bool Configuration::IsCyberspaceHUD = false;
 bool Configuration::LivesEnabled = true;
 bool Configuration::SpeedometerEnabled = true;
-bool Configuration::SpeedometerNumberEnabled = true;
+bool Configuration::XPNumberEnabled = true;
 std::string Configuration::ScoreGenerationsFormat = "%d";
 
 void Configuration::Read()
@@ -24,7 +24,7 @@ void Configuration::Read()
 	Configuration::LivesEnabled = reader.GetBoolean("Additional", "LivesEnabled", LivesEnabled);
 	Configuration::SkillsEnabled = reader.GetBoolean("Additional", "SkillsEnabled", SkillsEnabled);
 	Configuration::SpeedometerEnabled = reader.GetBoolean("Additional", "SpeedometerEnabled", SpeedometerEnabled);
-	Configuration::SpeedometerNumberEnabled = reader.GetBoolean("Additional", "SpeedometerNumberEnabled", SpeedometerNumberEnabled);
+	Configuration::XPNumberEnabled = reader.GetBoolean("Additional", "SpeedometerNumberEnabled", XPNumberEnabled);
 
 	//Count
 	Configuration::GearsCount = reader.GetInteger("Count", "GearsCount", GearsCount);
@@ -38,7 +38,7 @@ void Configuration::Read()
 		Configuration::LivesEnabled = true;
 		Configuration::SkillsEnabled = true;
 		Configuration::SpeedometerEnabled = true;
-		Configuration::SpeedometerNumberEnabled = true;
+		Configuration::XPNumberEnabled = true;
 		Configuration::GearsCount = 0;
 		Configuration::KeysCount = 0;
 		Configuration::RingCapCount = 999;
@@ -49,7 +49,7 @@ void Configuration::Read()
 		Configuration::LivesEnabled = false;
 		Configuration::SkillsEnabled = false;
 		Configuration::SpeedometerEnabled = false;
-		Configuration::SpeedometerNumberEnabled = false;
+		Configuration::XPNumberEnabled = false;
 		Configuration::GearsCount = 0;
 		Configuration::KeysCount = 0;
 		Configuration::RingCapCount = 999;

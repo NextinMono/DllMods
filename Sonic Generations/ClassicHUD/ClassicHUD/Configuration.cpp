@@ -1,4 +1,5 @@
 int Configuration::SpriteType = 0;
+bool Configuration::LoadingEnabled = false;
 
 void Configuration::Read()
 {
@@ -6,4 +7,5 @@ void Configuration::Read()
 
 	// Main
 	Configuration::SpriteType = reader.GetInteger("Main", "SpriteType", SpriteType);
+	Configuration::LoadingEnabled = reader.Get("Main", "IncludeDir1", "") != "";
 }

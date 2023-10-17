@@ -16,7 +16,7 @@ public:
 	static bool InfiniteBoost;
 	static bool GearsKeysEnabled;
 	static bool SpeedometerEnabled;
-	static bool SpeedometerNumberEnabled;
+	static bool XPNumberEnabled;
 	static bool LivesEnabled;
 	static bool SkillsEnabled;
 	static int GearsCount;

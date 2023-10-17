@@ -1,3 +1,41 @@
+int currentDebugIndex;
+bool editingMode;
+int testIndex;
+float testIndexValue;
+Hedgehog::Math::CVector2 sceneOffset;
+float gridlock = 1;
+#include "DebugDrawText.h"
+#include <format>
+
+struct CastEntry
+{
+	const char* name;
+	int groupIndex;
+	int castIndex;
+};
+struct XNCPData
+{
+	int Version;
+	float ZIndex;
+	float Framerate;
+	int Field0C;
+	int Field10;
+	int Data1Count;
+	void* pTextureResolutions;
+	int SpriteCount;
+	void* pSprites;
+	int LayerCount;
+	void* pLayers;
+	int CastCount;
+	CastEntry* pCastInfo;
+	int MotionCount;
+	void* pMotions;
+	void* pMotionInfos;
+	float AspectRatio;
+	void* pMotionFrameInfos;
+	void* pMotionEx;
+
+};
 bool IsAnimDone(Chao::CSD::CScene* scene)
 {
 	if (scene->m_MotionSpeed < 0.0f)
@@ -40,6 +78,11 @@ void CSDCommon::CheckSceneAnimation(int i, Chao::CSD::CScene* scene)
 	}
 }
 std::vector<Chao::CSD::CScene*> CSDCommon::scenesPlayingBack; //idk why i need to do this, symbol errors-
+template<typename T, typename U> constexpr size_t offsetOf(U T::* member)
+{
+	return (char*)&((T*)nullptr->*member) - (char*)nullptr;
+}
+std::vector<DebuggableScene> CSDCommon::debugScenes;
 void CSDCommon::update()
 {
 	if (CSDCommon::scenesPlayingBack.size() != 0)
@@ -58,7 +101,6 @@ void CSDCommon::update()
 		}
 	}
 }
-
 void CSDCommon::SplitTextToSeparateCasts(Chao::CSD::CScene* scene, const char* formatCastName, const char* text, int maxCharacterPerLine, int maxLines)
 {
 	const string input = string(text);
